@@ -33,14 +33,25 @@ window.SnakeRuntimeState = {
       setStateValue('waveCeremonyState', nextState);
     }
 
+    function callActionOrFallback(name, fallback, ...args) {
+      if (actions && typeof actions[name] === 'function') {
+        return actions[name](...args);
+      }
+      return fallback(...args);
+    }
+
     function showModeOverlay() {
-      setStateValue('hasSelectedMode', false);
-      modeOverlay.classList.remove('hidden');
+      return callActionOrFallback('showModeOverlay', () => {
+        setStateValue('hasSelectedMode', false);
+        modeOverlay.classList.remove('hidden');
+      });
     }
 
     function hideModeOverlay() {
-      setStateValue('hasSelectedMode', true);
-      modeOverlay.classList.add('hidden');
+      return callActionOrFallback('hideModeOverlay', () => {
+        setStateValue('hasSelectedMode', true);
+        modeOverlay.classList.add('hidden');
+      });
     }
 
     function getCeremonyState() {
@@ -175,10 +186,12 @@ window.SnakeRuntimeState = {
     }
 
     function closeAllOverlays() {
-      resultOverlay.classList.remove('show');
-      pauseOverlay.classList.remove('show');
-      waveOverlay.classList.remove('show');
-      getShopOverlayElement().classList.remove('show');
+      return callActionOrFallback('closeAllOverlays', () => {
+        resultOverlay.classList.remove('show');
+        pauseOverlay.classList.remove('show');
+        waveOverlay.classList.remove('show');
+        getShopOverlayElement().classList.remove('show');
+      });
     }
 
     function hideTransientOverlays() {
@@ -218,33 +231,43 @@ window.SnakeRuntimeState = {
     }
 
     function syncPauseButtonVisibility() {
-      pauseBtn.style.display = canRunGameLoop() ? 'block' : 'none';
+      return callActionOrFallback('syncPauseButtonVisibility', () => {
+        pauseBtn.style.display = canRunGameLoop() ? 'block' : 'none';
+      });
     }
 
     function showPauseOverlay() {
-      closeAllOverlays();
-      pauseOverlay.classList.add('show');
-      syncPauseButtonVisibility();
+      return callActionOrFallback('showPauseOverlay', () => {
+        closeAllOverlays();
+        pauseOverlay.classList.add('show');
+        syncPauseButtonVisibility();
+      });
     }
 
     function showShopOverlay() {
-      closeAllOverlays();
-      getShopOverlayElement().classList.add('show');
-      syncPauseButtonVisibility();
+      return callActionOrFallback('showShopOverlay', () => {
+        closeAllOverlays();
+        getShopOverlayElement().classList.add('show');
+        syncPauseButtonVisibility();
+      });
     }
 
     function showWaveOverlay() {
-      closeAllOverlays();
-      waveOverlay.classList.add('show');
-      syncPauseButtonVisibility();
+      return callActionOrFallback('showWaveOverlay', () => {
+        closeAllOverlays();
+        waveOverlay.classList.add('show');
+        syncPauseButtonVisibility();
+      });
     }
 
     function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
-      closeAllOverlays();
-      resultOverlay.classList.toggle('show', !!resultVisible);
-      pauseOverlay.classList.toggle('show', !!pauseVisible);
-      waveOverlay.classList.toggle('show', !!waveVisible);
-      getShopOverlayElement().classList.toggle('show', !!shopVisible);
+      return callActionOrFallback('restoreOverlayVisibility', () => {
+        closeAllOverlays();
+        resultOverlay.classList.toggle('show', !!resultVisible);
+        pauseOverlay.classList.toggle('show', !!pauseVisible);
+        waveOverlay.classList.toggle('show', !!waveVisible);
+        getShopOverlayElement().classList.toggle('show', !!shopVisible);
+      }, { resultVisible, pauseVisible, waveVisible, shopVisible });
     }
 
     function restoreRuntimeByPrimaryState(primaryState) {

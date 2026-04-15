@@ -69,6 +69,12 @@ window.SnakeUiOverlays = {
       syncPauseButtonVisibility();
     }
 
+    function showOnlyResultOverlay() {
+      closeAllOverlays();
+      resultOverlay.classList.add('show');
+      syncPauseButtonVisibility();
+    }
+
     function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
       closeAllOverlays();
       resultOverlay.classList.toggle('show', !!resultVisible);
@@ -85,6 +91,7 @@ window.SnakeUiOverlays = {
       showPauseOverlay,
       showShopOverlay,
       showWaveOverlay,
+      showOnlyResultOverlay,
       restoreOverlayVisibility
     };
   }

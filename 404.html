@@ -3940,9 +3940,16 @@
                 stopWaveTransitionCountdown: stopWaveTransitionCountdownAction,
                 stopGameLoop: stopGameLoopAction,
                 hideResult,
+                showModeOverlay,
+                hideModeOverlay,
                 initializeWaitingUI,
                 restartGameLoopWithCurrentState,
                 closeAllOverlays,
+                syncPauseButtonVisibility,
+                showPauseOverlay,
+                showShopOverlay,
+                showWaveOverlay,
+                restoreOverlayVisibility,
                 advanceWave,
                 restartWaveTransitionCountdown
             }
@@ -4128,6 +4135,7 @@
         }
 
         function showOnlyResultOverlay() {
+            if (uiOverlaysModule) return uiOverlaysModule.showOnlyResultOverlay();
             closeAllOverlays();
             resultOverlay.classList.add('show');
             syncPauseButtonVisibility();
