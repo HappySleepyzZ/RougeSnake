@@ -1,0 +1,14 @@
+window.SNAKE_ICON_MAP = {
+    ceremony_chest: { src: './icons/ceremony_chest.png' },
+    ceremony_key: { src: './icons/ceremony_key.png' },
+    food_barrier: { src: './icons/food_barrier.png' },
+    food_grow: { src: './icons/food_grow.png' },
+    food_shrink: { src: './icons/food_shrink.png' },
+    food_teleport: { src: './icons/food_teleport.png' },
+    food_wind: { src: './icons/food_wind.png' },
+    loot_coin: { src: './icons/loot_coin.png' },
+    portal_a: { src: './icons/portal_a.png' },
+    portal_b: { src: './icons/portal_b.png' },
+    terrain_ice: { src: './icons/terrain_ice.png' },
+    terrain_poison: { src: './icons/terrain_poison.png' }
+};
