@@ -4052,6 +4052,7 @@
         }
 
         function resetTransientState() {
+            if (runtimeStateModule) return runtimeStateModule.resetTransientState();
             clearInterval(waveTransitionInterval);
             waveTransitionInterval = null;
             waveTransitionTimer = 0;
@@ -4065,6 +4066,7 @@
         }
 
         function resetRunState() {
+            if (runtimeStateModule) return runtimeStateModule.resetRunState();
             isPaused = false;
             isGameRunning = false;
             isGameOver = false;
@@ -4076,6 +4078,7 @@
         }
 
         function resetToWaitingState() {
+            if (runtimeStateModule) return runtimeStateModule.resetToWaitingState();
             hideResult();
             isWaitingForStart = true;
             initializeWaitingUI();

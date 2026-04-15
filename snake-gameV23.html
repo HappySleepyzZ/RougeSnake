@@ -1082,6 +1082,7 @@
         }
 
         function renderPauseOverlay() {
+            if (runtimeStateModule) return runtimeStateModule.renderPauseOverlay();
             const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
             const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
             const modName = selectedModule ? `${selectedModule.icon}${selectedModule.name}` : '';
@@ -1090,6 +1091,7 @@
         }
 
         function applyPauseTimeCompensation(pauseDuration) {
+            if (runtimeStateModule) return runtimeStateModule.applyPauseTimeCompensation(pauseDuration);
             totalPausedTime += pauseDuration;
             waveStartTime += pauseDuration;
             gameStartTime += pauseDuration;
@@ -4198,12 +4200,14 @@
         }
 
         function resetPreviewFeedbackState() {
+            if (runtimeStateModule) return runtimeStateModule.resetPreviewFeedbackState();
             teleportPreview = null;
             teleportTrailTimer = 0;
             headGlowTimer = 0;
         }
 
         function resetTransientState() {
+            if (runtimeStateModule) return runtimeStateModule.resetTransientState();
             stopWaveTransitionCountdown();
             waveTransitionTimer = 0;
             pauseStartTime = 0;
@@ -4214,6 +4218,7 @@
         }
 
         function resetRunState() {
+            if (runtimeStateModule) return runtimeStateModule.resetRunState();
             setPausedState(false);
             isGameRunning = false;
             isGameOver = false;
@@ -4224,6 +4229,7 @@
         }
 
         function resetToWaitingState() {
+            if (runtimeStateModule) return runtimeStateModule.resetToWaitingState();
             hideResult();
             isWaitingForStart = true;
             initializeWaitingUI();
