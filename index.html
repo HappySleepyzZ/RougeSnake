@@ -944,8 +944,7 @@
             dashBurstTicks = 12;
             isSpeedBoosted = true;
             speedBoostTimer = Math.max(speedBoostTimer, currentInterval * dashBurstTicks);
-            clearInterval(gameLoop);
-            gameLoop = setInterval(gameStep, Math.max(currentInterval * TUNING.speed.dashLoopMultiplier, MIN_SPEED));
+            restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.dashLoopMultiplier, MIN_SPEED));
             spawnFloatingText(snake[0].x, snake[0].y, UI_TEXT.floating.dash, '#60a5fa', true);
             updateStatusUI();
         }
@@ -1064,8 +1063,7 @@
             if (getPrimaryGameState() !== 'RUNNING') return;
             isPaused = true;
             pauseStartTime = Date.now();
-            clearInterval(gameLoop);
-            gameLoop = null;
+            stopGameLoop();
             
             const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
             const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
@@ -1588,7 +1586,7 @@
             flashEffect('teleport');
             
             teleportPauseTimer = TELEPORT_PAUSE_DURATION;
-            clearInterval(gameLoop);
+            stopGameLoop();
             
             setTimeout(() => {
                 if (isGameRunning && !isLevelComplete && !isGameOver) {
@@ -2057,8 +2055,7 @@
         function openShop() {
             if (!enterShopState()) return;
             consumeWaveBuffs();
-            clearInterval(gameLoop);
-            gameLoop = null;
+            stopGameLoop();
             syncPauseButtonVisibility();
             
             shopItems = rollShopItems();
@@ -2098,26 +2095,19 @@
             
             document.getElementById('shopSkipBtn').onclick = () => closeShop();
             showShopOverlay();
-            shopOpening = false;
+            finishShopOpening();
         }
         
         function closeShop() {
             if (!isShopState() && !isShopOpeningState()) return;
-            shopOpening = false;
-            shopOpen = false;
-            portalTeleportCooldown = 0;
-            teleportPreview = null;
-            teleportTrailTimer = 0;
+            closeShopState();
+            resetTeleportPreviewState();
             closeAllOverlays();
             startWaveTransition();
         }
 
         function startWaveTransition() {
-            if (!enterWaveTransition()) return;
-            clearInterval(gameLoop);
-            gameLoop = null;
-            clearInterval(waveTransitionInterval);
-            waveTransitionInterval = null;
+            if (!beginWaveTransitionFlow()) return;
             
             // 显示波次过渡 UI
             waveText.textContent = UI_TEXT.wave.complete(currentWave);
@@ -2127,35 +2117,7 @@
         }
 
         function advanceWave() {
-            clearInterval(waveTransitionInterval);
-            waveTransitionInterval = null;
-            currentWave++;
-            portalTeleportCooldown = 0;
-            teleportPreview = null;
-            teleportTrailTimer = 0;
-            if (currentWave > bestWave) {
-                bestWave = currentWave;
-                localStorage.setItem(STORAGE_KEYS.bestWave, bestWave);
-            }
-            isWaveTransition = false;
-            waveStartTime = Date.now();
-            foodSpawnTimer = 0;
-            
-            // V19: 重置仪式状态 + 消耗波次buff
-            resetCeremonyState();
-            
-            // 清除 debuff
-            poisonDebuffEnd = 0;
-            slowDebuffEnd = 0;
-            terrainDotType = null;
-            
-            // 生成新地形和传送门
-            generateWaveTerrain();
-            generateWavePortals();
-            
-            // 恢复游戏循环
-            syncPauseButtonVisibility();
-            restartGameLoopWithCurrentState();
+            completeWaveAdvanceFlow();
         }
         function findSkinAnchorPosition() {
             // V14: 优先在蛇身附近找位置
@@ -2371,7 +2333,8 @@
             const waveElapsed = now - waveStartTime;
             
             // 检查是否该进入波间仪式
-            if (waveElapsed >= WAVE_DURATION && isCeremonyPlayingState()) {
+            tryStartKeyCeremony(waveElapsed);
+            if (false && waveElapsed >= WAVE_DURATION && isCeremonyPlayingState()) {
                 // V19: 不直接转场，先生成钥匙
                 waveCeremonyState = 'KEY_SPAWN';
                 portalTeleportCooldown = 0;
@@ -2391,7 +2354,8 @@
             }
             
             // V19: 钥匙被吃 → 生成宝箱
-            if (isCeremonyKeyState() && ceremonyKey) {
+            tryResolveKeyCeremony(snake[0]);
+            if (false && isCeremonyKeyState() && ceremonyKey) {
                 const head = snake[0];
                 if (head.x === ceremonyKey.x && head.y === ceremonyKey.y) {
                     waveCeremonyState = 'CHEST_SPAWN';
@@ -2405,7 +2369,8 @@
             }
             
             // V19: 宝箱被吃 → 喷食物
-            if (isCeremonyChestState() && ceremonyChest) {
+            tryResolveChestCeremony(snake[0]);
+            if (false && isCeremonyChestState() && ceremonyChest) {
                 const head = snake[0];
                 if (head.x === ceremonyChest.x && head.y === ceremonyChest.y) {
                     waveCeremonyState = 'LOOT_BURST';
@@ -2441,7 +2406,8 @@
             }
             
             // V19: 吃掉喷出的食物
-            if (isCeremonyLootBurstState()) {
+            if (updateLootBurstCollection(snake[0])) {
+            } else if (false && isCeremonyLootBurstState()) {
                 const head = snake[0];
                 lootFoods.forEach(lf => {
                     if (!lf.eaten && head.x === lf.x && head.y === lf.y) {
@@ -2459,7 +2425,8 @@
             }
             
             // V16: 自动刷新食物（仪式期间不刷新）
-            if (isCeremonyPlayingState()) {
+            updateWaveFoodSpawning();
+            if (false && isCeremonyPlayingState()) {
                 foodSpawnTimer += currentInterval;
                 const spawnInterval = getWaveFoodInterval();
                 if (foodSpawnTimer >= spawnInterval) {
@@ -2473,16 +2440,17 @@
             checkTerrainEffects();
             
             // V18b: 冰雪减速 — debuff 期间持续减速（不依赖区域内判定）
+            updateSlowLoopState();
             const now3 = Date.now();
             const isCurrentlySlowed = now3 < slowDebuffEnd;
-            if (isCurrentlySlowed && !isPausedState()) {
+            if (false && isCurrentlySlowed && !isPausedState()) {
                 const slowInterval = 500; // V18d: 固定500ms
                 // 只在 interval 变化时才重设（避免每帧 clearInterval）
                 if (!lastSlowInterval || lastSlowInterval !== slowInterval) {
                     lastSlowInterval = slowInterval;
                     restartGameLoopWithCurrentState();
                 }
-            } else if (lastSlowInterval) {
+            } else if (false && lastSlowInterval) {
                 // 减速结束，恢复正常
                 lastSlowInterval = null;
                 restartGameLoopWithCurrentState();
@@ -2678,8 +2646,7 @@
                     score += modScore;
                     isSpeedBoosted = true;
                     speedBoostTimer = speedBoostDuration;
-                    clearInterval(gameLoop);
-                    gameLoop = setInterval(gameStep, Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
+                    restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
                     break;
                     
                 case 'teleport':
@@ -3916,16 +3883,6 @@
             return value;
         }
 
-        function stopWaveTransitionCountdownAction() {
-            clearInterval(waveTransitionInterval);
-            waveTransitionInterval = null;
-        }
-
-        function stopGameLoopAction() {
-            clearInterval(gameLoop);
-            gameLoop = null;
-        }
-
         const runtimeStateModule = window.SnakeRuntimeState ? window.SnakeRuntimeState.install({
             modeOverlay,
             resultOverlay,
@@ -3937,8 +3894,8 @@
             getState: getRuntimeStateSnapshot,
             setStateValue: setRuntimeStateValue,
             actions: {
-                stopWaveTransitionCountdown: stopWaveTransitionCountdownAction,
-                stopGameLoop: stopGameLoopAction,
+                stopWaveTransitionCountdown,
+                stopGameLoop,
                 hideResult,
                 showModeOverlay,
                 hideModeOverlay,
@@ -4025,8 +3982,8 @@
         }
 
         function isPausedState() {
-            if (runtimeStateModule) return runtimeStateModule.getPrimaryGameState() === 'PAUSED';
-            return getPrimaryGameState() === 'PAUSED';
+            if (runtimeStateModule) return runtimeStateModule.isPausedState();
+            return isPaused;
         }
 
         const uiOverlaysModule = window.SnakeUiOverlays ? window.SnakeUiOverlays.install({
@@ -4117,6 +4074,15 @@
             syncPauseButtonVisibility();
         }
 
+        function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
+            if (uiOverlaysModule) return uiOverlaysModule.restoreOverlayVisibility({ resultVisible, pauseVisible, waveVisible, shopVisible });
+            closeAllOverlays();
+            resultOverlay.classList.toggle('show', !!resultVisible);
+            pauseOverlay.classList.toggle('show', !!pauseVisible);
+            waveOverlay.classList.toggle('show', !!waveVisible);
+            getShopOverlayElement().classList.toggle('show', !!shopVisible);
+        }
+
         function restartWaveTransitionCountdown() {
             clearInterval(waveTransitionInterval);
             waveTransitionInterval = null;
@@ -4150,20 +4116,183 @@
             waveCeremonyState = 'PLAYING';
             ceremonyKey = null;
             ceremonyChest = null;
+            resetLootBurstState();
+            closeShopState();
+        }
+
+        function beginShopOpening() {
+            waveCeremonyState = 'SHOP';
+            closeShopState();
+            setShopOpenState(true);
+            setShopOpeningState(true);
+        }
+
+        function finishShopOpening() {
+            setShopOpeningState(false);
+        }
+
+        function setShopOpenState(nextOpen) {
+            shopOpen = nextOpen;
+        }
+
+        function setShopOpeningState(nextOpening) {
+            shopOpening = nextOpening;
+        }
+
+        function closeShopState() {
+            setShopOpeningState(false);
+            setShopOpenState(false);
+        }
+
+        function clearWavePlayfieldState() {
+            resetTeleportPreviewState();
+            foods = [];
+            obstacles = [];
+            snakeSkins = [];
+            terrainZones = [];
+            portalPairs = [];
+            resetWaveDebuffState();
+        }
+
+        function resetLootBurstState() {
             lootFoods = [];
             lootEatenCount = 0;
             lootTotalCount = 0;
             lootBurstEndTime = 0;
-            shopOpen = false;
-            shopOpening = false;
+        }
+
+        function tryStartKeyCeremony(waveElapsed) {
+            if (waveElapsed < WAVE_DURATION || !isCeremonyPlayingState()) return false;
+            waveCeremonyState = 'KEY_SPAWN';
+            clearWavePlayfieldState();
+            ceremonyKey = findCeremonySpawnCell(TUNING.ceremony.keyMinDistance, { x: Math.floor(tileCount / 2), y: TUNING.ceremony.keyFallbackY });
+            spawnFloatingText(Math.floor(tileCount / 2), Math.floor(tileCount / 2), UI_TEXT.floating.keyFound, '#ffd700', true);
+            return true;
+        }
+
+        function tryResolveKeyCeremony(head) {
+            if (!isCeremonyKeyState() || !ceremonyKey) return false;
+            if (head.x !== ceremonyKey.x || head.y !== ceremonyKey.y) return false;
+            waveCeremonyState = 'CHEST_SPAWN';
+            ceremonyKey = null;
+            flashEffect('teleport');
+            flashAlpha = 0.3;
+            ceremonyChest = findCeremonySpawnCell(TUNING.ceremony.chestMinDistance, { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) });
+            spawnFloatingText(head.x, head.y, UI_TEXT.floating.keyGet, '#ffd700', true);
+            return true;
+        }
+
+        function getTargetLootCount() {
+            return Math.min(TUNING.wave.lootMax, Math.max(TUNING.wave.lootMin, Math.floor(tileCount * TUNING.wave.lootTileFactor)));
+        }
+
+        function spawnLootBurstFoods(targetLootCount) {
+            for (let i = 0; i < targetLootCount; i++) {
+                for (let att = 0; att < TUNING.generation.lootSpawnAttempts; att++) {
+                    const fx = Math.floor(Math.random() * (tileCount - 2)) + 1;
+                    const fy = Math.floor(Math.random() * (tileCount - 2)) + 1;
+                    if (!isPositionOccupied(fx, fy) && !lootFoods.some((lootFood) => lootFood.x === fx && lootFood.y === fy)) {
+                        lootFoods.push({ x: fx, y: fy, eaten: false });
+                        break;
+                    }
+                }
+            }
+            lootTotalCount = lootFoods.length;
+        }
+
+        function beginLootBurst(head) {
+            waveCeremonyState = 'LOOT_BURST';
+            ceremonyChest = null;
+            flashEffect('grow');
+            flashAlpha = 0.4;
+            spawnFloatingText(head.x, head.y, UI_TEXT.floating.coinFrenzy, '#ffd700', true);
+            clearWavePlayfieldState();
+            resetLootBurstState();
+            lootBurstEndTime = Date.now() + TUNING.wave.lootBurstDuration;
+            spawnLootBurstFoods(getTargetLootCount());
+        }
+
+        function tryResolveChestCeremony(head) {
+            if (!isCeremonyChestState() || !ceremonyChest) return false;
+            if (head.x !== ceremonyChest.x || head.y !== ceremonyChest.y) return false;
+            beginLootBurst(head);
+            return true;
+        }
+
+        function collectLootBurstPickup(head, lootFood) {
+            lootFood.eaten = true;
+            lootEatenCount++;
+            coins += 1;
+            score += 5;
+            spawnFloatingText(lootFood.x, lootFood.y, UI_TEXT.floating.coinGain(1), '#ffd700', false);
+        }
+
+        function shouldFinishLootBurst() {
+            const lootRemaining = lootFoods.filter((lootFood) => !lootFood.eaten).length;
+            return lootRemaining <= 0 || Date.now() >= lootBurstEndTime;
+        }
+
+        function updateLootBurstCollection(head) {
+            if (!isCeremonyLootBurstState()) return false;
+            lootFoods.forEach((lootFood) => {
+                if (!lootFood.eaten && head.x === lootFood.x && head.y === lootFood.y) {
+                    collectLootBurstPickup(head, lootFood);
+                }
+            });
+            if (shouldFinishLootBurst()) {
+                openShop();
+                return true;
+            }
+            return false;
+        }
+
+        function resetTeleportPreviewState() {
+            portalTeleportCooldown = 0;
+            teleportPreview = null;
+            teleportTrailTimer = 0;
+        }
+
+        function resetWaveProgressState() {
+            isWaveTransition = false;
+            waveStartTime = Date.now();
+            foodSpawnTimer = 0;
+        }
+
+        function resetWaveDebuffState() {
+            poisonDebuffEnd = 0;
+            slowDebuffEnd = 0;
+            terrainDotType = null;
         }
 
         function enterShopState() {
             if (isShopState() || isShopOpeningState()) return false;
-            shopOpening = true;
-            waveCeremonyState = 'SHOP';
-            shopOpen = true;
+            beginShopOpening();
             return true;
+        }
+
+        function updateWaveFoodSpawning() {
+            if (!isCeremonyPlayingState()) return;
+            foodSpawnTimer += currentInterval;
+            const spawnInterval = getWaveFoodInterval();
+            if (foodSpawnTimer >= spawnInterval) {
+                foodSpawnTimer = 0;
+                spawnFood();
+                ensurePositiveFood();
+            }
+        }
+
+        function updateSlowLoopState() {
+            const isCurrentlySlowed = Date.now() < slowDebuffEnd;
+            if (isCurrentlySlowed && !isPausedState()) {
+                const slowInterval = 500;
+                if (!lastSlowInterval || lastSlowInterval !== slowInterval) {
+                    lastSlowInterval = slowInterval;
+                    restartGameLoopWithCurrentState();
+                }
+            } else if (lastSlowInterval) {
+                lastSlowInterval = null;
+                restartGameLoopWithCurrentState();
+            }
         }
 
         function enterWaveTransition() {
@@ -4173,16 +4302,64 @@
             return true;
         }
 
-        function restartGameLoopWithCurrentState() {
+        function stopGameLoop() {
             clearInterval(gameLoop);
             gameLoop = null;
+        }
+
+        function stopWaveTransitionCountdown() {
+            clearInterval(waveTransitionInterval);
+            waveTransitionInterval = null;
+        }
+
+        function restoreRuntimeByPrimaryState(primaryState) {
+            stopGameLoop();
+            stopWaveTransitionCountdown();
+            if (primaryState === 'WAVE_TRANSITION' && waveTransitionTimer > 0) {
+                restartWaveTransitionCountdown();
+            } else if (primaryState === 'RUNNING') {
+                restartGameLoopWithCurrentState();
+            }
+        }
+
+        function restartGameLoopWithInterval(intervalOverride) {
+            stopGameLoop();
             if (!canRunGameLoop()) {
                 lastSlowInterval = null;
                 return;
             }
-            const effectiveInterval = getEffectiveInterval();
+            const effectiveInterval = intervalOverride ?? getEffectiveInterval();
             lastSlowInterval = effectiveInterval === 500 ? 500 : null;
             gameLoop = setInterval(gameStep, effectiveInterval);
+        }
+
+        function beginWaveTransitionFlow() {
+            if (!enterWaveTransition()) return false;
+            stopGameLoop();
+            stopWaveTransitionCountdown();
+            return true;
+        }
+
+        function completeWaveAdvanceFlow() {
+            stopWaveTransitionCountdown();
+            currentWave++;
+            resetTeleportPreviewState();
+            if (currentWave > bestWave) {
+                bestWave = currentWave;
+                localStorage.setItem(STORAGE_KEYS.bestWave, bestWave);
+            }
+            resetWaveProgressState();
+            resetCeremonyState();
+            resetWaveDebuffState();
+            generateWaveTerrain();
+            generateWavePortals();
+            syncPauseButtonVisibility();
+            restartGameLoopWithCurrentState();
+        }
+
+        function restartGameLoopWithCurrentState() {
+            gameLoop = null;
+            restartGameLoopWithInterval();
         }
 
         const DIRECTION_INPUT_MAP = {
@@ -4351,8 +4528,7 @@
                     selectedModule = mod;
                     updateModuleLegend();
                     hideResult();
-                    clearInterval(gameLoop);
-                    gameLoop = null;
+                    stopGameLoop();
                     applyModeConfig('survival');
                     resetToWaitingState();
                     closeModeMenu();
@@ -4586,8 +4762,13 @@
         }
 
         function restoreShopState({ shopOpen: nextShopOpen = false, shopOpening: nextShopOpening = false } = {}) {
-            shopOpen = nextShopOpen;
-            shopOpening = nextShopOpening;
+            closeShopState();
+            if (nextShopOpen) {
+                setShopOpenState(true);
+            }
+            if (nextShopOpening) {
+                setShopOpeningState(true);
+            }
         }
 
         const debugApiModule = window.SnakeDebugApi ? window.SnakeDebugApi.install({
@@ -4632,8 +4813,7 @@
                 setState: debugApiModule.setState,
                 setFoods: debugApiModule.setFoods,
                 clearLoop() {
-                    clearInterval(gameLoop);
-                    gameLoop = null;
+                    stopGameLoop();
                 },
                 selectMode,
                 spawnFood,

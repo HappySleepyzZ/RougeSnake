@@ -1,0 +1,6 @@
+# Browser smoke test artifacts
+.edge-smoke*/
+artifacts/
+smoke-*.png
+smoke-*-dom.html
+

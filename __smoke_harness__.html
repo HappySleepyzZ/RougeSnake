@@ -1,0 +1,143 @@
+﻿<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>snake smoke harness</title></head>
+<body>
+<pre id="out">running</pre>
+<script>
+(async () => {
+  const params = new URLSearchParams(location.search);
+  const page = params.get('page');
+  const inject = params.get('inject') === '1';
+  const out = document.getElementById('out');
+  function fail(message, extra) {
+    document.body.setAttribute('data-pass', 'false');
+    out.textContent = JSON.stringify({ ok: false, message, extra }, null, 2);
+  }
+  function pass(result) {
+    document.body.setAttribute('data-pass', 'true');
+    out.textContent = JSON.stringify({ ok: true, result }, null, 2);
+  }
+  if (!page) {
+    fail('missing page parameter');
+    return;
+  }
+  const targetUrl = new URL(page + (page.includes('?') ? '&' : '?') + 'test=1', location.href);
+  const targetHtml = await fetch(targetUrl).then((response) => response.text());
+  const injectedPrelude = `
+    <base href="${targetUrl.href}">
+    <script>
+      window.__smokeErrors = [];
+      window.addEventListener('error', function(event) {
+        window.__smokeErrors.push({
+          type: 'error',
+          message: event.message,
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno
+        });
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = event.reason;
+        window.__smokeErrors.push({
+          type: 'unhandledrejection',
+          message: reason && reason.message ? reason.message : String(reason)
+        });
+      });
+    <\/script>
+  `;
+  const patchedHtml = targetHtml.replace('<head>', `<head>${injectedPrelude}`);
+  const iframe = document.createElement('iframe');
+  iframe.style.width = '1280px';
+  iframe.style.height = '900px';
+  document.body.appendChild(iframe);
+  if (inject) {
+    iframe.srcdoc = patchedHtml;
+  } else {
+    iframe.src = targetUrl.href;
+  }
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    if (!iframe.contentWindow) {
+      fail('iframe contentWindow unavailable');
+      return;
+    }
+    try {
+      const api = iframe.contentWindow.__snakeTestApi__;
+      const smokeErrors = iframe.contentWindow.__smokeErrors || [];
+      if (!api) {
+        const doc = iframe.contentWindow.document;
+        const moduleButtons = doc.getElementById('moduleButtons');
+        let manualBuildResult = null;
+        if (inject && typeof iframe.contentWindow.buildModuleButtons === 'function') {
+          try {
+            iframe.contentWindow.buildModuleButtons();
+            manualBuildResult = {
+              ok: true,
+              moduleButtonCountAfterCall: moduleButtons ? moduleButtons.children.length : null
+            };
+          } catch (error) {
+            manualBuildResult = {
+              ok: false,
+              message: error && error.message ? error.message : String(error),
+              stack: error && error.stack ? error.stack : null
+            };
+          }
+        }
+        fail('missing __snakeTestApi__', {
+          readyState: doc.readyState,
+          title: iframe.contentWindow.document.title,
+          moduleButtonCount: moduleButtons ? moduleButtons.children.length : null,
+          hasBuildModuleButtons: typeof iframe.contentWindow.buildModuleButtons,
+          hasApplyModeConfig: typeof iframe.contentWindow.applyModeConfig,
+          hasSnakeRuntimeState: typeof iframe.contentWindow.SnakeRuntimeState,
+          hasSnakeInputHelpers: typeof iframe.contentWindow.SnakeInputHelpers,
+          hasSnakeUiOverlays: typeof iframe.contentWindow.SnakeUiOverlays,
+          hasSnakeDebugApi: typeof iframe.contentWindow.SnakeDebugApi,
+          smokeErrors,
+          manualBuildResult,
+          moduleTypesCount: iframe.contentWindow.MODULE_TYPES ? Object.keys(iframe.contentWindow.MODULE_TYPES).length : null,
+          bodyTextSample: doc.body ? doc.body.innerText.slice(0, 200) : null
+        });
+        return;
+      }
+      if (typeof api.getState !== 'function' || typeof api.setState !== 'function') {
+        fail('missing getState/setState', { keys: Object.keys(api) });
+        return;
+      }
+      const before = api.getState();
+      api.setState({
+        score: 321,
+        currentWave: 9,
+        showTutorial: false,
+        isGameRunning: false,
+        isWaitingForStart: true,
+        resultVisible: true,
+        pauseVisible: false,
+        waveVisible: false,
+        shopVisible: false
+      });
+      const after = api.getState();
+      const checks = {
+        score: after.score === 321,
+        currentWave: after.currentWave === 9,
+        showTutorial: after.showTutorial === false,
+        isWaitingForStart: after.isWaitingForStart === true,
+        resultVisible: after.resultVisible === true,
+        apiKeys: Object.keys(api).length > 0
+      };
+      const failed = Object.entries(checks).filter(([, ok]) => !ok);
+      if (failed.length) {
+        fail('assertions failed', { checks, before, after, apiKeys: Object.keys(api) });
+        return;
+      }
+      pass({ checks, beforeScore: before.score, afterScore: after.score, apiKeys: Object.keys(api) });
+    } catch (error) {
+      fail(error && error.message ? error.message : String(error), { stack: error && error.stack ? error.stack : null });
+    }
+  } catch (error) {
+    fail(error && error.message ? error.message : String(error), { stack: error && error.stack ? error.stack : null });
+  }
+})();
+</script>
+</body>
+</html>

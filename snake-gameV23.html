@@ -4173,7 +4173,7 @@
         }
 
         function isPausedState() {
-            if (runtimeStateModule) return runtimeStateModule.getPrimaryGameState() === 'PAUSED';
+            if (runtimeStateModule) return runtimeStateModule.isPausedState();
             return isPaused;
         }
 
