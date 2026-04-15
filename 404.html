@@ -471,6 +471,7 @@
     <script src="./icons/icon-map.js"></script>
     <script src="./visuals/texture-map.js"></script>
     <script src="./visuals/style-map.js"></script>
+    <script src="./js/runtime-state.js"></script>
     <script>
         // V19c: 像素风图标 (Base64 内嵌)
         const ICON_IMAGES = {};
@@ -3819,7 +3820,131 @@
             return currentInterval;
         }
 
+        function getRuntimeStateSnapshot() {
+            return {
+                isGameOver,
+                isLevelComplete,
+                shopOpen,
+                shopOpening,
+                isWaveTransition,
+                isPaused,
+                isWaitingForStart,
+                isGameRunning,
+                waveCeremonyState,
+                hasSelectedMode,
+                showTutorial,
+                totalSurvivalTime,
+                selectedModule,
+                currentWave,
+                score,
+                waveTransitionTimer,
+                totalPausedTime,
+                waveStartTime,
+                gameStartTime,
+                pauseStartTime,
+                lastSlowInterval,
+                teleportPreview,
+                teleportTrailTimer,
+                headGlowTimer
+            };
+        }
+
+        function setRuntimeStateValue(key, value) {
+            switch (key) {
+                case 'isPaused':
+                    isPaused = value;
+                    break;
+                case 'isWaveTransition':
+                    isWaveTransition = value;
+                    break;
+                case 'waveCeremonyState':
+                    waveCeremonyState = value;
+                    break;
+                case 'hasSelectedMode':
+                    hasSelectedMode = value;
+                    break;
+                case 'waveTransitionTimer':
+                    waveTransitionTimer = value;
+                    break;
+                case 'pauseStartTime':
+                    pauseStartTime = value;
+                    break;
+                case 'totalPausedTime':
+                    totalPausedTime = value;
+                    break;
+                case 'lastSlowInterval':
+                    lastSlowInterval = value;
+                    break;
+                case 'teleportPreview':
+                    teleportPreview = value;
+                    break;
+                case 'teleportTrailTimer':
+                    teleportTrailTimer = value;
+                    break;
+                case 'headGlowTimer':
+                    headGlowTimer = value;
+                    break;
+                case 'isGameRunning':
+                    isGameRunning = value;
+                    break;
+                case 'isGameOver':
+                    isGameOver = value;
+                    break;
+                case 'isLevelComplete':
+                    isLevelComplete = value;
+                    break;
+                case 'isWaitingForStart':
+                    isWaitingForStart = value;
+                    break;
+                case 'waveStartTime':
+                    waveStartTime = value;
+                    break;
+                case 'gameStartTime':
+                    gameStartTime = value;
+                    break;
+                case 'waveTransitionInterval':
+                    waveTransitionInterval = value;
+                    break;
+                default:
+                    break;
+            }
+            return value;
+        }
+
+        function stopWaveTransitionCountdownAction() {
+            clearInterval(waveTransitionInterval);
+            waveTransitionInterval = null;
+        }
+
+        function stopGameLoopAction() {
+            clearInterval(gameLoop);
+            gameLoop = null;
+        }
+
+        const runtimeStateModule = window.SnakeRuntimeState ? window.SnakeRuntimeState.install({
+            modeOverlay,
+            resultOverlay,
+            pauseOverlay,
+            waveOverlay,
+            pauseBtn,
+            waveCountdown,
+            UI_TEXT,
+            getState: getRuntimeStateSnapshot,
+            setStateValue: setRuntimeStateValue,
+            actions: {
+                stopWaveTransitionCountdown: stopWaveTransitionCountdownAction,
+                stopGameLoop: stopGameLoopAction,
+                hideResult,
+                initializeWaitingUI,
+                restartGameLoopWithCurrentState,
+                closeAllOverlays,
+                advanceWave,
+                restartWaveTransitionCountdown
+            }
+        }) : null;
+
         function getPrimaryGameState() {
+            if (runtimeStateModule) return runtimeStateModule.getPrimaryGameState();
             if (isGameOver) return 'GAME_OVER';
             if (isLevelComplete) return 'LEVEL_COMPLETE';
             if (isShopState()) return 'SHOP';
@@ -3831,52 +3956,64 @@
         }
 
         function canRunGameLoop() {
+            if (runtimeStateModule) return runtimeStateModule.canRunGameLoop();
             return getPrimaryGameState() === 'RUNNING';
         }
 
         function canAcceptGameplayInput() {
+            if (runtimeStateModule) return runtimeStateModule.canAcceptGameplayInput();
             const state = getPrimaryGameState();
             return hasSelectedMode && state !== 'PAUSED' && state !== 'LEVEL_COMPLETE' && state !== 'GAME_OVER';
         }
 
         function isInTerminalOverlayState() {
+            if (runtimeStateModule) return runtimeStateModule.isInTerminalOverlayState();
             const state = getPrimaryGameState();
             return state === 'LEVEL_COMPLETE' || state === 'GAME_OVER';
         }
 
         function isInWaitingTutorialState() {
+            if (runtimeStateModule) return runtimeStateModule.isInWaitingTutorialState();
             return showTutorial && getPrimaryGameState() === 'WAITING';
         }
 
         function isCeremonyPlayingState() {
+            if (runtimeStateModule) return runtimeStateModule.isCeremonyPlayingState();
             return waveCeremonyState === 'PLAYING';
         }
 
         function isCeremonyKeyState() {
+            if (runtimeStateModule) return runtimeStateModule.isCeremonyKeyState();
             return waveCeremonyState === 'KEY_SPAWN';
         }
 
         function isCeremonyChestState() {
+            if (runtimeStateModule) return runtimeStateModule.isCeremonyChestState();
             return waveCeremonyState === 'CHEST_SPAWN';
         }
 
         function isCeremonyLootBurstState() {
+            if (runtimeStateModule) return runtimeStateModule.isCeremonyLootBurstState();
             return waveCeremonyState === 'LOOT_BURST';
         }
 
         function isShopState() {
+            if (runtimeStateModule) return runtimeStateModule.isShopState();
             return shopOpen || waveCeremonyState === 'SHOP';
         }
 
         function isShopOpeningState() {
+            if (runtimeStateModule) return runtimeStateModule.isShopOpeningState();
             return shopOpening;
         }
 
         function isWaveTransitionState() {
+            if (runtimeStateModule) return runtimeStateModule.isWaveTransitionState();
             return isWaveTransition;
         }
 
         function isPausedState() {
+            if (runtimeStateModule) return runtimeStateModule.getPrimaryGameState() === 'PAUSED';
             return getPrimaryGameState() === 'PAUSED';
         }
 
