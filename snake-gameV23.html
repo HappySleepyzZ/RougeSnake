@@ -472,6 +472,7 @@
     <script src="./visuals/texture-map.js"></script>
     <script src="./visuals/style-map.js"></script>
     <script src="./js/runtime-state.js"></script>
+    <script src="./js/input-helpers.js"></script>
     <script>
         // V19c: 像素风图标 (Base64 内嵌)
         const ICON_IMAGES = {};
@@ -4601,13 +4602,60 @@
             return isWaitingForStart || canAcceptGameplayInput();
         }
 
+        function getInputHelperStateSnapshot() {
+            return {
+                hasSelectedMode,
+                showTutorial,
+                direction: { ...direction },
+                nextDirection: { ...nextDirection },
+                isGameRunning
+            };
+        }
+
+        function setInputHelperStateValue(key, value) {
+            switch (key) {
+                case 'showTutorial':
+                    showTutorial = value;
+                    break;
+                case 'nextDirection':
+                    nextDirection = value;
+                    break;
+                default:
+                    break;
+            }
+            return value;
+        }
+
+        const inputHelpersModule = window.SnakeInputHelpers ? window.SnakeInputHelpers.install({
+            touchControls,
+            canvas,
+            getState: getInputHelperStateSnapshot,
+            setStateValue: setInputHelperStateValue,
+            actions: {
+                startGame,
+                pauseGame,
+                resumeGame,
+                resetToWaitingState,
+                triggerDashBurst,
+                getPrimaryGameState,
+                canAcceptGameplayInput,
+                isInTerminalOverlayState,
+                isInWaitingTutorialState,
+                runtimeStateGuards: runtimeStateModule ? runtimeStateModule.runtimeStateGuards : null
+            },
+            shouldHandleDirectionInput,
+            directionInputMap: DIRECTION_INPUT_MAP
+        }) : null;
+
         function canQueueDirection() {
+            if (inputHelpersModule) return inputHelpersModule.canQueueDirection();
             if (!hasSelectedMode) return false;
             if (getPrimaryGameState() === 'PAUSED') return false;
             return true;
         }
 
         function submitDirectionInput(inputKey) {
+            if (inputHelpersModule) return inputHelpersModule.submitDirectionInput(inputKey);
             if (!shouldHandleDirectionInput()) return;
             const next = DIRECTION_INPUT_MAP[inputKey];
             if (!next) return;
@@ -4615,6 +4663,7 @@
         }
 
         function handlePreGameDirectionInput(next) {
+            if (inputHelpersModule) return inputHelpersModule.handlePreGameDirectionInput(next);
             if (showTutorial) {
                 showTutorial = false;
             }
@@ -4623,6 +4672,7 @@
         }
 
         function tryApplyAxisDirection(next) {
+            if (inputHelpersModule) return inputHelpersModule.tryApplyAxisDirection(next);
             if (next.x !== 0 && direction.x !== -next.x) {
                 nextDirection = next;
                 return direction.x !== next.x || direction.y !== next.y;
@@ -4635,6 +4685,7 @@
         }
 
         function handleInGameDirectionInput(next) {
+            if (inputHelpersModule) return inputHelpersModule.handleInGameDirectionInput(next);
             if (!canAcceptGameplayInput() || !isGameRunning) return;
             const directionChanged = tryApplyAxisDirection(next);
             if (directionChanged) {
@@ -4643,6 +4694,7 @@
         }
 
         function queueDirection(next) {
+            if (inputHelpersModule) return inputHelpersModule.queueDirection(next);
             if (!next || !canQueueDirection()) return;
 
             if (getPrimaryGameState() === 'WAITING') {
@@ -4705,7 +4757,7 @@
         }
 
         function handleKeyboardDirectionInput(e) {
-            // V18: Escape/P 暂停切换
+            if (inputHelpersModule) return inputHelpersModule.handleKeyboardDirectionInput(e);
             if ((e.key === 'Escape' || e.key === 'p' || e.key === 'P') && (getPrimaryGameState() === 'RUNNING' || getPrimaryGameState() === 'PAUSED')) {
                 if (getPrimaryGameState() === 'PAUSED') resumeGame(); else pauseGame();
                 return;
@@ -4731,136 +4783,34 @@
             submitDirectionInput(e.key);
         }
 
-        document.addEventListener('keydown', handleKeyboardDirectionInput);
-
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchTracking = false;
-        let touchStartedOnControl = false;
-
-        function isInteractiveTouchTarget(target) {
-            if (!target || !(target instanceof Element)) return false;
-            return !!target.closest('[data-direction], button, .mode-overlay, .result-overlay, #pauseBtn, #legend');
-        }
-
-        document.addEventListener('touchstart', (e) => {
-            if (!e.touches || !e.touches.length) return;
-            touchStartedOnControl = isInteractiveTouchTarget(e.target);
-            touchTracking = !touchStartedOnControl;
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }, { passive: true });
-
-        document.addEventListener('touchmove', (e) => {
-            if (touchTracking) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
         function handleSwipeDirectionInput(e) {
-            if (!touchTracking || touchStartedOnControl) {
-                touchTracking = false;
-                touchStartedOnControl = false;
-                return;
-            }
-            if (!hasSelectedMode) {
-                touchTracking = false;
-                return;
-            }
-            if (getPrimaryGameState() === 'PAUSED') {
-                touchTracking = false;
-                return;
-            }
-            if (isInTerminalOverlayState()) {
-                resetToWaitingState();
-                touchTracking = false;
-                return;
-            }
-            
-            if (isInWaitingTutorialState()) {
-                showTutorial = false;
-                touchTracking = false;
-                return;
-            }
-            
-            if (!shouldHandleDirectionInput()) {
-                touchTracking = false;
-                return;
-            }
-
-            if (!e.changedTouches || !e.changedTouches.length) {
-                touchTracking = false;
-                return;
-            }
-
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            const dx = touchEndX - touchStartX;
-            const dy = touchEndY - touchStartY;
-            touchTracking = false;
-
-            if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
-
-            if (Math.abs(dx) > Math.abs(dy)) {
-                submitDirectionInput(dx > 0 ? 'right' : 'left');
-            } else {
-                submitDirectionInput(dy > 0 ? 'down' : 'up');
-            }
+            if (inputHelpersModule) return inputHelpersModule.handleSwipeDirectionInput(e);
         }
-
-        document.addEventListener('touchend', handleSwipeDirectionInput, { passive: true });
-
-        canvas.addEventListener('click', () => {
-            if (!hasSelectedMode) return;
-            if (isInWaitingTutorialState()) {
-                showTutorial = false;
-            }
-        });
 
         window.addEventListener('resize', resizeCanvas);
 
         resizeCanvas();
         function handleButtonDirectionInput(button) {
-            if (!button) return;
-            if (!hasSelectedMode) return;
-            if (getPrimaryGameState() === 'PAUSED') return;
-            if (isInTerminalOverlayState()) {
-                resetToWaitingState();
-                return;
-            }
-            
-            if (isInWaitingTutorialState()) {
-                showTutorial = false;
-            }
-            
-            if (!shouldHandleDirectionInput()) {
-                return;
-            }
-            
-            const key = button.dataset.direction;
-            submitDirectionInput(key);
+            if (inputHelpersModule) return inputHelpersModule.handleButtonDirectionInput(button);
         }
 
-        touchControls.forEach((button) => {
-            button.addEventListener('click', () => {
-                handleButtonDirectionInput(button);
-            });
-            button.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                touchStartedOnControl = true;
-                touchTracking = false;
-                handleButtonDirectionInput(button);
-            }, { passive: false });
-            button.addEventListener('pointerdown', (e) => {
-                if (e.pointerType === 'touch') {
-                    e.preventDefault();
-                    touchStartedOnControl = true;
-                    touchTracking = false;
-                    handleButtonDirectionInput(button);
+        if (inputHelpersModule) {
+            inputHelpersModule.bind();
+        } else {
+            document.addEventListener('keydown', handleKeyboardDirectionInput);
+            document.addEventListener('touchend', handleSwipeDirectionInput, { passive: true });
+            canvas.addEventListener('click', () => {
+                if (!hasSelectedMode) return;
+                if (isInWaitingTutorialState()) {
+                    showTutorial = false;
                 }
             });
-        });
+            touchControls.forEach((button) => {
+                button.addEventListener('click', () => {
+                    handleButtonDirectionInput(button);
+                });
+            });
+        }
 
         const isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
         if (isTestMode) {
