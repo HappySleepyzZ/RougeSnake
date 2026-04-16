@@ -1067,28 +1067,33 @@
             waveCeremonyState = nextState;
         }
         
-        function pauseGame() {
-            if (getPrimaryGameState() !== 'RUNNING') return;
-            isPaused = true;
-            pauseStartTime = Date.now();
-            stopGameLoop();
-            
+        function renderPauseOverlay() {
             const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
             const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
             const modName = selectedModule ? `${selectedModule.icon}${selectedModule.name}` : '';
             document.getElementById('pauseInfo').textContent = UI_TEXT.pause.info(currentWave, score, `${surviveMin}:${surviveSec}`, modName);
             showPauseOverlay();
         }
+
+        function applyPauseTimeCompensation(pauseDuration) {
+            totalPausedTime += pauseDuration;
+            waveStartTime += pauseDuration;
+            gameStartTime += pauseDuration;
+        }
+
+        function pauseGame() {
+            if (getPrimaryGameState() !== 'RUNNING') return;
+            setPausedState(true);
+            pauseStartTime = Date.now();
+            stopGameLoop();
+            renderPauseOverlay();
+        }
         
         function resumeGame() {
             if (getPrimaryGameState() !== 'PAUSED') return;
-            isPaused = false;
+            setPausedState(false);
             const pauseDuration = Date.now() - pauseStartTime;
-            totalPausedTime += pauseDuration;
-            // 修正波次开始时间，防止暂停期间算入波次时长
-            waveStartTime += pauseDuration;
-            gameStartTime += pauseDuration;
-            
+            applyPauseTimeCompensation(pauseDuration);
             pauseOverlay.classList.remove('show');
             restartGameLoopWithCurrentState();
         }
@@ -3886,8 +3891,8 @@
             if (isGameOver) return 'GAME_OVER';
             if (isLevelComplete) return 'LEVEL_COMPLETE';
             if (isShopState()) return 'SHOP';
-            if (isWaveTransition) return 'WAVE_TRANSITION';
-            if (isPaused) return 'PAUSED';
+            if (isWaveTransitionState()) return 'WAVE_TRANSITION';
+            if (isPausedState()) return 'PAUSED';
             if (isWaitingForStart) return 'WAITING';
             if (isGameRunning) return 'RUNNING';
             return 'IDLE';
