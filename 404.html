@@ -1082,21 +1082,11 @@
         }
 
         function renderPauseOverlay() {
-            return invokeRuntimeStateModuleMethod('renderPauseOverlay', () => {
-                const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
-                const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
-                const modName = selectedModule ? `${selectedModule.icon}${selectedModule.name}` : '';
-                document.getElementById('pauseInfo').textContent = UI_TEXT.pause.info(currentWave, score, `${surviveMin}:${surviveSec}`, modName);
-                showPauseOverlay();
-            });
+            return runtimeStateModule.renderPauseOverlay();
         }
 
         function applyPauseTimeCompensation(pauseDuration) {
-            return invokeRuntimeStateModuleMethod('applyPauseTimeCompensation', () => {
-                totalPausedTime += pauseDuration;
-                waveStartTime += pauseDuration;
-                gameStartTime += pauseDuration;
-            }, pauseDuration);
+            return runtimeStateModule.applyPauseTimeCompensation(pauseDuration);
         }
 
         function pauseGame() {
@@ -1258,16 +1248,12 @@
 
         function showModeOverlay() {
             hasSelectedMode = false;
-            return invokeUiOverlaysModuleMethod('showModeOverlay', () => {
-                modeOverlay.classList.remove('hidden');
-            });
+            return uiOverlaysModule.showModeOverlay();
         }
 
         function hideModeOverlay() {
             hasSelectedMode = true;
-            return invokeUiOverlaysModuleMethod('hideModeOverlay', () => {
-                modeOverlay.classList.add('hidden');
-            });
+            return uiOverlaysModule.hideModeOverlay();
         }
 
         function openModeMenu() {
@@ -4078,7 +4064,7 @@
             return value;
         }
 
-        const runtimeStateModule = installOptionalSnakeModule(window.SnakeRuntimeState, {
+        const runtimeStateModule = installRequiredSnakeModule(window.SnakeRuntimeState, 'SnakeRuntimeState', {
             modeOverlay,
             resultOverlay,
             pauseOverlay,
@@ -4092,74 +4078,59 @@
         });
 
         function getPrimaryGameState() {
-            return invokeRuntimeStateModuleMethod('getPrimaryGameState', () => {
-                if (isGameOver) return 'GAME_OVER';
-                if (isLevelComplete) return 'LEVEL_COMPLETE';
-                if (isShopState()) return 'SHOP';
-                if (isWaveTransitionState()) return 'WAVE_TRANSITION';
-                if (isPausedState()) return 'PAUSED';
-                if (isWaitingForStart) return 'WAITING';
-                if (isGameRunning) return 'RUNNING';
-                return 'IDLE';
-            });
+            return runtimeStateModule.getPrimaryGameState();
         }
 
         function canRunGameLoop() {
-            return invokeRuntimeStateModuleMethod('canRunGameLoop', () => getPrimaryGameState() === 'RUNNING');
+            return runtimeStateModule.canRunGameLoop();
         }
 
         function canAcceptGameplayInput() {
-            return invokeRuntimeStateModuleMethod('canAcceptGameplayInput', () => {
-                const state = getPrimaryGameState();
-                return hasSelectedMode && state !== 'PAUSED' && state !== 'LEVEL_COMPLETE' && state !== 'GAME_OVER';
-            });
+            return runtimeStateModule.canAcceptGameplayInput();
         }
 
         function isInTerminalOverlayState() {
-            return invokeRuntimeStateModuleMethod('isInTerminalOverlayState', () => {
-                const state = getPrimaryGameState();
-                return state === 'LEVEL_COMPLETE' || state === 'GAME_OVER';
-            });
+            return runtimeStateModule.isInTerminalOverlayState();
         }
 
         function isInWaitingTutorialState() {
-            return invokeRuntimeStateModuleMethod('isInWaitingTutorialState', () => showTutorial && getPrimaryGameState() === 'WAITING');
+            return runtimeStateModule.isInWaitingTutorialState();
         }
 
         function isCeremonyPlayingState() {
-            return invokeRuntimeStateModuleMethod('isCeremonyPlayingState', () => waveCeremonyState === 'PLAYING');
+            return runtimeStateModule.isCeremonyPlayingState();
         }
 
         function isCeremonyKeyState() {
-            return invokeRuntimeStateModuleMethod('isCeremonyKeyState', () => waveCeremonyState === 'KEY_SPAWN');
+            return runtimeStateModule.isCeremonyKeyState();
         }
 
         function isCeremonyChestState() {
-            return invokeRuntimeStateModuleMethod('isCeremonyChestState', () => waveCeremonyState === 'CHEST_SPAWN');
+            return runtimeStateModule.isCeremonyChestState();
         }
 
         function isCeremonyLootBurstState() {
-            return invokeRuntimeStateModuleMethod('isCeremonyLootBurstState', () => waveCeremonyState === 'LOOT_BURST');
+            return runtimeStateModule.isCeremonyLootBurstState();
         }
 
         function isShopState() {
-            return invokeRuntimeStateModuleMethod('isShopState', () => shopOpen || waveCeremonyState === 'SHOP');
+            return runtimeStateModule.isShopState();
         }
 
         function isShopOpeningState() {
-            return invokeRuntimeStateModuleMethod('isShopOpeningState', () => shopOpening);
+            return runtimeStateModule.isShopOpeningState();
         }
 
         function isWaveTransitionState() {
-            return invokeRuntimeStateModuleMethod('isWaveTransitionState', () => isWaveTransition);
+            return runtimeStateModule.isWaveTransitionState();
         }
 
         function isPausedState() {
-            return invokeRuntimeStateModuleMethod('isPausedState', () => isPaused);
+            return runtimeStateModule.isPausedState();
         }
 
         function getModuleRuntimeStateGuards() {
-            return runtimeStateModule ? runtimeStateModule.runtimeStateGuards : null;
+            return runtimeStateModule.runtimeStateGuards;
         }
 
         function createModuleActions(baseActions = {}) {
@@ -4169,27 +4140,11 @@
             };
         }
 
-        function installOptionalSnakeModule(moduleFactory, config) {
-            return moduleFactory ? moduleFactory.install(config) : null;
-        }
-
-        function invokeOptionalModuleMethod(moduleApi, methodName, fallback, ...args) {
-            if (moduleApi && typeof moduleApi[methodName] === 'function') {
-                return moduleApi[methodName](...args);
+        function installRequiredSnakeModule(moduleFactory, moduleName, config) {
+            if (!moduleFactory || typeof moduleFactory.install !== 'function') {
+                throw new Error(`Missing snake module: ${moduleName}`);
             }
-            return fallback(...args);
-        }
-
-        function invokeRuntimeStateModuleMethod(methodName, fallback, ...args) {
-            return invokeOptionalModuleMethod(runtimeStateModule, methodName, fallback, ...args);
-        }
-
-        function invokeUiOverlaysModuleMethod(methodName, fallback, ...args) {
-            return invokeOptionalModuleMethod(uiOverlaysModule, methodName, fallback, ...args);
-        }
-
-        function invokeInputHelpersModuleMethod(methodName, fallback, ...args) {
-            return invokeOptionalModuleMethod(inputHelpersModule, methodName, fallback, ...args);
+            return moduleFactory.install(config);
         }
 
         function getRuntimeStateActions() {
@@ -4244,7 +4199,7 @@
             });
         }
 
-        const uiOverlaysModule = installOptionalSnakeModule(window.SnakeUiOverlays, {
+        const uiOverlaysModule = installRequiredSnakeModule(window.SnakeUiOverlays, 'SnakeUiOverlays', {
             modeOverlay,
             resultOverlay,
             pauseOverlay,
@@ -4260,12 +4215,7 @@
         }
 
         function closeAllOverlays() {
-            return invokeUiOverlaysModuleMethod('closeAllOverlays', () => {
-                resultOverlay.classList.remove('show');
-                pauseOverlay.classList.remove('show');
-                waveOverlay.classList.remove('show');
-                getShopOverlayElement().classList.remove('show');
-            });
+            return uiOverlaysModule.closeAllOverlays();
         }
 
         function hideTransientOverlays() {
@@ -4273,73 +4223,35 @@
         }
 
         function resetPreviewFeedbackState() {
-            return invokeRuntimeStateModuleMethod('resetPreviewFeedbackState', () => {
-                teleportPreview = null;
-                teleportTrailTimer = 0;
-                headGlowTimer = 0;
-            });
+            return runtimeStateModule.resetPreviewFeedbackState();
         }
 
         function resetTransientState() {
-            return invokeRuntimeStateModuleMethod('resetTransientState', () => {
-                stopWaveTransitionCountdown();
-                waveTransitionTimer = 0;
-                pauseStartTime = 0;
-                totalPausedTime = 0;
-                lastSlowInterval = null;
-                resetPreviewFeedbackState();
-                closeAllOverlays();
-            });
+            return runtimeStateModule.resetTransientState();
         }
 
         function resetRunState() {
-            return invokeRuntimeStateModuleMethod('resetRunState', () => {
-                setPausedState(false);
-                isGameRunning = false;
-                isGameOver = false;
-                isLevelComplete = false;
-                clearWaveTransitionState();
-                stopGameLoop();
-                resetTransientState();
-            });
+            return runtimeStateModule.resetRunState();
         }
 
         function resetToWaitingState() {
-            return invokeRuntimeStateModuleMethod('resetToWaitingState', () => {
-                hideResult();
-                isWaitingForStart = true;
-                initializeWaitingUI();
-            });
+            return runtimeStateModule.resetToWaitingState();
         }
 
         function syncPauseButtonVisibility() {
-            return invokeUiOverlaysModuleMethod('syncPauseButtonVisibility', () => {
-                pauseBtn.style.display = canRunGameLoop() ? 'block' : 'none';
-            });
+            return uiOverlaysModule.syncPauseButtonVisibility();
         }
 
         function showPauseOverlay() {
-            return invokeUiOverlaysModuleMethod('showPauseOverlay', () => {
-                closeAllOverlays();
-                pauseOverlay.classList.add('show');
-                syncPauseButtonVisibility();
-            });
+            return uiOverlaysModule.showPauseOverlay();
         }
 
         function showShopOverlay() {
-            return invokeUiOverlaysModuleMethod('showShopOverlay', () => {
-                closeAllOverlays();
-                document.getElementById('shopOverlay').classList.add('show');
-                syncPauseButtonVisibility();
-            });
+            return uiOverlaysModule.showShopOverlay();
         }
 
         function showWaveOverlay() {
-            return invokeUiOverlaysModuleMethod('showWaveOverlay', () => {
-                closeAllOverlays();
-                waveOverlay.classList.add('show');
-                syncPauseButtonVisibility();
-            });
+            return uiOverlaysModule.showWaveOverlay();
         }
 
         function restartWaveTransitionCountdown() {
@@ -4358,11 +4270,7 @@
         }
 
         function showOnlyResultOverlay() {
-            return invokeUiOverlaysModuleMethod('showOnlyResultOverlay', () => {
-                closeAllOverlays();
-                resultOverlay.classList.add('show');
-                syncPauseButtonVisibility();
-            });
+            return uiOverlaysModule.showOnlyResultOverlay();
         }
 
         function initializeWaitingUI() {
@@ -4621,17 +4529,7 @@
         }
 
         function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
-            return invokeUiOverlaysModuleMethod(
-                'restoreOverlayVisibility',
-                () => {
-                    closeAllOverlays();
-                    resultOverlay.classList.toggle('show', !!resultVisible);
-                    pauseOverlay.classList.toggle('show', !!pauseVisible);
-                    waveOverlay.classList.toggle('show', !!waveVisible);
-                    getShopOverlayElement().classList.toggle('show', !!shopVisible);
-                },
-                { resultVisible, pauseVisible, waveVisible, shopVisible }
-            );
+            return uiOverlaysModule.restoreOverlayVisibility({ resultVisible, pauseVisible, waveVisible, shopVisible });
         }
 
         function restoreRuntimeByPrimaryState(primaryState) {
@@ -4743,7 +4641,7 @@
             return value;
         }
 
-        const inputHelpersModule = installOptionalSnakeModule(window.SnakeInputHelpers, {
+        const inputHelpersModule = installRequiredSnakeModule(window.SnakeInputHelpers, 'SnakeInputHelpers', {
             touchControls,
             canvas,
             getState: getInputHelperStateSnapshot,
@@ -4754,67 +4652,27 @@
         });
 
         function canQueueDirection() {
-            return invokeInputHelpersModuleMethod('canQueueDirection', () => {
-                if (!hasSelectedMode) return false;
-                if (getPrimaryGameState() === 'PAUSED') return false;
-                return true;
-            });
+            return inputHelpersModule.canQueueDirection();
         }
 
         function submitDirectionInput(inputKey) {
-            return invokeInputHelpersModuleMethod('submitDirectionInput', () => {
-                if (!shouldHandleDirectionInput()) return;
-                const next = DIRECTION_INPUT_MAP[inputKey];
-                if (!next) return;
-                queueDirection(next);
-            }, inputKey);
+            return inputHelpersModule.submitDirectionInput(inputKey);
         }
 
         function handlePreGameDirectionInput(next) {
-            return invokeInputHelpersModuleMethod('handlePreGameDirectionInput', () => {
-                if (showTutorial) {
-                    showTutorial = false;
-                }
-                nextDirection = next;
-                startGame();
-            }, next);
+            return inputHelpersModule.handlePreGameDirectionInput(next);
         }
 
         function tryApplyAxisDirection(next) {
-            return invokeInputHelpersModuleMethod('tryApplyAxisDirection', () => {
-                if (next.x !== 0 && direction.x !== -next.x) {
-                    nextDirection = next;
-                    return direction.x !== next.x || direction.y !== next.y;
-                }
-                if (next.y !== 0 && direction.y !== -next.y) {
-                    nextDirection = next;
-                    return direction.x !== next.x || direction.y !== next.y;
-                }
-                return false;
-            }, next);
+            return inputHelpersModule.tryApplyAxisDirection(next);
         }
 
         function handleInGameDirectionInput(next) {
-            return invokeInputHelpersModuleMethod('handleInGameDirectionInput', () => {
-                if (!canAcceptGameplayInput() || !isGameRunning) return;
-                const directionChanged = tryApplyAxisDirection(next);
-                if (directionChanged) {
-                    triggerDashBurst();
-                }
-            }, next);
+            return inputHelpersModule.handleInGameDirectionInput(next);
         }
 
         function queueDirection(next) {
-            return invokeInputHelpersModuleMethod('queueDirection', () => {
-                if (!next || !canQueueDirection()) return;
-
-                if (getPrimaryGameState() === 'WAITING') {
-                    handlePreGameDirectionInput(next);
-                    return;
-                }
-
-                handleInGameDirectionInput(next);
-            }, next);
+            return inputHelpersModule.queueDirection(next);
         }
 
         restartBtn.addEventListener('click', () => {
@@ -4869,60 +4727,22 @@
         }
 
         function handleKeyboardDirectionInput(e) {
-            return invokeInputHelpersModuleMethod('handleKeyboardDirectionInput', () => {
-                if ((e.key === 'Escape' || e.key === 'p' || e.key === 'P') && (getPrimaryGameState() === 'RUNNING' || getPrimaryGameState() === 'PAUSED')) {
-                    if (getPrimaryGameState() === 'PAUSED') resumeGame(); else pauseGame();
-                    return;
-                }
-                if (!hasSelectedMode) return;
-                if (getPrimaryGameState() === 'PAUSED') return; // V18: 暂停时不响应方向键
-                if (isInTerminalOverlayState()) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        resetToWaitingState();
-                    }
-                    return;
-                }
-
-                if (isInWaitingTutorialState()) {
-                    showTutorial = false;
-                    return;
-                }
-
-                if (!shouldHandleDirectionInput()) {
-                    return;
-                }
-
-                submitDirectionInput(e.key);
-            }, e);
+            return inputHelpersModule.handleKeyboardDirectionInput(e);
         }
 
         function handleSwipeDirectionInput(e) {
-            return invokeInputHelpersModuleMethod('handleSwipeDirectionInput', () => {}, e);
+            return inputHelpersModule.handleSwipeDirectionInput(e);
         }
 
         window.addEventListener('resize', resizeCanvas);
 
         resizeCanvas();
         function handleButtonDirectionInput(button) {
-            return invokeInputHelpersModuleMethod('handleButtonDirectionInput', () => {}, button);
+            return inputHelpersModule.handleButtonDirectionInput(button);
         }
 
         function bindDirectionInputHandlers() {
-            return invokeInputHelpersModuleMethod('bind', () => {
-                document.addEventListener('keydown', handleKeyboardDirectionInput);
-                document.addEventListener('touchend', handleSwipeDirectionInput, { passive: true });
-                canvas.addEventListener('click', () => {
-                    if (!hasSelectedMode) return;
-                    if (isInWaitingTutorialState()) {
-                        showTutorial = false;
-                    }
-                });
-                touchControls.forEach((button) => {
-                    button.addEventListener('click', () => {
-                        handleButtonDirectionInput(button);
-                    });
-                });
-            });
+            return inputHelpersModule.bind();
         }
 
         bindDirectionInputHandlers();
@@ -5095,7 +4915,7 @@
             return value;
         }
 
-        const debugApiModule = installOptionalSnakeModule(window.SnakeDebugApi, {
+        const debugApiModule = installRequiredSnakeModule(window.SnakeDebugApi, 'SnakeDebugApi', {
             modeOverlay,
             resultOverlay,
             pauseOverlay,
