@@ -1052,12 +1052,12 @@
         }
 
         function clearWaveTransitionState() {
-            isWaveTransition = false;
+            clearWaveTransitionState();
         }
 
         function setWaveTransitionState(nextTransitioning) {
             if (nextTransitioning) {
-                isWaveTransition = true;
+                setWaveTransitionState(true);
             } else {
                 clearWaveTransitionState();
             }
@@ -1406,7 +1406,7 @@
             gameStartTime = Date.now();
             waveStartTime = Date.now();
             currentWave = 1;
-            isWaveTransition = false;
+            clearWaveTransitionState();
             terrainZones = [];
             // 灵蛇模块扩大穿墙
             if (selectedModule && selectedModule.special === 'widePortal') {
@@ -4087,7 +4087,7 @@
         }
 
         function resetCeremonyState() {
-            waveCeremonyState = 'PLAYING';
+            setCeremonyState('PLAYING');
             ceremonyKey = null;
             ceremonyChest = null;
             resetLootBurstState();
@@ -4095,7 +4095,7 @@
         }
 
         function beginShopOpening() {
-            waveCeremonyState = 'SHOP';
+            setCeremonyState('SHOP');
             closeShopState();
             setShopOpenState(true);
             setShopOpeningState(true);
@@ -4137,7 +4137,7 @@
 
         function tryStartKeyCeremony(waveElapsed) {
             if (waveElapsed < WAVE_DURATION || !isCeremonyPlayingState()) return false;
-            waveCeremonyState = 'KEY_SPAWN';
+            setCeremonyState('KEY_SPAWN');
             clearWavePlayfieldState();
             ceremonyKey = findCeremonySpawnCell(TUNING.ceremony.keyMinDistance, { x: Math.floor(tileCount / 2), y: TUNING.ceremony.keyFallbackY });
             spawnFloatingText(Math.floor(tileCount / 2), Math.floor(tileCount / 2), UI_TEXT.floating.keyFound, '#ffd700', true);
@@ -4147,7 +4147,7 @@
         function tryResolveKeyCeremony(head) {
             if (!isCeremonyKeyState() || !ceremonyKey) return false;
             if (head.x !== ceremonyKey.x || head.y !== ceremonyKey.y) return false;
-            waveCeremonyState = 'CHEST_SPAWN';
+            setCeremonyState('CHEST_SPAWN');
             ceremonyKey = null;
             flashEffect('teleport');
             flashAlpha = 0.3;
@@ -4175,7 +4175,7 @@
         }
 
         function beginLootBurst(head) {
-            waveCeremonyState = 'LOOT_BURST';
+            setCeremonyState('LOOT_BURST');
             ceremonyChest = null;
             flashEffect('grow');
             flashAlpha = 0.4;
@@ -4342,7 +4342,7 @@
         }
 
         function resetWaveProgressState() {
-            isWaveTransition = false;
+            clearWaveTransitionState();
             waveStartTime = Date.now();
             foodSpawnTimer = 0;
         }
@@ -4386,7 +4386,7 @@
 
         function enterWaveTransition() {
             if (isWaveTransitionState()) return false;
-            isWaveTransition = true;
+            setWaveTransitionState(true);
             waveTransitionTimer = WAVE_TRANSITION_DURATION;
             return true;
         }
@@ -4397,7 +4397,8 @@
         }
 
         function stopWaveTransitionCountdown() {
-            stopWaveTransitionCountdown();
+            clearInterval(waveTransitionInterval);
+            waveTransitionInterval = null;
         }
 
         function restoreRuntimeByPrimaryState(primaryState) {
