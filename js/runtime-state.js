@@ -40,18 +40,17 @@ window.SnakeRuntimeState = {
       return fallback(...args);
     }
 
+    function setModeSelectionVisibility(hasSelectedMode) {
+      setStateValue('hasSelectedMode', hasSelectedMode);
+      modeOverlay.classList.toggle('hidden', hasSelectedMode);
+    }
+
     function showModeOverlay() {
-      return callActionOrFallback('showModeOverlay', () => {
-        setStateValue('hasSelectedMode', false);
-        modeOverlay.classList.remove('hidden');
-      });
+      return callActionOrFallback('showModeOverlay', () => setModeSelectionVisibility(false));
     }
 
     function hideModeOverlay() {
-      return callActionOrFallback('hideModeOverlay', () => {
-        setStateValue('hasSelectedMode', true);
-        modeOverlay.classList.add('hidden');
-      });
+      return callActionOrFallback('hideModeOverlay', () => setModeSelectionVisibility(true));
     }
 
     function getCeremonyState() {
@@ -153,6 +152,12 @@ window.SnakeRuntimeState = {
       return document.getElementById('shopOverlay');
     }
 
+    function applyStateAssignments(assignments) {
+      assignments.forEach(([key, value]) => {
+        setStateValue(key, value);
+      });
+    }
+
     function closeAllOverlays() {
       return callActionOrFallback('closeAllOverlays', () => {
         resultOverlay.classList.remove('show');
@@ -177,26 +182,32 @@ window.SnakeRuntimeState = {
     }
 
     function resetPreviewFeedbackState() {
-      setStateValue('teleportPreview', null);
-      setStateValue('teleportTrailTimer', 0);
-      setStateValue('headGlowTimer', 0);
+      applyStateAssignments([
+        ['teleportPreview', null],
+        ['teleportTrailTimer', 0],
+        ['headGlowTimer', 0]
+      ]);
     }
 
     function resetTransientState() {
       actions.stopWaveTransitionCountdown();
-      setStateValue('waveTransitionTimer', 0);
-      setStateValue('pauseStartTime', 0);
-      setStateValue('totalPausedTime', 0);
-      setStateValue('lastSlowInterval', null);
+      applyStateAssignments([
+        ['waveTransitionTimer', 0],
+        ['pauseStartTime', 0],
+        ['totalPausedTime', 0],
+        ['lastSlowInterval', null]
+      ]);
       resetPreviewFeedbackState();
       closeAllOverlays();
     }
 
     function resetRunState() {
       setPausedState(false);
-      setStateValue('isGameRunning', false);
-      setStateValue('isGameOver', false);
-      setStateValue('isLevelComplete', false);
+      applyStateAssignments([
+        ['isGameRunning', false],
+        ['isGameOver', false],
+        ['isLevelComplete', false]
+      ]);
       clearWaveTransitionState();
       actions.stopGameLoop();
       resetTransientState();
@@ -257,9 +268,11 @@ window.SnakeRuntimeState = {
 
     function applyPauseTimeCompensation(pauseDuration) {
       const state = getState();
-      setStateValue('totalPausedTime', state.totalPausedTime + pauseDuration);
-      setStateValue('waveStartTime', state.waveStartTime + pauseDuration);
-      setStateValue('gameStartTime', state.gameStartTime + pauseDuration);
+      applyStateAssignments([
+        ['totalPausedTime', state.totalPausedTime + pauseDuration],
+        ['waveStartTime', state.waveStartTime + pauseDuration],
+        ['gameStartTime', state.gameStartTime + pauseDuration]
+      ]);
     }
 
     function restartWaveTransitionCountdown() {
