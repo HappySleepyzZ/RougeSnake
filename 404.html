@@ -7,9 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
-    <meta name="description" content="支持手机和微�?H5 游玩的贪吃蛇小游�?- 肉鸽生存�?V19">
+    <meta name="description" content="支持手机和微信 H5 游玩的贪吃蛇小游戏 - 肉鸽生存版 V19">
     <meta property="og:title" content="Snake V23 - Wave Shop">
-    <meta property="og:description" content="波间商店、钥匙宝箱仪式、蛇身代�?>
+    <meta property="og:description" content="波间商店、钥匙宝箱仪式、蛇身代币">
     <title>Snake V23 - Wave Shop</title>
     <style>
         * {
@@ -45,7 +45,7 @@
             box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
         }
 
-        /* 状态面�?- 左上�?*/
+        /* 状态面板 - 左上角 */
         .status-panel {
             position: fixed;
             top: 10px;
@@ -83,7 +83,7 @@
             color: #f1c40f;
         }
 
-        /* V19c: 食物图例 - 可收�?*/
+        /* V19c: 食物图例 - 可收起 */
         .legend {
             position: fixed;
             top: 10px;
@@ -303,7 +303,7 @@
             50% { transform: scale(1.1); }
         }
 
-        /* 呼吸灯效�?*/
+        /* 呼吸灯效果 */
         .breath-indicator {
             position: fixed;
             top: 10px;
@@ -378,7 +378,7 @@
 <body>
     <canvas id="gameCanvas"></canvas>
     
-    <!-- 状态面�?- 左上�?-->
+    <!-- 状态面板 - 左上角 -->
     <div class="status-panel" id="statusPanel">
         <div class="timer" id="timerDisplay">02:30</div>
         <div class="score-line">
@@ -391,16 +391,16 @@
     <div class="legend collapsed" id="legend" onclick="toggleLegend()">
         <div class="legend-toggle"><span>📋</span><span class="legend-toggle-label">图例</span></div>
         <div class="legend-body">
-            <div class="legend-item" id="moduleLegend" style="margin-bottom:4px;font-weight:bold"><span class="legend-symbol">�?/span> <span>通用</span></div>
+            <div class="legend-item" id="moduleLegend" style="margin-bottom:4px;font-weight:bold"><span class="legend-symbol">⚪</span> <span>通用</span></div>
             <div class="legend-item legend-positive"><span class="legend-symbol" style="color:#9be15d">&#8593;</span> <span>变长</span></div>
             <div class="legend-item legend-positive"><span class="legend-symbol" style="color:#ffd166">&#8644;</span> <span>对调</span></div>
             <div class="legend-item legend-strategy"><span class="legend-symbol" style="color:#f59e0b">🚧</span> <span>造障</span></div>
             <div class="legend-item legend-danger"><span class="legend-symbol" style="color:#ff6b6b">&#8595;</span> <span>变短</span></div>
             <div class="legend-item legend-wind"><span class="legend-symbol" style="color:#74cfff">🌀</span> <span>清障</span></div>
             <div class="legend-item"><span class="legend-symbol" style="color:#8b4513">🐍</span> <span>蛇皮</span></div>
-            <div class="legend-item"><span class="legend-symbol" style="color:#800080">�?/span> <span>毒雾</span></div>
-            <div class="legend-item"><span class="legend-symbol" style="color:#0064c8">�?/span> <span>减�?/span></div>
-            <div class="legend-item"><span class="legend-symbol" style="color:#c084fc">�?/span> <span>传送门</span></div>
+            <div class="legend-item"><span class="legend-symbol" style="color:#800080">☠</span> <span>毒雾</span></div>
+            <div class="legend-item"><span class="legend-symbol" style="color:#0064c8">❄</span> <span>减速</span></div>
+            <div class="legend-item"><span class="legend-symbol" style="color:#c084fc">⊙</span> <span>传送门</span></div>
         </div>
     </div>
     
@@ -409,24 +409,24 @@
         <div class="result-icon" id="resultIcon"></div>
         <div class="result-text" id="resultText"></div>
         <div class="result-score" id="resultScore"></div>
-        <button class="restart-btn" id="restartBtn">重新开�?/button>
+        <button class="restart-btn" id="restartBtn">重新开始</button>
     </div>
 
     <!-- V16: 波次过渡画面 -->
     <div class="result-overlay" id="waveOverlay">
         <div class="result-icon">🌊</div>
         <div class="result-text" id="waveText" style="color:#2ecc71">Wave 1 Complete!</div>
-        <div class="result-score" id="waveCountdown">下一�?3...</div>
+        <div class="result-score" id="waveCountdown">下一波 3...</div>
     </div>
 
     <div class="mode-overlay" id="modeOverlay">
         <div class="mode-card">
             <div class="mode-title">选择初始模块</div>
-            <div class="mode-subtitle" id="modeSubtitle">每种模块对不同效果有独特加成，选择你的风格�?/div>
+            <div class="mode-subtitle" id="modeSubtitle">每种模块对不同效果有独特加成，选择你的风格。</div>
             <div class="mode-actions" id="moduleButtons">
-                <!-- V16: 动态生�?-->
+                <!-- V16: 动态生成 -->
             </div>
-            <div class="mode-note">波次生存：每 30 秒一波，难度递增，存活越久越好�?/div>
+            <div class="mode-note">波次生存：每 30 秒一波，难度递增，存活越久越好。</div>
         </div>
     </div>
     
@@ -436,7 +436,7 @@
         <div class="result-text" style="color:#ffd700">波间商店</div>
         <div class="result-score" id="shopInfo"></div>
         <div id="shopItems" style="display:flex; flex-direction:column; gap:10px; margin-top:16px; width:100%; max-width:320px;"></div>
-        <button class="restart-btn" id="shopSkipBtn" style="background:#555; margin-top:12px;">�?跳过</button>
+        <button class="restart-btn" id="shopSkipBtn" style="background:#555; margin-top:12px;">⏩ 跳过</button>
     </div>
 
     <!-- V18: 暂停按钮 -->
@@ -446,22 +446,22 @@
         background:rgba(255,255,255,0.15); backdrop-filter:blur(8px);
         color:#fff; font-size:18px; padding:8px 20px;
         cursor:pointer; display:none;
-    ">�?/button>
+    ">⏸</button>
 
     <!-- V18: 暂停菜单 -->
     <div class="result-overlay" id="pauseOverlay">
-        <div class="result-icon">�?/div>
-        <div class="result-text" id="pauseTitle" style="color:#fff">已暂�?/div>
+        <div class="result-icon">⏸</div>
+        <div class="result-text" id="pauseTitle" style="color:#fff">已暂停</div>
         <div class="result-score" id="pauseInfo"></div>
         <div style="display:flex; gap:12px; margin-top:20px;">
             <button class="restart-btn" id="resumeBtn" style="background:#2ecc71">继续</button>
-            <button class="restart-btn" id="pauseRestartBtn" style="background:#e74c3c">重新开�?/button>
+            <button class="restart-btn" id="pauseRestartBtn" style="background:#e74c3c">重新开始</button>
         </div>
     </div>
 
     <div class="breath-indicator" id="breathIndicator"></div>
-    <div class="touch-hint" id="touchHint">滑动或点击方向键开始游�?/div>
-    <div class="touch-controls" aria-label="屏幕方向�?>
+    <div class="touch-hint" id="touchHint">滑动或点击方向键开始游戏</div>
+    <div class="touch-controls" aria-label="屏幕方向键">
         <button class="control-btn control-up" type="button" data-direction="up" aria-label="向上">&#8593;</button>
         <button class="control-btn control-left" type="button" data-direction="left" aria-label="向左">&#8592;</button>
         <button class="control-btn control-down" type="button" data-direction="down" aria-label="向下">&#8595;</button>
@@ -476,7 +476,7 @@
     <script src="./js/ui-overlays.js"></script>
     <script src="./js/debug-api.js"></script>
     <script>
-        // V19c: 像素风图�?(Base64 内嵌)
+        // V19c: 像素风图标 (Base64 内嵌)
         const ICON_IMAGES = {};
         const ICON_CONFIG = window.SNAKE_ICON_MAP || {};
         const TEXTURE_IMAGES = {};
@@ -569,12 +569,12 @@
         const waveText = document.getElementById('waveText');
         const waveCountdown = document.getElementById('waveCountdown');
 
-        // ========== 动态尺寸系�?==========
+        // ========== 动态尺寸系统 ==========
         let cellSize = 20;
         let tileCount;
         const BASE_CELL_DIVISOR = 30; // V18f: 30x30
         
-        // ========== V12：缩放因�?==========
+        // ========== V12：缩放因子 ==========
         function getScaleFactors() {
             return {
                 food: cellSize * 0.96,
@@ -618,42 +618,42 @@
             },
             wave: {
                 complete: (wave) => `Wave ${wave} Complete!`,
-                nextIn: (secs) => `下一�?${secs}...`,
-                modeNote: '波次生存：每 30 秒一波，难度递增，存活越久越好�?,
-                canvasTip: '�?30 秒一波，难度递增'
+                nextIn: (secs) => `下一波 ${secs}...`,
+                modeNote: '波次生存：每 30 秒一波，难度递增，存活越久越好。',
+                canvasTip: '每 30 秒一波，难度递增'
             },
             pause: {
-                title: '已暂�?,
+                title: '已暂停',
                 info: (wave, score, surviveText, modName) => `Wave ${wave} | 分数: ${score} | 存活: ${surviveText} | ${modName}`
             },
             shop: {
-                info: (coins, snakeLength, wave) => `金币: ${coins} | 蛇身: ${snakeLength}�?| 商店规则: buff优先扣蛇身，不够再补金币 | Wave ${wave}`
+                info: (coins, snakeLength, wave) => `金币: ${coins} | 蛇身: ${snakeLength}节 | 商店规则: buff优先扣蛇身，不够再补金币 | Wave ${wave}`
             },
             hud: {
                 score: (score, coins) => `分数: ${score} | 金币: ${coins}`,
                 survival: (surviveText) => `存活: ${surviveText}`,
                 resultSummary: (wave, score, surviveText, moduleName) => `波次: ${wave} | 分数: ${score} | 存活: ${surviveText} | ${moduleName}`,
-                debuffPoison: (secs) => ` �?{secs}s`,
-                debuffSlow: (secs) => ` �?{secs}s`,
+                debuffPoison: (secs) => ` ☠${secs}s`,
+                debuffSlow: (secs) => ` ❄${secs}s`,
                 shield: (count) => ` 🛡${count}`,
-                dash: (count) => ` �?{count}`,
+                dash: (count) => ` ⚡${count}`,
                 poisonResist: ' 🟢毒抗',
                 iceArmor: ' 🔵冰甲',
                 magnet: ' 🧲磁铁'
             },
             tutorial: {
                 title: '🎯 波次生存 - 活得越久越好',
-                line1: '�?变长  �?瞬移  🧱 造障',
-                line2: '�?缩短(危险)',
+                line1: '● 变长  ▲ 瞬移  🧱 造障',
+                line2: '⚠ 缩短(危险)',
                 line3: '🌀 清石(旋风)',
                 line4: '🐍 蛇皮区域(撞上即死)',
-                line5: '�?毒雾�? �?减速区 (效果受模块影�?'
+                line5: '☠ 毒雾区  ❄ 减速区 (效果受模块影响)'
             },
             floating: {
-                dash: '�?冲刺!',
+                dash: '⚡ 冲刺!',
                 shield: '🛡 护盾!',
                 keyFound: '🔑 找到钥匙!',
-                keyGet: '�?钥匙get!',
+                keyGet: '✨ 钥匙get!',
                 coinFrenzy: '💰 金币狂欢!',
                 coinGain: (amount) => `+${amount} 金币`
             },
@@ -669,7 +669,7 @@
                 clear: '清障',
                 snakeSkin: '蛇皮',
                 poison: '毒雾',
-                slow: '减�?,
+                slow: '减速',
                 portal: '传送门'
             }
         };
@@ -739,7 +739,8 @@
         let snake = [];
         let foods = [];
         let obstacles = []; // 石头障碍
-        let snakeSkins = []; // V12：蛇皮数组（支持3x3区域�?        let direction = { x: 0, y: 0 };
+        let snakeSkins = []; // V12：蛇皮数组（支持3x3区域）
+        let direction = { x: 0, y: 0 };
         let nextDirection = { x: 0, y: 0 };
         let score = 0;
         let highScore = Number(localStorage.getItem(STORAGE_KEYS.highScore) || 0);
@@ -749,12 +750,15 @@
         let startIndicator = null;
         let hasSelectedMode = false;
 
-        // V12：蛇皮计数器与配�?        let foodEatenCount = 0;
+        // V12：蛇皮计数器与配置
+        let foodEatenCount = 0;
 
         // V16: 波次系统
         let currentWave = 1;
         let waveStartTime = 0;
-        const WAVE_DURATION = 30000; // 30 秒每�?        const WAVE_TRANSITION_DURATION = 3000; // 3 秒过�?        const TUNING = {
+        const WAVE_DURATION = 30000; // 30 秒每波
+        const WAVE_TRANSITION_DURATION = 3000; // 3 秒过渡
+        const TUNING = {
             speed: {
                 base: 150,
                 min: 50,
@@ -822,11 +826,12 @@
         let isWaveTransition = false;
         
         // V19: 波间仪式状态机
-        // 流程：PLAYING �?KEY_SPAWN �?CHEST_SPAWN �?LOOT_BURST �?SHOP
+        // 流程：PLAYING → KEY_SPAWN → CHEST_SPAWN → LOOT_BURST → SHOP
         let waveCeremonyState = 'PLAYING'; // PLAYING | KEY_SPAWN | CHEST_SPAWN | LOOT_BURST | SHOP
         let ceremonyKey = null;    // { x, y }
         let ceremonyChest = null;  // { x, y }
-        let lootFoods = [];        // 喷出的食�?        let lootEatenCount = 0;
+        let lootFoods = [];        // 喷出的食物
+        let lootEatenCount = 0;
         let lootTotalCount = 0;
         let lootBurstEndTime = 0;
         let coins = 0;              // 波间商店货币
@@ -834,25 +839,26 @@
         let shopOpening = false;
         let shopItems = [];
         let dashBurstTicks = 0;
-        let activeBuffs = [];      // 当前生效�?buff [{id, remaining}]
+        let activeBuffs = [];      // 当前生效的 buff [{id, remaining}]
         let shieldCharges = 0;     // 护盾次数
         let dashCharges = 0;       // 冲刺次数
         
-        // 商品�?        const SHOP_POOL = [
-            { id: 'poison_resist', name: '毒雾抗�?, icon: '🟢', cost: 3, desc: 'DoT减半 1�?, category: 'defense' },
-            { id: 'ice_armor', name: '冰霜护甲', icon: '🔵', cost: 3, desc: '减速时�?50% 1�?, category: 'defense' },
-            { id: 'shield', name: '护盾', icon: '🛡', cost: 4, desc: '撞障碍免�?�?, category: 'defense' },
-            { id: 'dash', name: '冲刺', icon: '�?, cost: 5, desc: '获得1次冲刺加�?, category: 'offense' },
-            { id: 'magnet', name: '磁铁', icon: '🧲', cost: 4, desc: '食物吸引+2�?1�?, category: 'offense' },
-            { id: 'clear', name: '清障', icon: '🧹', cost: 3, desc: '清除所有蛇皮障�?, category: 'tool' },
+        // 商品池
+        const SHOP_POOL = [
+            { id: 'poison_resist', name: '毒雾抗性', icon: '🟢', cost: 3, desc: 'DoT减半 1波', category: 'defense' },
+            { id: 'ice_armor', name: '冰霜护甲', icon: '🔵', cost: 3, desc: '减速时间-50% 1波', category: 'defense' },
+            { id: 'shield', name: '护盾', icon: '🛡', cost: 4, desc: '撞障碍免死1次', category: 'defense' },
+            { id: 'dash', name: '冲刺', icon: '⚡', cost: 5, desc: '获得1次冲刺加速', category: 'offense' },
+            { id: 'magnet', name: '磁铁', icon: '🧲', cost: 4, desc: '食物吸引+2格 1波', category: 'offense' },
+            { id: 'clear', name: '清障', icon: '🧹', cost: 3, desc: '清除所有蛇皮障碍', category: 'tool' },
         ];
         
         function rollShopItems() {
             const shuffled = [...SHOP_POOL].sort(() => Math.random() - 0.5);
             const picked = shuffled.slice(0, 3);
             // 固定恢复选项
-            picked.push({ id: 'heal', name: '回复', icon: '❤️', cost: 3, payType: 'coins', desc: '+2节蛇�?, category: 'heal' });
-            picked.push({ id: 'grow_tail', name: '加长', icon: '🐍', cost: 5, payType: 'coins', desc: '+4节蛇�?, category: 'heal' });
+            picked.push({ id: 'heal', name: '回复', icon: '❤️', cost: 3, payType: 'coins', desc: '+2节蛇身', category: 'heal' });
+            picked.push({ id: 'grow_tail', name: '加长', icon: '🐍', cost: 5, payType: 'coins', desc: '+4节蛇身', category: 'heal' });
             return picked;
         }
         
@@ -868,7 +874,7 @@
             if (item.payType === 'coins') return `${item.cost} 金币`;
             const bodyPay = Math.min(item.cost, Math.max(0, snake.length - 2));
             const coinPay = Math.max(0, item.cost - bodyPay);
-            if (coinPay > 0 && bodyPay > 0) return `-${bodyPay}�?+ ${coinPay}金币`;
+            if (coinPay > 0 && bodyPay > 0) return `-${bodyPay}节 + ${coinPay}金币`;
             if (coinPay > 0) return `${coinPay} 金币`;
             return `-${item.cost} 节`;
         }
@@ -910,7 +916,8 @@
                     obstacles = [];
                     break;
                 case 'heal':
-                    // �?�?                    for (let i = 0; i < 2; i++) {
+                    // 加2节
+                    for (let i = 0; i < 2; i++) {
                         const tail = snake[snake.length - 1];
                         snake.push({ x: tail.x, y: tail.y });
                     }
@@ -960,21 +967,22 @@
         const MODULE_TYPES = {
             VENOM: {
                 id: 'venom', name: '毒尾', icon: '🟢',
-                desc: '擅长处理毒雾，碰毒加�?,
-                strength: '碰毒 +15', weakness: '碰减�?-8',
-                passive: '毒雾区内移速不�?,
+                desc: '擅长处理毒雾，碰毒加分',
+                strength: '碰毒 +15', weakness: '碰减速 -8',
+                passive: '毒雾区内移速不减',
                 scoreModifiers: { grow: 10, shrink: -8, teleport: 20, barrier: 20, wind: -20 },
                 terrainBonus: { poison: 15, slow: -8 },
                 special: null,
                 // V17: 视觉配置
                 headColor: '#7b2ff7', headGlow: '#a855f7',
                 bodyColor: '#5b1daa', bodyGlow: '#7c3aed',
-                headShape: 'triangle', // 三角�?                trailEffect: 'drip' // 蛇尾毒液滴落
+                headShape: 'triangle', // 三角头
+                trailEffect: 'drip' // 蛇尾毒液滴落
             },
             ARMOR: {
                 id: 'armor', name: '装甲', icon: '🔵',
                 desc: '坚固防御，碰石头不死',
-                strength: '碰减�?+12', weakness: '碰毒 -5',
+                strength: '碰减速 +12', weakness: '碰毒 -5',
                 passive: '碰石头时碎石而非死亡',
                 scoreModifiers: { grow: 10, shrink: 12, teleport: 20, barrier: 20, wind: -20 },
                 terrainBonus: { poison: -5, slow: 12 },
@@ -987,20 +995,22 @@
             },
             SPIRIT: {
                 id: 'spirit', name: '灵蛇', icon: '🟡',
-                desc: '灵活穿行，穿墙范围更�?,
-                strength: '碰风 +10', weakness: '碰路�?-8',
-                passive: '穿墙通道范围扩大�?5 �?,
+                desc: '灵活穿行，穿墙范围更大',
+                strength: '碰风 +10', weakness: '碰路障 -8',
+                passive: '穿墙通道范围扩大至 5 格',
                 scoreModifiers: { grow: 10, shrink: -10, teleport: 20, barrier: -8, wind: 10 },
                 terrainBonus: { poison: -10, slow: -10 },
                 special: 'widePortal',
                 // V17: 视觉配置
                 headColor: '#f5c842', headGlow: '#fbbf24',
                 bodyColor: '#d4a017', bodyGlow: '#f59e0b',
-                headShape: 'slim', // 细长�?                trailEffect: 'ghost' // 淡金色残�?            },
+                headShape: 'slim', // 细长头
+                trailEffect: 'ghost' // 淡金色残影
+            },
             BALANCED: {
-                id: 'balanced', name: '通用', icon: '�?,
-                desc: '均衡稳定，地形伤害减�?,
-                strength: '所有效�?±5', weakness: '无明显弱�?,
+                id: 'balanced', name: '通用', icon: '⚪',
+                desc: '均衡稳定，地形伤害减半',
+                strength: '所有效果 ±5', weakness: '无明显弱点',
                 passive: '地形 DoT 伤害减半',
                 scoreModifiers: { grow: 5, shrink: -5, teleport: 5, barrier: 5, wind: -5 },
                 terrainBonus: { poison: -2, slow: -2 },
@@ -1015,9 +1025,10 @@
 
         // V14：瞬移无敌帧
         let teleportInvincibleSteps = 0;
-        // V21 fix: 传送门重复触发/跨波次残留保�?        let portalTeleportCooldown = 0;
+        // V21 fix: 传送门重复触发/跨波次残留保护
+        let portalTeleportCooldown = 0;
 
-        // 改动1：速度曲线平滑�?- 指数衰减
+        // 改动1：速度曲线平滑化 - 指数衰减
         const BASE_SPEED = TUNING.speed.base;
         const MIN_SPEED = TUNING.speed.min;
         
@@ -1042,22 +1053,25 @@
         // V18: 暂停系统
         let isPaused = false;
         let pauseStartTime = 0;
-        let totalPausedTime = 0; // 累计暂停时间（毫秒），用于修正计�?        const pauseBtn = document.getElementById('pauseBtn');
+        let totalPausedTime = 0; // 累计暂停时间（毫秒），用于修正计时
+        let timerTraceBuffer = [];
+        const TIMER_TRACE_LIMIT = 180;
+        const pauseBtn = document.getElementById('pauseBtn');
         const pauseOverlay = document.getElementById('pauseOverlay');
         const resumeBtn = document.getElementById('resumeBtn');
         const pauseRestartBtn = document.getElementById('pauseRestartBtn');
-
+        
         function setPausedState(nextPaused) {
             isPaused = nextPaused;
         }
 
         function clearWaveTransitionState() {
-            clearWaveTransitionState();
+            isWaveTransition = false;
         }
 
         function setWaveTransitionState(nextTransitioning) {
             if (nextTransitioning) {
-                setWaveTransitionState(true);
+                isWaveTransition = true;
             } else {
                 clearWaveTransitionState();
             }
@@ -1066,8 +1080,9 @@
         function setCeremonyState(nextState) {
             waveCeremonyState = nextState;
         }
-        
+
         function renderPauseOverlay() {
+            if (runtimeStateModule) return runtimeStateModule.renderPauseOverlay();
             const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
             const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
             const modName = selectedModule ? `${selectedModule.icon}${selectedModule.name}` : '';
@@ -1076,6 +1091,7 @@
         }
 
         function applyPauseTimeCompensation(pauseDuration) {
+            if (runtimeStateModule) return runtimeStateModule.applyPauseTimeCompensation(pauseDuration);
             totalPausedTime += pauseDuration;
             waveStartTime += pauseDuration;
             gameStartTime += pauseDuration;
@@ -1121,7 +1137,7 @@
 
         function getSkinGenerationThreshold() {
             const base = currentLevelConfig.skin.generationThreshold;
-            // V16: 通用模块蛇皮阈�?+2
+            // V16: 通用模块蛇皮阈值 +2
             if (selectedModule && selectedModule.special === 'slowSkin') return base + TUNING.module.slowSkinThresholdBonus;
             return base;
         }
@@ -1262,73 +1278,83 @@
             // V16: no-op, always survival
         }
 
-        // ========== 瞬移视觉引导状态变�?==========
+        // ========== 瞬移视觉引导状态变量 ==========
         let teleportPreview = null;
         let teleportTrailTimer = 0;
         let headGlowTimer = 0;
         const TELEPORT_TRAIL_DURATION = TUNING.visual.teleportTrailDuration;
         const HEAD_GLOW_DURATION = TUNING.visual.headGlowDuration;
 
-        // ========== 新手引导状态变�?==========
+        // ========== 新手引导状态变量 ==========
         let showTutorial = true;
         let tutorialTimer = 3;
 
-        // ========== V12：食物类型定义（颜色调整�?==========
+        // ========== V12：食物类型定义（颜色调整） ==========
         const FOOD_TYPES = {
-            // V12：正分食�?�?绿色�?            GROW: { 
+            // V12：正分食物 → 绿色系
+            GROW: { 
                 shape: 'grow_orb', 
                 color: '#9be15d',
                 glow: '#d6ff8a',
                 effect: 'grow',
-                symbol: '�?,
-                symbolMeaning: '�?,
+                symbol: '↑',
+                symbolMeaning: '长',
                 probability: 0.40,
                 score: 10,
                 isPositive: true
             },
             TELEPORT: { 
                 shape: 'teleport_gate', 
-                color: '#27ae60',      // V12: 深绿�?                glow: '#2ecc71',       // V12: 绿色光晕
+                color: '#27ae60',      // V12: 深绿色
+                glow: '#2ecc71',       // V12: 绿色光晕
                 effect: 'teleport',
-                symbol: '�?,
+                symbol: '⇄',
                 symbolMeaning: '首尾换位',
                 probability: 0.15,
                 score: 20,
                 isPositive: true
             },
             BARRIER: {
-                shape: 'barrier_sign', // V17b: 橙色路障�?                color: '#f59e0b',      // 橙黄�?                glow: '#fbbf24',       // 金黄光晕
+                shape: 'barrier_sign', // V17b: 橙色路障牌
+                color: '#f59e0b',      // 橙黄色
+                glow: '#fbbf24',       // 金黄光晕
                 effect: 'barrier',
                 symbol: '🚧',
-                symbolMeaning: '�?,
+                symbolMeaning: '障',
                 probability: 0.10,
                 score: 20,
                 isPositive: true
             },
-            // V12：扣分食�?�?红色系（危险�?            SHRINK: { 
+            // V12：扣分食物 → 红色系（危险）
+            SHRINK: { 
                 shape: 'danger_square',
                 color: '#e74c3c',      // V12: 红色
                 glow: '#c0392b',       // V12: 深红光晕
                 effect: 'shrink',
-                symbol: '�?,
-                symbolMeaning: '�?,
+                symbol: '⚠',
+                symbolMeaning: '短',
                 probability: 0.20,
                 score: -10,
                 isPositive: false,
                 isDanger: true
             },
-            // V12：清�?�?保持蓝紫�?+ 旋风动画（非危险抖动�?            WIND: { 
-                shape: 'wind_star',    // V12: 新形�?- 旋风�?                color: '#8e44ad',      // 保持紫色
-                glow: '#9b59b6',       // 保持紫光�?                effect: 'wind',
+            // V12：清石 → 保持蓝紫色 + 旋风动画（非危险抖动）
+            WIND: { 
+                shape: 'wind_star',    // V12: 新形状 - 旋风星
+                color: '#8e44ad',      // 保持紫色
+                glow: '#9b59b6',       // 保持紫光晕
+                effect: 'wind',
                 symbol: '🌀',   // V12: 旋风符号
-                symbolMeaning: '�?,
+                symbolMeaning: '清',
                 probability: 0.15,
                 score: -20,
                 isPositive: false,
-                isWind: true           // V12: 旋风标记（非危险抖动�?            }
+                isWind: true           // V12: 旋风标记（非危险抖动）
+            }
         };
         
-        // 概率总和�?.40 + 0.15 + 0.10 + 0.20 + 0.15 = 1.00 �?
+        // 概率总和：0.40 + 0.15 + 0.10 + 0.20 + 0.15 = 1.00 ✓
+
         function getPortalRanges() {
             const center = Math.floor(tileCount / 2);
             const halfWidth = Math.floor(portalWidth / 2);
@@ -1386,7 +1412,8 @@
             portalPairs = [];
             floatingTexts = [];
             
-            // V14: 重置瞬移无敌�?            teleportInvincibleSteps = 0;
+            // V14: 重置瞬移无敌帧
+            teleportInvincibleSteps = 0;
             portalTeleportCooldown = 0;
             
             showTutorial = true;
@@ -1414,7 +1441,7 @@
             } else {
                 portalWidth = currentLevelConfig.portalWidth;
             }
-            // V17d: �? 就生成地形和传送门
+            // V17d: 波1 就生成地形和传送门
             generateWaveTerrain();
             generateWavePortals();
         }
@@ -1444,7 +1471,8 @@
             isLevelComplete = false;
             isGameOver = false;
             
-            // V14: 重置瞬移无敌�?            teleportInvincibleSteps = 0;
+            // V14: 重置瞬移无敌帧
+            teleportInvincibleSteps = 0;
             portalTeleportCooldown = 0;
             
             teleportPreview = null;
@@ -1453,21 +1481,25 @@
             
             initGameMode(currentMode);
             
-            // 初始生成食物（保证有正分食物�?            const initialFoodCount = getInitialFoodCount();
+            // 初始生成食物（保证有正分食物）
+            const initialFoodCount = getInitialFoodCount();
             for (let i = 0; i < initialFoodCount; i++) {
                 spawnFood();
             }
             
-            // 紧急补�?- 确保至少�?个正分食�?            ensurePositiveFood();
+            // 紧急补位 - 确保至少有1个正分食物
+            ensurePositiveFood();
             
             updateStatusUI();
         }
 
-        // V12：扩展位置占用检查（包含蛇皮3x3区域�?        function isPositionOccupied(x, y) {
+        // V12：扩展位置占用检查（包含蛇皮3x3区域）
+        function isPositionOccupied(x, y) {
             if (snake.some(seg => seg.x === x && seg.y === y)) return true;
             if (foods.some(f => f.x === x && f.y === y)) return true;
             if (obstacles.some(o => o.x === x && o.y === y)) return true;
-            // V12：检查蛇皮（每个蛇皮对象包含cells数组�?            if (snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === x && c.y === y))) return true;
+            // V12：检查蛇皮（每个蛇皮对象包含cells数组）
+            if (snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === x && c.y === y))) return true;
             // V17c: 传送门占位
             if (portalPairs.some(p => (p.a.x === x && p.a.y === y) || (p.b.x === x && p.b.y === y))) return true;
             
@@ -1486,7 +1518,7 @@
             return foods.filter(f => f.type.isPositive).length;
         }
 
-        // ========== 紧急补位机�?==========
+        // ========== 紧急补位机制 ==========
         function ensurePositiveFood() {
             const positiveCount = countPositiveFoods();
             if (positiveCount < 1) {
@@ -1496,12 +1528,12 @@
 
                 if (newFood) {
                     foods.push(newFood);
-                    console.log('[保底] 紧急补位正分食�?', selectedType.symbolMeaning);
+                    console.log('[保底] 紧急补位正分食物:', selectedType.symbolMeaning);
                 }
             }
         }
 
-        // ========== V12：食物生�?==========
+        // ========== V12：食物生成 ==========
         function spawnFood() {
             const maxFoods = Math.floor(Math.random() * 3) + 4;
             if (foods.length >= maxFoods) return;
@@ -1569,7 +1601,8 @@
                 y: newHead.y - newSecond.y
             };
             
-            // 如果计算出的方向�?(0,0)（极端情况），fallback 到简单取�?            if (newDirection.x === 0 && newDirection.y === 0) {
+            // 如果计算出的方向为 (0,0)（极端情况），fallback 到简单取反
+            if (newDirection.x === 0 && newDirection.y === 0) {
                 newDirection.x = -oldDirection.x;
                 newDirection.y = -oldDirection.y;
             }
@@ -1591,7 +1624,8 @@
                 }
             }, TELEPORT_PAUSE_DURATION);
             
-            // V14: 设置瞬移无敌�?            teleportInvincibleSteps = 3;
+            // V14: 设置瞬移无敌帧
+            teleportInvincibleSteps = 3;
         }
 
         let flashAlpha = 0;
@@ -1613,17 +1647,19 @@
         let teleportPauseTimer = 0;
         const TELEPORT_PAUSE_DURATION = TUNING.visual.teleportPauseDuration;
 
-        // ========== 路障食物生成石头（上�?5，永久存在） ==========
+        // ========== 路障食物生成石头（上限15，永久存在） ==========
         const MAX_OBSTACLES = TUNING.generation.maxObstacles;
         
         function spawnBarrierObstacles() {
             const headPos = snake[0];
-            const stoneCount = Math.floor(Math.random() * 4) + 3; // 3-6个石�?            
-            // 上限检�?            const currentObstacleCount = obstacles.length;
+            const stoneCount = Math.floor(Math.random() * 4) + 3; // 3-6个石头
+            
+            // 上限检查
+            const currentObstacleCount = obstacles.length;
             const canSpawnCount = Math.min(stoneCount, MAX_OBSTACLES - currentObstacleCount);
             
             if (canSpawnCount <= 0) {
-                console.log('[路障V13] 石头已达上限15，跳过生�?);
+                console.log('[路障V13] 石头已达上限15，跳过生成');
                 return;
             }
             
@@ -1636,7 +1672,7 @@
                     targetY = Math.floor(Math.random() * tileCount);
                     attempts++;
                     
-                    // 检查是否避开蛇头范围（蛇头周�?格内不生成）
+                    // 检查是否避开蛇头范围（蛇头周围3格内不生成）
                     const dx = Math.abs(targetX - headPos.x);
                     const dy = Math.abs(targetY - headPos.y);
                     const tooCloseToHead = dx <= 3 && dy <= 3;
@@ -1648,7 +1684,8 @@
                             x: targetX,
                             y: targetY,
                             spawnTime: Date.now()
-                            // V13: 删除 duration 字段，石头永久存�?                        };
+                            // V13: 删除 duration 字段，石头永久存在
+                        };
                         obstacles.push(obstacle);
                         break;
                     }
@@ -1672,7 +1709,7 @@
 
         // ========== V16: 波次系统函数 ==========
         function getWaveFoodInterval() {
-            // V17fix: �?就快节奏
+            // V17fix: 波1就快节奏
             if (currentWave <= 1) return TUNING.spawn.foodIntervalWave1;
             if (currentWave <= 2) return TUNING.spawn.foodIntervalWave2;
             if (currentWave <= 3) return TUNING.spawn.foodIntervalWave2 - 200;
@@ -1680,7 +1717,7 @@
         }
 
         function getWaveTerrainCount() {
-            // V17d: �?就有毒雾+减速，�?起传送门
+            // V17d: 波1就有毒雾+减速，波2起传送门
             if (currentWave <= 1) return { ...TUNING.terrain.baseCounts.wave1 };
             if (currentWave === 2) return { ...TUNING.terrain.baseCounts.wave2 };
             if (currentWave === 3) return { ...TUNING.terrain.baseCounts.wave3 };
@@ -1722,10 +1759,16 @@
             }
         }
 
-        // V17fix: DoT 计步�?        let terrainDotStepCounter = 0;
-        const TERRAIN_DOT_INTERVAL = TUNING.terrain.dotInterval; // �?步触发一�?        let terrainDotType = null; // 当前所在地形类型（用于视觉�?        
+        // V17fix: DoT 计步器
+        let terrainDotStepCounter = 0;
+        const TERRAIN_DOT_INTERVAL = TUNING.terrain.dotInterval; // 每3步触发一次
+        let terrainDotType = null; // 当前所在地形类型（用于视觉）
+        
         // V18b: Debuff 持续系统
-        const DEBUFF_DURATION = TUNING.terrain.debuffDuration; // 10�?        let poisonDebuffEnd = 0; // 中毒 debuff 结束时间�?        let slowDebuffEnd = 0;   // 减�?debuff 结束时间�?        const SLOW_MULTIPLIER = TUNING.speed.slowMultiplier; // 减速倍率
+        const DEBUFF_DURATION = TUNING.terrain.debuffDuration; // 10秒
+        let poisonDebuffEnd = 0; // 中毒 debuff 结束时间戳
+        let slowDebuffEnd = 0;   // 减速 debuff 结束时间戳
+        const SLOW_MULTIPLIER = TUNING.speed.slowMultiplier; // 减速倍率
 
         // V17c: 传送门系统
         let portalPairs = []; // [{ a: {x,y}, b: {x,y}, color }]
@@ -1757,7 +1800,7 @@
         function generateWavePortals() {
             portalPairs = [];
             let count = 0;
-            // V17d: �?就有传送门
+            // V17d: 波1就有传送门
             if (currentWave >= 1) count = 1;
             if (currentWave >= 3) count = 2;
             for (let i = 0; i < count; i++) {
@@ -1812,7 +1855,8 @@
                         ctx.arc(px, py, r * 0.6, 0, Math.PI * 2);
                         ctx.fill();
                     
-                    // 中心�?                    ctx.fillStyle = '#fff';
+                    // 中心点
+                    ctx.fillStyle = '#fff';
                         ctx.beginPath();
                         ctx.fillStyle = '#fff';
                         ctx.arc(px, py, 2, 0, Math.PI * 2);
@@ -1856,17 +1900,19 @@
                 ft.age += dt;
                 const progress = ft.age / ft.maxAge;
                 const alpha = 1 - progress;
-                const yOffset = -30 * progress; // 向上�?0px
+                const yOffset = -30 * progress; // 向上飘30px
                 const fontSize = ft.big ? cellSize * 1.0 : cellSize * 0.75;
                 
                 ctx.save();
                 ctx.globalAlpha = alpha;
                 ctx.fillStyle = ft.color;
-                // 像素风：用等宽粗�?                ctx.font = `bold ${Math.round(fontSize)}px "Courier New", monospace`;
+                // 像素风：用等宽粗体
+                ctx.font = `bold ${Math.round(fontSize)}px "Courier New", monospace`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 
-                // 描边让字更清�?                ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+                // 描边让字更清晰
+                ctx.strokeStyle = 'rgba(0,0,0,0.7)';
                 ctx.lineWidth = 3;
                 ctx.strokeText(ft.text, ft.x, ft.y + yOffset);
                 ctx.fillText(ft.text, ft.x, ft.y + yOffset);
@@ -1887,7 +1933,8 @@
             });
         }
 
-        // V19c: 绘制仪式物品（像素风图标�?        function drawCeremonyItems(time) {
+        // V19c: 绘制仪式物品（像素风图标）
+        function drawCeremonyItems(time) {
             // 钥匙
             if (ceremonyKey && isCeremonyKeyState()) {
                 const kx = ceremonyKey.x * cellSize + cellSize / 2;
@@ -1930,7 +1977,8 @@
                 ctx.restore();
             }
             
-            // 喷出的金�?            if (isCeremonyLootBurstState()) {
+            // 喷出的金币
+            if (isCeremonyLootBurstState()) {
                 const coinImg = ICON_IMAGES.loot_coin;
                 lootFoods.forEach(lf => {
                     if (lf.eaten) return;
@@ -1959,7 +2007,8 @@
             const now = Date.now();
             const head = snake[0];
             
-            // V18b: 检测蛇头是否在地形区域�?            let inTerrain = null;
+            // V18b: 检测蛇头是否在地形区域内
+            let inTerrain = null;
             for (const zone of terrainZones) {
                 if (zone.cells.some(c => c.x === head.x && c.y === head.y)) {
                     inTerrain = zone;
@@ -1978,7 +2027,8 @@
                 
                 terrainDotStepCounter++;
                 
-                // 进入毒雾 �?刷新�?debuff 计时�?                if (inTerrain.type === 'poison' && selectedModule.id !== 'venom') {
+                // 进入毒雾 → 刷新毒 debuff 计时器
+                if (inTerrain.type === 'poison' && selectedModule.id !== 'venom') {
                     poisonDebuffEnd = now + DEBUFF_DURATION;
                 }
                 // 毒尾在毒雾里加分
@@ -1990,7 +2040,7 @@
                     }
                 }
                 
-                // 进入减速区 �?刷新减�?debuff 计时�?+ 扣分
+                // 进入减速区 → 刷新减速 debuff 计时器 + 扣分
                 if (inTerrain.type === 'slow') {
                     const dur = hasBuff('ice_armor') ? DEBUFF_DURATION / 2 : DEBUFF_DURATION; // V19
                     slowDebuffEnd = now + dur;
@@ -2009,7 +2059,7 @@
             const isPoisoned = now < poisonDebuffEnd;
             const isSlowed = now < slowDebuffEnd;
             
-            // 中毒 DoT：持续扣�?+ 飘字
+            // 中毒 DoT：持续扣分 + 飘字
             if (isPoisoned) {
                 terrainDotType = 'poison';
                 if (Math.random() < 0.1) {
@@ -2020,7 +2070,8 @@
                 }
             }
             
-            // 减�?debuff：只减速，不扣�?            if (isSlowed) {
+            // 减速 debuff：只减速，不扣分
+            if (isSlowed) {
                 terrainDotType = terrainDotType || 'slow';
             }
             
@@ -2030,14 +2081,8 @@
         }
 
         // V19: 商店系统
-        function renderShopState() {
-            const shopInfo = document.getElementById('shopInfo');
-            const shopItemsDiv = document.getElementById('shopItems');
-
-            shopInfo.textContent = UI_TEXT.shop.info(coins, snake.length, currentWave);
-            shopItemsDiv.innerHTML = '';
-
-            shopItems.forEach((item) => {
+        function populateShopItems(shopItemsDiv) {
+            shopItems.forEach(item => {
                 const canAfford = canAffordShopItem(item);
                 const btn = document.createElement('button');
                 btn.className = 'restart-btn';
@@ -2063,12 +2108,20 @@
                 }
                 shopItemsDiv.appendChild(btn);
             });
+        }
 
+        function renderShopState() {
+            const shopInfo = document.getElementById('shopInfo');
+            const shopItemsDiv = document.getElementById('shopItems');
+            shopInfo.textContent = UI_TEXT.shop.info(coins, snake.length, currentWave);
+            shopItemsDiv.innerHTML = '';
+            populateShopItems(shopItemsDiv);
             document.getElementById('shopSkipBtn').onclick = () => closeShop();
             showShopOverlay();
             finishShopOpening();
         }
 
+        // ========== shop-wave-flow 包装层 (Patch 1) ==========
         function runShopOpenStep() {
             const entered = enterShopState();
             if (!entered) return { entered: false, shopOpened: false };
@@ -2120,28 +2173,42 @@
             };
         }
 
+        // ========== shop-wave-flow Pipeline (Patch 2) ==========
         function runShopWavePipeline(action) {
             if (action === 'openShop') {
                 return { action: 'openShop', ...runShopOpenStep() };
             }
             if (action === 'closeShop') {
-                return { action: 'closeShop', ...runShopCloseStep() };
-            }
-            if (action === 'startWaveTransition') {
-                return { action: 'startWaveTransition', ...runWaveTransitionStep() };
+                const closeResult = runShopCloseStep();
+                if (closeResult.transitionStarted) {
+                    const transitionResult = runWaveTransitionStep();
+                    return { action: 'closeShop', closeResult, transitionResult };
+                }
+                return { action: 'closeShop', closeResult };
             }
             if (action === 'advanceWave') {
-                return { action: 'advanceWave', ...runWaveAdvanceStep() };
+                const advanceResult = runWaveAdvanceStep();
+                return { action: 'advanceWave', advanceResult };
             }
             return { action: 'unknown', success: false };
         }
 
+        // ========== 原始函数（保持不变） ==========
         function openShop() {
-            if (!runShopWavePipeline('openShop').entered) return;
+            if (!enterShopState()) return;
+            consumeWaveBuffs();
+            stopGameLoop();
+            syncPauseButtonVisibility();
+            shopItems = rollShopItems();
+            renderShopState();
         }
         
         function closeShop() {
-            if (!runShopWavePipeline('closeShop').closed) return;
+            if (!isShopState() && !isShopOpeningState()) return;
+            closeShopState();
+            resetTeleportPreviewState();
+            closeAllOverlays();
+            startWaveTransition();
         }
 
         function renderWaveTransitionOverlay() {
@@ -2151,16 +2218,19 @@
         }
 
         function startWaveTransition() {
-            if (!runShopWavePipeline('startWaveTransition').started) return;
+            if (!beginWaveTransitionFlow()) return;
+            renderWaveTransitionOverlay();
+            restartWaveTransitionCountdown();
         }
 
         function advanceWave() {
-            runShopWavePipeline('advanceWave');
+            completeWaveAdvanceFlow();
         }
         function findSkinAnchorPosition() {
             // V14: 优先在蛇身附近找位置
-            const tailIndex = Math.floor(snake.length / 2); // 蛇身后半段开�?            
-            // 尝试在蛇尾延伸方�?2-4 格处
+            const tailIndex = Math.floor(snake.length / 2); // 蛇身后半段开始
+            
+            // 尝试在蛇尾延伸方向 2-4 格处
             if (snake.length >= 2) {
                 const tail = snake[snake.length - 1];
                 const beforeTail = snake[snake.length - 2];
@@ -2199,11 +2269,13 @@
                 }
             }
             
-            // 兜底：随机位�?            return findRandomSkinAnchor();
+            // 兜底：随机位置
+            return findRandomSkinAnchor();
         }
         
         function isValidSkinAnchor(centerX, centerY) {
-            // 边界检�?            if (centerX < 1 || centerX >= tileCount - 1 || centerY < 1 || centerY >= tileCount - 1) {
+            // 边界检查
+            if (centerX < 1 || centerX >= tileCount - 1 || centerY < 1 || centerY >= tileCount - 1) {
                 return false;
             }
             
@@ -2214,7 +2286,7 @@
                 return false;
             }
             
-            // 检�?3x3 区域的空闲格子数
+            // 检查 3x3 区域的空闲格子数
             let freeCount = 0;
             for (let dx = -1; dx <= 1; dx++) {
                 for (let dy = -1; dy <= 1; dy++) {
@@ -2227,7 +2299,8 @@
                 }
             }
             
-            // 至少需�?5 格空�?            return freeCount >= 5;
+            // 至少需要 5 格空闲
+            return freeCount >= 5;
         }
         
         function findRandomSkinAnchor() {
@@ -2249,28 +2322,34 @@
         }
 
         function generateSnakeSkin(anchor = null) {
-            // 检查蛇皮区域数量上�?            let skinRegionCount = snakeSkins.length;
+            // 检查蛇皮区域数量上限
+            let skinRegionCount = snakeSkins.length;
             if (skinRegionCount >= getMaxSkinRegions()) return;
             
-            // 如果没有传入锚点，使用蛇尾作为默认值（兼容旧逻辑�?            const tailPos = anchor || snake[snake.length - 1];
+            // 如果没有传入锚点，使用蛇尾作为默认值（兼容旧逻辑）
+            const tailPos = anchor || snake[snake.length - 1];
             const centerX = tailPos.x;
             const centerY = tailPos.y;
             
-            // 生成3x3区域的格�?            const cells = [];
+            // 生成3x3区域的格子
+            const cells = [];
             for (let dx = -1; dx <= 1; dx++) {
                 for (let dy = -1; dy <= 1; dy++) {
                     const x = centerX + dx;
                     const y = centerY + dy;
                     
-                    // 边界检�?                    if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
+                    // 边界检查
+                    if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
                     
-                    // 检查位置是否已被占�?                    if (!isPositionOccupied(x, y)) {
+                    // 检查位置是否已被占用
+                    if (!isPositionOccupied(x, y)) {
                         cells.push({ x, y });
                     }
                 }
             }
             
-            // 至少需�?个格子才能生成（避免完全重叠�?            if (cells.length >= 3) {
+            // 至少需要3个格子才能生成（避免完全重叠）
+            if (cells.length >= 3) {
                 const skin = {
                     centerX,
                     centerY,
@@ -2279,11 +2358,34 @@
                 };
                 snakeSkins.push(skin);
                 flashEffect('skin');
-                console.log('[蛇皮V14] 生成3x3区域�?', centerX, centerY, '格子�?', cells.length, '总计区域:', snakeSkins.length);
+                console.log('[蛇皮V14] 生成3x3区域于:', centerX, centerY, '格子数:', cells.length, '总计区域:', snakeSkins.length);
             }
         }
 
         // 更新状态UI
+        function pushTimerTrace(snapshot) {
+            timerTraceBuffer.push(snapshot);
+            if (timerTraceBuffer.length > TIMER_TRACE_LIMIT) {
+                timerTraceBuffer.shift();
+            }
+        }
+
+        function captureTimerTrace(nowOverride = Date.now()) {
+            const waveElapsed = waveStartTime ? (nowOverride - waveStartTime) : null;
+            const waveRemaining = waveElapsed === null ? null : (WAVE_DURATION - waveElapsed) / 1000;
+            return {
+                now: nowOverride,
+                timerText: timerDisplay.textContent,
+                waveStartTime,
+                waveElapsed,
+                waveRemaining,
+                waveCeremonyState,
+                isWaveTransition,
+                isPaused,
+                currentWave
+            };
+        }
+
         function updateStatusUI() {
             // V16: wave display
             const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
@@ -2300,12 +2402,19 @@
                 const lootRemainingTime = Math.max(0, Math.ceil((lootBurstEndTime - Date.now()) / 1000));
                 timerDisplay.textContent = `金币狂欢 ${lootRemainingTime}s`;
                 timerDisplay.classList.add('warning');
-                targetDisplay.textContent = `已收�? ${lootEatenCount}/${lootTotalCount}`;
-            } else if (waveRemaining <= 5 && waveRemaining > 0 && !isWaveTransitionState()) {
-                timerDisplay.classList.add('warning');
+                targetDisplay.textContent = `已收集: ${lootEatenCount}/${lootTotalCount}`;
+            } else {
+                const displayWaveSeconds = Math.max(0, Math.ceil(waveRemaining - 0.15));
+                timerDisplay.textContent = `Wave ${currentWave} · ${displayWaveSeconds}s`;
+                if (displayWaveSeconds <= 5 && displayWaveSeconds > 0 && !isWaveTransitionState()) {
+                    timerDisplay.classList.add('warning');
+                }
             }
             
-            // V18b: debuff 状态显�?            const now2 = Date.now();
+            pushTimerTrace(captureTimerTrace());
+
+            // V18b: debuff 状态显示
+            const now2 = Date.now();
             let debuffStr = '';
             if (now2 < poisonDebuffEnd) {
                 const pSec = Math.ceil((poisonDebuffEnd - now2) / 1000);
@@ -2350,6 +2459,7 @@
             hideTransientOverlays();
         }
 
+        // 游戏主循环
         function resolveNextHeadMovement() {
             direction = { ...nextDirection };
             return {
@@ -2434,7 +2544,6 @@
             };
         }
 
-        // Game loop collision and pickup helpers
         function findFoodPickupIndex(head) {
             let eatenFoodIndex = -1;
             let minDist = Infinity;
@@ -2540,9 +2649,6 @@
             };
         }
 
-        function gameStep() {
-            return runGameStepPipeline();
-        }
         function applyStepConsumption(eatenFood) {
             if (eatenFood) {
                 applyFoodEffect(eatenFood.type.effect);
@@ -2567,7 +2673,104 @@
             }
         }
 
-        // ========== V12：食物效果处�?==========
+        // ========== runtime-loop 包装层 (Patch 1) ==========
+        function runRuntimePreambleStep() {
+            if (isWaveTransitionState()) return { skipped: true, reason: 'waveTransition' };
+            
+            const now = Date.now();
+            totalSurvivalTime = (now - gameStartTime) / 1000;
+            const waveElapsed = now - waveStartTime;
+            
+            updateCeremonyFlow(waveElapsed);
+            updateWaveFoodSpawning();
+            checkTerrainEffects();
+            updateSlowLoopState();
+            updateStatusUI();
+            
+            return {
+                skipped: false,
+                waveElapsed,
+                survivalTime: totalSurvivalTime
+            };
+        }
+
+        function runRuntimeMovementStep() {
+            let head = resolveNextHeadMovement();
+            const movementResolution = resolvePortalAndWallInteraction(head);
+            if (movementResolution.blocked) {
+                return { blocked: true, head: null, movementResolution };
+            }
+            return { blocked: false, head: movementResolution.head, movementResolution };
+        }
+
+        function runRuntimeConsumptionStep(head) {
+            const collisionResolution = runCollisionAndPickupStep(head);
+            if (collisionResolution.blocked) {
+                return { blocked: true, collisionResolution };
+            }
+            
+            snake.unshift(head);
+            applyStepConsumption(collisionResolution.eatenFood);
+            updateDashAndBoostTimers();
+            
+            return {
+                blocked: false,
+                collisionResolution,
+                consumed: !!collisionResolution.eatenFood
+            };
+        }
+
+        // ========== runtime-loop Pipeline (Patch 2) ==========
+        function runGameStepPipeline() {
+            const preambleResult = runRuntimePreambleStep();
+            if (preambleResult.skipped) return { completed: false, stage: 'preamble', preambleResult };
+            
+            const movementResult = runRuntimeMovementStep();
+            if (movementResult.blocked) return { completed: false, stage: 'movement', preambleResult, movementResult };
+            
+            const consumptionResult = runRuntimeConsumptionStep(movementResult.head);
+            if (consumptionResult.blocked) return { completed: false, stage: 'consumption', preambleResult, movementResult, consumptionResult };
+            
+            return {
+                completed: true,
+                stage: 'complete',
+                preambleResult,
+                movementResult,
+                consumptionResult,
+                snakeLen: snake.length,
+                score
+            };
+        }
+
+        // ========== 原始函数（保持不变） ==========
+        function gameStep() {
+            if (isWaveTransitionState()) return; // 波次过渡中不更新
+            
+            const now = Date.now();
+            totalSurvivalTime = (now - gameStartTime) / 1000;
+            const waveElapsed = now - waveStartTime;
+            
+            updateCeremonyFlow(waveElapsed);
+            updateWaveFoodSpawning();
+            checkTerrainEffects();
+            updateSlowLoopState();
+            
+            updateStatusUI();
+            
+            let head = resolveNextHeadMovement();
+            const movementResolution = resolvePortalAndWallInteraction(head);
+            if (movementResolution.blocked) return;
+            head = movementResolution.head;
+
+            const collisionResolution = runCollisionAndPickupStep(head);
+            if (collisionResolution.blocked) return;
+
+            snake.unshift(head);
+            applyStepConsumption(collisionResolution.eatenFood);
+            updateDashAndBoostTimers();
+        }
+
+        // ========== V12：食物效果处理 ==========
         function resolveFoodEffectScore(effect) {
             return (selectedModule && selectedModule.scoreModifiers[effect] !== undefined)
                 ? selectedModule.scoreModifiers[effect]
@@ -2644,19 +2847,20 @@
             headGlowTimer = 0;
             teleportTrailTimer = 0;
             teleportPreview = null;
-
+            
             const modScore = resolveFoodEffectScore(effect);
             showFoodEffectScoreText(modScore);
             const effectResolution = runFoodEffectHandlerStep(effect, modScore);
-
+            
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem(STORAGE_KEYS.highScore, highScore);
             }
-
+            
             updateStatusUI();
             return effectResolution;
         }
+
         function updateBackgroundHue() {
             backgroundHue = 240 - (Math.max(0, score) / 500) * 240;
             if (backgroundHue < 0) backgroundHue = 0;
@@ -2689,7 +2893,9 @@
 
             const windRotation = food.type.isWind ? (time * 3 + (food.windSpinPhase || 0)) : 0;
             const pulse = Math.sin(time * 3 + food.pulsePhase) * 0.05 + 0.95;
-            const size = cellSize * 0.45 * pulse; // V18d: 食物占满1格（直径�?0%格子�?            const markerRadius = cellSize * 0.48; // 底圈也占�?            const markerFill = food.type.isDanger
+            const size = cellSize * 0.45 * pulse; // V18d: 食物占满1格（直径≈90%格子）
+            const markerRadius = cellSize * 0.48; // 底圈也占满
+            const markerFill = food.type.isDanger
                 ? 'rgba(94, 17, 17, 0.34)'
                 : food.type.isWind
                     ? 'rgba(20, 74, 89, 0.30)'
@@ -2719,7 +2925,7 @@
                 ctx.arc(x, y, markerRadius + 1.5, 0, Math.PI * 2);
                 ctx.stroke();
                 
-                // V17: 模块适性光圈（�?有利，红=不利，白=中性）
+                // V17: 模块适性光圈（绿=有利，红=不利，白=中性）
                 if (selectedModule) {
                     const modScore = selectedModule.scoreModifiers[food.type.effect] || 0;
                     let auraColor;
@@ -2959,7 +3165,8 @@
                     break;
 
                 case 'barrier_sign':
-                    // V17b: 橙色三角路障�?                    ctx.beginPath();
+                    // V17b: 橙色三角路障牌
+                    ctx.beginPath();
                     ctx.moveTo(x, y - size * 0.9);
                     ctx.lineTo(x + size * 0.85, y + size * 0.7);
                     ctx.lineTo(x - size * 0.85, y + size * 0.7);
@@ -3060,7 +3267,7 @@
             });
         }
 
-        // ========== V17: 地形区域绘制（增强版�?==========
+        // ========== V17: 地形区域绘制（增强版） ==========
         function drawTerrainZones(time) {
             terrainZones.forEach(zone => {
                 const pulse = Math.sin(time * 2) * 0.1 + 0.25;
@@ -3129,13 +3336,14 @@
                     ctx.font = `${cellSize * 0.8}px Arial`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(isPosion ? '�? : '�?, cx, cy);
+                    ctx.fillText(isPosion ? '☠' : '❄', cx, cy);
                 }
             });
         }
 
         function drawSnakeSkins(time) {
-            const inset = 0; // V18d: 蛇蜕占满一�?            const tileRadius = Math.max(3, currentLevelConfig.skin.tileRadius);
+            const inset = 0; // V18d: 蛇蜕占满一格
+            const tileRadius = Math.max(3, currentLevelConfig.skin.tileRadius);
             const skinTexture = TEXTURE_IMAGES.snake_skin;
             const useSkinTexture = isDrawableIcon(skinTexture);
             const skinStyle = VISUAL_STYLE_CONFIG.snakeSkin || {};
@@ -3229,7 +3437,8 @@
             const y = startIndicator.y * cellSize + cellSize / 2 + bounce;
             const size = scale.snakeHead;
             
-            // V12：绿色引导指�?            ctx.shadowColor = '#27ae60';
+            // V12：绿色引导指示
+            ctx.shadowColor = '#27ae60';
             ctx.shadowBlur = 15;
             ctx.fillStyle = '#2ecc71';
             ctx.beginPath();
@@ -3241,7 +3450,7 @@
             ctx.font = `bold ${scale.symbol}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('�?, x, y);
+            ctx.fillText('▶', x, y);
         }
 
         // ========== 瞬移视觉引导绘制函数 ==========
@@ -3257,7 +3466,8 @@
             const y = teleportPreview.y * cellSize + cellSize / 2;
             
             const pulse = Math.sin(time * 10) * 0.5 + 0.5;
-            // V12：绿色瞬移预�?            ctx.fillStyle = `rgba(39, 174, 96, ${pulse})`;
+            // V12：绿色瞬移预览
+            ctx.fillStyle = `rgba(39, 174, 96, ${pulse})`;
             ctx.beginPath();
             ctx.arc(x, y, cellSize * 0.6, 0, Math.PI * 2);
             ctx.fill();
@@ -3292,7 +3502,8 @@
         // V17: 蛇头形状绘制
         function drawSnakeHead(x, y, size, shape) {
             switch (shape) {
-                case 'triangle': // 毒尾 - 三角�?                    ctx.beginPath();
+                case 'triangle': // 毒尾 - 三角头
+                    ctx.beginPath();
                     ctx.moveTo(x + direction.x * size * 1.2 - direction.y * size * 0.1, 
                                y + direction.y * size * 1.2 + direction.x * size * 0.1);
                     ctx.lineTo(x - direction.y * size * 0.9, y + direction.x * size * 0.9);
@@ -3310,7 +3521,8 @@
                     }
                     ctx.closePath();
                     ctx.fill();
-                    // 装甲纹理�?                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    // 装甲纹理线
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(x - size * 0.5, y); ctx.lineTo(x + size * 0.5, y);
@@ -3338,7 +3550,7 @@
             const s = cellSize * 0.3;
             
             switch (selectedModule.trailEffect) {
-                case 'drip': // 毒尾 - 毒液滴落（最�?节）
+                case 'drip': // 毒尾 - 毒液滴落（最后3节）
                     if (index >= snake.length - 3) {
                         const drip = Math.sin(time * 5 + index) * 0.5 + 0.5;
                         ctx.fillStyle = `rgba(123, 47, 247, ${drip * 0.4})`;
@@ -3347,7 +3559,7 @@
                         ctx.fill();
                     }
                     break;
-                case 'stripe': // 装甲 - 金属光泽条纹（每�?节）
+                case 'stripe': // 装甲 - 金属光泽条纹（每隔2节）
                     if (index % 2 === 0) {
                         ctx.strokeStyle = 'rgba(200, 220, 240, 0.45)';
                         ctx.lineWidth = 2;
@@ -3356,7 +3568,8 @@
                         ctx.stroke();
                     }
                     break;
-                case 'ghost': // 灵蛇 - 淡金色残�?                    if (index <= 2) {
+                case 'ghost': // 灵蛇 - 淡金色残影
+                    if (index <= 2) {
                         const fade = (3 - index) / 3;
                         ctx.fillStyle = `rgba(245, 200, 66, ${fade * 0.2})`;
                         ctx.beginPath();
@@ -3396,7 +3609,8 @@
             
             // V17fix: 地形 DoT 蛇身持续变色脉动
             let terrainTint = null;
-            // V18c: debuff 全身变色（除蛇头�?            const nowDraw = Date.now();
+            // V18c: debuff 全身变色（除蛇头）
+            const nowDraw = Date.now();
             const isPoisonedDraw = nowDraw < poisonDebuffEnd;
             const isSlowedDraw = nowDraw < slowDebuffEnd;
             let debuffBodyGradientOverride = null;
@@ -3438,7 +3652,8 @@
                         gradient.addColorStop(1, hColor);
                     }
                 } else {
-                    // V18c: debuff 时蛇身变�?                    if (debuffBodyGradientOverride) {
+                    // V18c: debuff 时蛇身变色
+                    if (debuffBodyGradientOverride) {
                         gradient.addColorStop(0, debuffBodyGradientOverride.c1);
                         gradient.addColorStop(1, debuffBodyGradientOverride.c2);
                     } else {
@@ -3449,10 +3664,11 @@
                 
                 ctx.fillStyle = gradient;
                 
-                // V18b: 蛇身改为圆角方块（格子化�?                if (index === 0) {
+                // V18b: 蛇身改为圆角方块（格子化）
+                if (index === 0) {
                     drawSnakeHead(x, y, size, hShape);
                 } else {
-                    const bSize = cellSize * 0.82; // 占格�?0%
+                    const bSize = cellSize * 0.82; // 占格子80%
                     const bRadius = cellSize * 0.15;
                     ctx.beginPath();
                     ctx.roundRect(x - bSize/2, y - bSize/2, bSize, bSize, bRadius);
@@ -3556,23 +3772,23 @@
             ctx.textBaseline = 'middle';
             
             const topCenterX = (portals.top.start + (portals.top.end - portals.top.start) / 2 + 0.5) * cellSize;
-            ctx.fillText('�?, topCenterX, cellSize / 2);
+            ctx.fillText('↔', topCenterX, cellSize / 2);
             
             const bottomCenterX = (portals.bottom.start + (portals.bottom.end - portals.bottom.start) / 2 + 0.5) * cellSize;
-            ctx.fillText('�?, bottomCenterX, canvas.height - cellSize / 2);
+            ctx.fillText('↔', bottomCenterX, canvas.height - cellSize / 2);
             
             const leftCenterY = (portals.left.start + (portals.left.end - portals.left.start) / 2 + 0.5) * cellSize;
             ctx.save();
             ctx.translate(cellSize / 2, leftCenterY);
             ctx.rotate(Math.PI / 2);
-            ctx.fillText('�?, 0, 0);
+            ctx.fillText('↔', 0, 0);
             ctx.restore();
             
             const rightCenterY = (portals.right.start + (portals.right.end - portals.right.start) / 2 + 0.5) * cellSize;
             ctx.save();
             ctx.translate(canvas.width - cellSize / 2, rightCenterY);
             ctx.rotate(Math.PI / 2);
-            ctx.fillText('�?, 0, 0);
+            ctx.fillText('↔', 0, 0);
             ctx.restore();
             
             const wallColor = '#ff4444';
@@ -3692,7 +3908,8 @@
             drawTerrainZones(time); // V16: 地形区域
             drawPortalPairs(time); // V17c: 传送门
             drawCeremonyItems(time); // V19: 仪式物品
-            drawSnakeSkins(time); // V12：绘制蛇皮（3x3区域�?            
+            drawSnakeSkins(time); // V12：绘制蛇皮（3x3区域）
+            
             if (isInWaitingTutorialState()) {
                 drawTutorial();
                 return;
@@ -3741,7 +3958,7 @@
 
         function startGame() {
             if (getPrimaryGameState() === 'RUNNING' || !hasSelectedMode) return;
-
+            
             resizeCanvas();
             stopGameLoop();
             initGame();
@@ -3749,13 +3966,13 @@
             syncPauseButtonVisibility();
             hideResult();
             updateTouchHint();
-
             restartGameLoopWithCurrentState();
         }
+
         function updateTouchHint() {
             if (!touchHintEl) return;
             touchHintEl.textContent = isWaitingForStart
-                ? '滑动或点击方向键开始游�?
+                ? '滑动或点击方向键开始游戏'
                 : activeModeConfig.touchHint(currentLevelConfig);
         }
 
@@ -3990,6 +4207,7 @@
         }
 
         function resetPreviewFeedbackState() {
+            if (runtimeStateModule) return runtimeStateModule.resetPreviewFeedbackState();
             teleportPreview = null;
             teleportTrailTimer = 0;
             headGlowTimer = 0;
@@ -4048,15 +4266,6 @@
             closeAllOverlays();
             waveOverlay.classList.add('show');
             syncPauseButtonVisibility();
-        }
-
-        function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
-            if (uiOverlaysModule) return uiOverlaysModule.restoreOverlayVisibility({ resultVisible, pauseVisible, waveVisible, shopVisible });
-            closeAllOverlays();
-            resultOverlay.classList.toggle('show', !!resultVisible);
-            pauseOverlay.classList.toggle('show', !!pauseVisible);
-            waveOverlay.classList.toggle('show', !!waveVisible);
-            getShopOverlayElement().classList.toggle('show', !!shopVisible);
         }
 
         function restartWaveTransitionCountdown() {
@@ -4118,6 +4327,34 @@
             setShopOpenState(false);
         }
 
+        function restoreShopState({ shopOpen: nextShopOpen = false, shopOpening: nextShopOpening = false } = {}) {
+            closeShopState();
+            if (nextShopOpen) {
+                setShopOpenState(true);
+            }
+            if (nextShopOpening) {
+                setShopOpeningState(true);
+            }
+        }
+
+        function resetTeleportPreviewState() {
+            portalTeleportCooldown = 0;
+            teleportPreview = null;
+            teleportTrailTimer = 0;
+        }
+
+        function resetWaveProgressState() {
+            clearWaveTransitionState();
+            waveStartTime = Date.now();
+            foodSpawnTimer = 0;
+        }
+
+        function resetWaveDebuffState() {
+            poisonDebuffEnd = 0;
+            slowDebuffEnd = 0;
+            terrainDotType = null;
+        }
+
         function clearWavePlayfieldState() {
             resetTeleportPreviewState();
             foods = [];
@@ -4165,7 +4402,7 @@
                 for (let att = 0; att < TUNING.generation.lootSpawnAttempts; att++) {
                     const fx = Math.floor(Math.random() * (tileCount - 2)) + 1;
                     const fy = Math.floor(Math.random() * (tileCount - 2)) + 1;
-                    if (!isPositionOccupied(fx, fy) && !lootFoods.some((lootFood) => lootFood.x === fx && lootFood.y === fy)) {
+                    if (!isPositionOccupied(fx, fy) && !lootFoods.some(l => l.x === fx && l.y === fy)) {
                         lootFoods.push({ x: fx, y: fy, eaten: false });
                         break;
                     }
@@ -4202,15 +4439,15 @@
         }
 
         function shouldFinishLootBurst() {
-            const lootRemaining = lootFoods.filter((lootFood) => !lootFood.eaten).length;
+            const lootRemaining = lootFoods.filter(lf => !lf.eaten).length;
             return lootRemaining <= 0 || Date.now() >= lootBurstEndTime;
         }
 
         function updateLootBurstCollection(head) {
             if (!isCeremonyLootBurstState()) return false;
-            lootFoods.forEach((lootFood) => {
-                if (!lootFood.eaten && head.x === lootFood.x && head.y === lootFood.y) {
-                    collectLootBurstPickup(head, lootFood);
+            lootFoods.forEach(lf => {
+                if (!lf.eaten && head.x === lf.x && head.y === lf.y) {
+                    collectLootBurstPickup(head, lf);
                 }
             });
             if (shouldFinishLootBurst()) {
@@ -4220,6 +4457,7 @@
             return false;
         }
 
+        // ========== wave-ceremony 包装层 (Patch 1) ==========
         function runCeremonyHeadInteractionsStep(head) {
             const keyResolved = tryResolveKeyCeremony(head);
             const chestResolved = tryResolveChestCeremony(head);
@@ -4243,19 +4481,23 @@
             };
         }
 
+        // ========== wave-ceremony Pipeline (Patch 2) ==========
         function runCeremonyPipeline(waveElapsed) {
             const flowResult = runCeremonyFlowStep(waveElapsed);
+            const currentState = getPrimaryGameState();
+            
             return {
                 ...flowResult,
-                currentState: getPrimaryGameState(),
+                currentState,
                 ceremonyPhase: waveCeremonyState || null,
                 keyPosition: ceremonyKey ? { x: ceremonyKey.x, y: ceremonyKey.y } : null,
                 chestPosition: ceremonyChest ? { x: ceremonyChest.x, y: ceremonyChest.y } : null,
-                lootRemaining: lootFoods ? lootFoods.filter((lootFood) => !lootFood.eaten).length : 0,
+                lootRemaining: lootFoods ? lootFoods.filter(l => !l.eaten).length : 0,
                 lootEaten: lootEatenCount || 0
             };
         }
 
+        // ========== 原始函数（保持不变） ==========
         function resolveCeremonyHeadInteractions(ceremonyHead) {
             tryResolveKeyCeremony(ceremonyHead);
             tryResolveChestCeremony(ceremonyHead);
@@ -4266,97 +4508,6 @@
             tryStartKeyCeremony(waveElapsed);
             const ceremonyHead = snake[0];
             resolveCeremonyHeadInteractions(ceremonyHead);
-        }
-
-        function runRuntimePreambleStep() {
-            if (isWaveTransitionState()) return { skipped: true, reason: 'waveTransition' };
-
-            const now = Date.now();
-            totalSurvivalTime = (now - gameStartTime) / 1000;
-            const waveElapsed = now - waveStartTime;
-
-            updateCeremonyFlow(waveElapsed);
-            updateWaveFoodSpawning();
-            checkTerrainEffects();
-            updateSlowLoopState();
-            updateStatusUI();
-
-            return {
-                skipped: false,
-                waveElapsed,
-                survivalTime: totalSurvivalTime
-            };
-        }
-
-        function runRuntimeMovementStep() {
-            let head = resolveNextHeadMovement();
-            const movementResolution = resolvePortalAndWallInteraction(head);
-            if (movementResolution.blocked) {
-                return { blocked: true, head: null, movementResolution };
-            }
-            return { blocked: false, head: movementResolution.head, movementResolution };
-        }
-
-        function runRuntimeConsumptionStep(head) {
-            const collisionResolution = runCollisionAndPickupStep(head);
-            if (collisionResolution.blocked) {
-                return { blocked: true, collisionResolution };
-            }
-
-            snake.unshift(head);
-            applyStepConsumption(collisionResolution.eatenFood);
-            updateDashAndBoostTimers();
-
-            return {
-                blocked: false,
-                collisionResolution,
-                consumed: !!collisionResolution.eatenFood
-            };
-        }
-
-        function runGameStepPipeline() {
-            const preambleResult = runRuntimePreambleStep();
-            if (preambleResult.skipped) return { completed: false, stage: 'preamble', preambleResult };
-
-            const movementResult = runRuntimeMovementStep();
-            if (movementResult.blocked) return { completed: false, stage: 'movement', preambleResult, movementResult };
-
-            const consumptionResult = runRuntimeConsumptionStep(movementResult.head);
-            if (consumptionResult.blocked) return { completed: false, stage: 'consumption', preambleResult, movementResult, consumptionResult };
-
-            return {
-                completed: true,
-                stage: 'complete',
-                preambleResult,
-                movementResult,
-                consumptionResult,
-                snakeLen: snake.length,
-                score
-            };
-        }
-
-        function resetTeleportPreviewState() {
-            portalTeleportCooldown = 0;
-            teleportPreview = null;
-            teleportTrailTimer = 0;
-        }
-
-        function resetWaveProgressState() {
-            clearWaveTransitionState();
-            waveStartTime = Date.now();
-            foodSpawnTimer = 0;
-        }
-
-        function resetWaveDebuffState() {
-            poisonDebuffEnd = 0;
-            slowDebuffEnd = 0;
-            terrainDotType = null;
-        }
-
-        function enterShopState() {
-            if (isShopState() || isShopOpeningState()) return false;
-            beginShopOpening();
-            return true;
         }
 
         function updateWaveFoodSpawning() {
@@ -4384,13 +4535,6 @@
             }
         }
 
-        function enterWaveTransition() {
-            if (isWaveTransitionState()) return false;
-            setWaveTransitionState(true);
-            waveTransitionTimer = WAVE_TRANSITION_DURATION;
-            return true;
-        }
-
         function stopGameLoop() {
             clearInterval(gameLoop);
             gameLoop = null;
@@ -4399,6 +4543,15 @@
         function stopWaveTransitionCountdown() {
             clearInterval(waveTransitionInterval);
             waveTransitionInterval = null;
+        }
+
+        function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
+            if (uiOverlaysModule) return uiOverlaysModule.restoreOverlayVisibility({ resultVisible, pauseVisible, waveVisible, shopVisible });
+            closeAllOverlays();
+            resultOverlay.classList.toggle('show', !!resultVisible);
+            pauseOverlay.classList.toggle('show', !!pauseVisible);
+            waveOverlay.classList.toggle('show', !!waveVisible);
+            getShopOverlayElement().classList.toggle('show', !!shopVisible);
         }
 
         function restoreRuntimeByPrimaryState(primaryState) {
@@ -4446,8 +4599,20 @@
             restartGameLoopWithCurrentState();
         }
 
+        function enterShopState() {
+            if (isShopState() || isShopOpeningState()) return false;
+            beginShopOpening();
+            return true;
+        }
+
+        function enterWaveTransition() {
+            if (isWaveTransitionState()) return false;
+            setWaveTransitionState(true);
+            waveTransitionTimer = WAVE_TRANSITION_DURATION;
+            return true;
+        }
+
         function restartGameLoopWithCurrentState() {
-            gameLoop = null;
             restartGameLoopWithInterval();
         }
 
@@ -4568,16 +4733,19 @@
         function queueDirection(next) {
             if (inputHelpersModule) return inputHelpersModule.queueDirection(next);
             if (!next || !canQueueDirection()) return;
+
             if (getPrimaryGameState() === 'WAITING') {
                 handlePreGameDirectionInput(next);
                 return;
             }
+
             handleInGameDirectionInput(next);
         }
 
         restartBtn.addEventListener('click', () => {
             resetToWaitingState();
-            openModeMenu(); // V16: 重新选模�?        });
+            openModeMenu(); // V16: 重新选模块
+        });
 
         // V16: module selection buttons (generated dynamically)
         // V19c: 图例折叠切换
@@ -4632,7 +4800,8 @@
                 return;
             }
             if (!hasSelectedMode) return;
-            if (getPrimaryGameState() === 'PAUSED') return; // V18: 暂停时不响应方向�?            if (isInTerminalOverlayState()) {
+            if (getPrimaryGameState() === 'PAUSED') return; // V18: 暂停时不响应方向键
+            if (isInTerminalOverlayState()) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     resetToWaitingState();
                 }
@@ -4848,16 +5017,6 @@
             return value;
         }
 
-        function restoreShopState({ shopOpen: nextShopOpen = false, shopOpening: nextShopOpening = false } = {}) {
-            closeShopState();
-            if (nextShopOpen) {
-                setShopOpenState(true);
-            }
-            if (nextShopOpening) {
-                setShopOpeningState(true);
-            }
-        }
-
         const debugApiModule = window.SnakeDebugApi ? window.SnakeDebugApi.install({
             modeOverlay,
             resultOverlay,
@@ -4871,14 +5030,14 @@
             getState: getDebugApiStateSnapshot,
             setStateValue: setDebugApiStateValue,
             actions: {
-                setPausedState: runtimeStateModule ? runtimeStateModule.setPausedState : (value) => { setPausedState(value); },
-                setWaveTransitionState: runtimeStateModule ? runtimeStateModule.setWaveTransitionState : (value) => { setWaveTransitionState(value); },
-                setCeremonyState: runtimeStateModule ? runtimeStateModule.setCeremonyState : (value) => { setCeremonyState(value); },
+                setPausedState,
+                setWaveTransitionState,
+                setCeremonyState,
                 restoreShopState,
                 applyModeConfig,
-                restoreOverlayVisibility: runtimeStateModule ? runtimeStateModule.restoreOverlayVisibility : null,
-                restoreRuntimeByPrimaryState: runtimeStateModule ? runtimeStateModule.restoreRuntimeByPrimaryState : null,
-                syncPauseButtonVisibility: runtimeStateModule ? runtimeStateModule.syncPauseButtonVisibility : null,
+                restoreOverlayVisibility,
+                restoreRuntimeByPrimaryState,
+                syncPauseButtonVisibility,
                 updateTouchHint,
                 updateStatusUI,
                 getShopOverlayElement,
@@ -4899,6 +5058,20 @@
                 getState: debugApiModule.getState,
                 setState: debugApiModule.setState,
                 setFoods: debugApiModule.setFoods,
+                getTimerTrace() {
+                    return timerTraceBuffer.map(item => ({ ...item }));
+                },
+                clearTimerTrace() {
+                    timerTraceBuffer = [];
+                },
+                captureTimerTrace() {
+                    const snap = captureTimerTrace();
+                    pushTimerTrace(snap);
+                    return snap;
+                },
+                exportTimerTrace() {
+                    return JSON.stringify(timerTraceBuffer);
+                },
                 clearLoop() {
                     stopGameLoop();
                 },
@@ -4906,10 +5079,8 @@
                 spawnFood,
                 ensurePositiveFood,
                 canPlaceFoodAt,
-                runShopWavePipeline,
-                runCeremonyPipeline,
-                runGameStepPipeline,
-                // V12：测试辅助函�?                forceGenerateSkin() {
+                // V12：测试辅助函数
+                forceGenerateSkin() {
                     generateSnakeSkin();
                 },
                 forceSpawnBarrier() {

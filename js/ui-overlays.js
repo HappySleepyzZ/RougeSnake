@@ -47,40 +47,42 @@ window.SnakeUiOverlays = {
       getShopOverlayElement().classList.remove('show');
     }
 
+    function showExclusiveOverlay(overlay) {
+      closeAllOverlays();
+      overlay.classList.add('show');
+      syncPauseButtonVisibility();
+    }
+
+    function setOverlayVisibility(overlay, visible) {
+      overlay.classList.toggle('show', !!visible);
+    }
+
     function syncPauseButtonVisibility() {
       pauseBtn.style.display = canRunGameLoopGuarded() ? 'block' : 'none';
     }
 
     function showPauseOverlay() {
-      closeAllOverlays();
-      pauseOverlay.classList.add('show');
-      syncPauseButtonVisibility();
+      showExclusiveOverlay(pauseOverlay);
     }
 
     function showShopOverlay() {
-      closeAllOverlays();
-      getShopOverlayElement().classList.add('show');
-      syncPauseButtonVisibility();
+      showExclusiveOverlay(getShopOverlayElement());
     }
 
     function showWaveOverlay() {
-      closeAllOverlays();
-      waveOverlay.classList.add('show');
-      syncPauseButtonVisibility();
+      showExclusiveOverlay(waveOverlay);
     }
 
     function showOnlyResultOverlay() {
-      closeAllOverlays();
-      resultOverlay.classList.add('show');
-      syncPauseButtonVisibility();
+      showExclusiveOverlay(resultOverlay);
     }
 
     function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
       closeAllOverlays();
-      resultOverlay.classList.toggle('show', !!resultVisible);
-      pauseOverlay.classList.toggle('show', !!pauseVisible);
-      waveOverlay.classList.toggle('show', !!waveVisible);
-      getShopOverlayElement().classList.toggle('show', !!shopVisible);
+      setOverlayVisibility(resultOverlay, resultVisible);
+      setOverlayVisibility(pauseOverlay, pauseVisible);
+      setOverlayVisibility(waveOverlay, waveVisible);
+      setOverlayVisibility(getShopOverlayElement(), shopVisible);
     }
 
     return {

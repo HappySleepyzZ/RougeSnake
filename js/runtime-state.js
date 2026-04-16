@@ -129,57 +129,25 @@ window.SnakeRuntimeState = {
       return guard();
     }
 
-    function getPrimaryGameState() {
-      return runRuntimeStateGuard('getPrimaryGameState', 'IDLE');
+    function createRuntimeStateGuardRunner(name, fallbackValue) {
+      return function runGuard() {
+        return runRuntimeStateGuard(name, fallbackValue);
+      };
     }
 
-    function canRunGameLoop() {
-      return runRuntimeStateGuard('canRunGameLoop', false);
-    }
-
-    function canAcceptGameplayInput() {
-      return runRuntimeStateGuard('canAcceptGameplayInput', false);
-    }
-
-    function isInTerminalOverlayState() {
-      return runRuntimeStateGuard('isInTerminalOverlayState', false);
-    }
-
-    function isInWaitingTutorialState() {
-      return runRuntimeStateGuard('isInWaitingTutorialState', false);
-    }
-
-    function isCeremonyPlayingState() {
-      return runRuntimeStateGuard('isCeremonyPlayingState', false);
-    }
-
-    function isCeremonyKeyState() {
-      return runRuntimeStateGuard('isCeremonyKeyState', false);
-    }
-
-    function isCeremonyChestState() {
-      return runRuntimeStateGuard('isCeremonyChestState', false);
-    }
-
-    function isCeremonyLootBurstState() {
-      return runRuntimeStateGuard('isCeremonyLootBurstState', false);
-    }
-
-    function isShopState() {
-      return runRuntimeStateGuard('isShopState', false);
-    }
-
-    function isShopOpeningState() {
-      return runRuntimeStateGuard('isShopOpeningState', false);
-    }
-
-    function isWaveTransitionState() {
-      return runRuntimeStateGuard('isWaveTransitionState', false);
-    }
-
-    function isPausedState() {
-      return runRuntimeStateGuard('isPausedState', false);
-    }
+    const getPrimaryGameState = createRuntimeStateGuardRunner('getPrimaryGameState', 'IDLE');
+    const canRunGameLoop = createRuntimeStateGuardRunner('canRunGameLoop', false);
+    const canAcceptGameplayInput = createRuntimeStateGuardRunner('canAcceptGameplayInput', false);
+    const isInTerminalOverlayState = createRuntimeStateGuardRunner('isInTerminalOverlayState', false);
+    const isInWaitingTutorialState = createRuntimeStateGuardRunner('isInWaitingTutorialState', false);
+    const isCeremonyPlayingState = createRuntimeStateGuardRunner('isCeremonyPlayingState', false);
+    const isCeremonyKeyState = createRuntimeStateGuardRunner('isCeremonyKeyState', false);
+    const isCeremonyChestState = createRuntimeStateGuardRunner('isCeremonyChestState', false);
+    const isCeremonyLootBurstState = createRuntimeStateGuardRunner('isCeremonyLootBurstState', false);
+    const isShopState = createRuntimeStateGuardRunner('isShopState', false);
+    const isShopOpeningState = createRuntimeStateGuardRunner('isShopOpeningState', false);
+    const isWaveTransitionState = createRuntimeStateGuardRunner('isWaveTransitionState', false);
+    const isPausedState = createRuntimeStateGuardRunner('isPausedState', false);
 
     function getShopOverlayElement() {
       return document.getElementById('shopOverlay');
@@ -192,6 +160,16 @@ window.SnakeRuntimeState = {
         waveOverlay.classList.remove('show');
         getShopOverlayElement().classList.remove('show');
       });
+    }
+
+    function showOverlayWithPauseSync(overlay) {
+      closeAllOverlays();
+      overlay.classList.add('show');
+      syncPauseButtonVisibility();
+    }
+
+    function setOverlayVisibility(overlay, visible) {
+      overlay.classList.toggle('show', !!visible);
     }
 
     function hideTransientOverlays() {
@@ -237,36 +215,24 @@ window.SnakeRuntimeState = {
     }
 
     function showPauseOverlay() {
-      return callActionOrFallback('showPauseOverlay', () => {
-        closeAllOverlays();
-        pauseOverlay.classList.add('show');
-        syncPauseButtonVisibility();
-      });
+      return callActionOrFallback('showPauseOverlay', () => showOverlayWithPauseSync(pauseOverlay));
     }
 
     function showShopOverlay() {
-      return callActionOrFallback('showShopOverlay', () => {
-        closeAllOverlays();
-        getShopOverlayElement().classList.add('show');
-        syncPauseButtonVisibility();
-      });
+      return callActionOrFallback('showShopOverlay', () => showOverlayWithPauseSync(getShopOverlayElement()));
     }
 
     function showWaveOverlay() {
-      return callActionOrFallback('showWaveOverlay', () => {
-        closeAllOverlays();
-        waveOverlay.classList.add('show');
-        syncPauseButtonVisibility();
-      });
+      return callActionOrFallback('showWaveOverlay', () => showOverlayWithPauseSync(waveOverlay));
     }
 
     function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
       return callActionOrFallback('restoreOverlayVisibility', () => {
         closeAllOverlays();
-        resultOverlay.classList.toggle('show', !!resultVisible);
-        pauseOverlay.classList.toggle('show', !!pauseVisible);
-        waveOverlay.classList.toggle('show', !!waveVisible);
-        getShopOverlayElement().classList.toggle('show', !!shopVisible);
+        setOverlayVisibility(resultOverlay, resultVisible);
+        setOverlayVisibility(pauseOverlay, pauseVisible);
+        setOverlayVisibility(waveOverlay, waveVisible);
+        setOverlayVisibility(getShopOverlayElement(), shopVisible);
       }, { resultVisible, pauseVisible, waveVisible, shopVisible });
     }
 

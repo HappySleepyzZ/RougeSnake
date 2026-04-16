@@ -30,21 +30,16 @@ window.SnakeInputHelpers = {
       return fallbackValue;
     }
 
-    function getPrimaryGameState() {
-      return resolveRuntimeGuard('getPrimaryGameState', 'getPrimaryGameState', 'IDLE');
+    function createRuntimeGuardResolver(name, fallbackName, fallbackValue) {
+      return function resolveGuard() {
+        return resolveRuntimeGuard(name, fallbackName, fallbackValue);
+      };
     }
 
-    function canAcceptGameplayInput() {
-      return resolveRuntimeGuard('canAcceptGameplayInput', 'canAcceptGameplayInput', false);
-    }
-
-    function isInTerminalOverlayState() {
-      return resolveRuntimeGuard('isInTerminalOverlayState', 'isInTerminalOverlayState', false);
-    }
-
-    function isInWaitingTutorialState() {
-      return resolveRuntimeGuard('isInWaitingTutorialState', 'isInWaitingTutorialState', false);
-    }
+    const getPrimaryGameState = createRuntimeGuardResolver('getPrimaryGameState', 'getPrimaryGameState', 'IDLE');
+    const canAcceptGameplayInput = createRuntimeGuardResolver('canAcceptGameplayInput', 'canAcceptGameplayInput', false);
+    const isInTerminalOverlayState = createRuntimeGuardResolver('isInTerminalOverlayState', 'isInTerminalOverlayState', false);
+    const isInWaitingTutorialState = createRuntimeGuardResolver('isInWaitingTutorialState', 'isInWaitingTutorialState', false);
 
     function canQueueDirection() {
       if (!getState().hasSelectedMode) return false;
@@ -60,11 +55,19 @@ window.SnakeInputHelpers = {
     }
 
     function handlePreGameDirectionInput(next) {
+      dismissTutorial();
+      setStateValue('nextDirection', next);
+      actions.startGame();
+    }
+
+    function dismissTutorial() {
       if (getState().showTutorial) {
         setStateValue('showTutorial', false);
       }
-      setStateValue('nextDirection', next);
-      actions.startGame();
+    }
+
+    function resetToWaitingFromTerminalState() {
+      actions.resetToWaitingState();
     }
 
     function tryApplyAxisDirection(next) {
@@ -107,12 +110,12 @@ window.SnakeInputHelpers = {
       if (primaryState === 'PAUSED') return;
       if (isInTerminalOverlayState()) {
         if (e.key === 'Enter' || e.key === ' ') {
-          actions.resetToWaitingState();
+          resetToWaitingFromTerminalState();
         }
         return;
       }
       if (isInWaitingTutorialState()) {
-        setStateValue('showTutorial', false);
+        dismissTutorial();
         return;
       }
       if (!shouldHandleDirectionInput()) return;
@@ -122,6 +125,18 @@ window.SnakeInputHelpers = {
     function isInteractiveTouchTarget(target) {
       if (!target || !(target instanceof Element)) return false;
       return !!target.closest('[data-direction], button, .mode-overlay, .result-overlay, #pauseBtn, #legend');
+    }
+
+    function resetTouchTracking() {
+      touchTracking = false;
+      touchStartedOnControl = false;
+    }
+
+    function resolveSwipeInputKey(dx, dy) {
+      if (Math.abs(dx) > Math.abs(dy)) {
+        return dx > 0 ? 'right' : 'left';
+      }
+      return dy > 0 ? 'down' : 'up';
     }
 
     function handleTouchStart(e) {
@@ -140,53 +155,48 @@ window.SnakeInputHelpers = {
 
     function handleSwipeDirectionInput(e) {
       if (!touchTracking || touchStartedOnControl) {
-        touchTracking = false;
-        touchStartedOnControl = false;
+        resetTouchTracking();
         return;
       }
       if (!getState().hasSelectedMode) {
-        touchTracking = false;
+        resetTouchTracking();
         return;
       }
       if (getPrimaryGameState() === 'PAUSED') {
-        touchTracking = false;
+        resetTouchTracking();
         return;
       }
       if (isInTerminalOverlayState()) {
-        actions.resetToWaitingState();
-        touchTracking = false;
+        resetToWaitingFromTerminalState();
+        resetTouchTracking();
         return;
       }
       if (isInWaitingTutorialState()) {
-        setStateValue('showTutorial', false);
-        touchTracking = false;
+        dismissTutorial();
+        resetTouchTracking();
         return;
       }
       if (!shouldHandleDirectionInput()) {
-        touchTracking = false;
+        resetTouchTracking();
         return;
       }
       if (!e.changedTouches || !e.changedTouches.length) {
-        touchTracking = false;
+        resetTouchTracking();
         return;
       }
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
       const dx = touchEndX - touchStartX;
       const dy = touchEndY - touchStartY;
-      touchTracking = false;
+      resetTouchTracking();
       if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        submitDirectionInput(dx > 0 ? 'right' : 'left');
-      } else {
-        submitDirectionInput(dy > 0 ? 'down' : 'up');
-      }
+      submitDirectionInput(resolveSwipeInputKey(dx, dy));
     }
 
     function handleCanvasClick() {
       if (!getState().hasSelectedMode) return;
       if (isInWaitingTutorialState()) {
-        setStateValue('showTutorial', false);
+        dismissTutorial();
       }
     }
 
@@ -195,11 +205,11 @@ window.SnakeInputHelpers = {
       if (!getState().hasSelectedMode) return;
       if (getPrimaryGameState() === 'PAUSED') return;
       if (isInTerminalOverlayState()) {
-        actions.resetToWaitingState();
+        resetToWaitingFromTerminalState();
         return;
       }
       if (isInWaitingTutorialState()) {
-        setStateValue('showTutorial', false);
+        dismissTutorial();
       }
       if (!shouldHandleDirectionInput()) return;
       const key = button.dataset.direction;

@@ -34,25 +34,159 @@ window.SnakeDebugApi = {
       return resolveRuntimeGuard('getPrimaryGameState', 'getPrimaryGameState', 'IDLE');
     }
 
+    function cloneVector(value) {
+      return value ? { ...value } : value;
+    }
+
+    function cloneOptionalState(value) {
+      return value ? { ...value } : null;
+    }
+
+    function cloneCells(cells) {
+      return Array.isArray(cells) ? cells.map(cell => ({ ...cell })) : [];
+    }
+
+    function serializeFoodType(type) {
+      return Object.keys(FOOD_TYPES).find((key) => FOOD_TYPES[key] === type) || type?.effect || null;
+    }
+
+    function serializeFood(food) {
+      return {
+        x: food.x,
+        y: food.y,
+        type: serializeFoodType(food.type),
+        pulsePhase: food.pulsePhase ?? 0,
+        dangerShakePhase: food.dangerShakePhase ?? 0,
+        windSpinPhase: food.windSpinPhase ?? 0
+      };
+    }
+
+    function deserializeFood(food) {
+      const type = typeof food.type === 'string' ? FOOD_TYPES[food.type] : food.type;
+      return {
+        x: food.x,
+        y: food.y,
+        type,
+        pulsePhase: food.pulsePhase ?? 0,
+        dangerShakePhase: food.dangerShakePhase ?? 0,
+        windSpinPhase: food.windSpinPhase ?? 0
+      };
+    }
+
+    function cloneSnakeSkin(skin) {
+      return {
+        centerX: skin.centerX,
+        centerY: skin.centerY,
+        cells: cloneCells(skin.cells),
+        spawnTime: skin.spawnTime
+      };
+    }
+
+    function applyMappedArrayAssignments(state, assignments) {
+      assignments.forEach(([key, mapper]) => {
+        if (Array.isArray(state[key])) {
+          setStateValue(key, state[key].map(mapper));
+        }
+      });
+    }
+
+    function applyScalarAssignments(state, assignments) {
+      assignments.forEach(([key, expectedType]) => {
+        if (typeof state[key] === expectedType) {
+          setStateValue(key, state[key]);
+        }
+      });
+    }
+
+    function applyRuntimeStateSetters(state) {
+      if (typeof state.isPaused === 'boolean' && typeof actions.setPausedState === 'function') {
+        actions.setPausedState(state.isPaused);
+      }
+      if (typeof state.isWaveTransition === 'boolean' && typeof actions.setWaveTransitionState === 'function') {
+        actions.setWaveTransitionState(state.isWaveTransition);
+      }
+      if (typeof state.waveCeremonyState === 'string' && typeof actions.setCeremonyState === 'function') {
+        actions.setCeremonyState(state.waveCeremonyState);
+      }
+    }
+
+    function applyModeSelectionState(state) {
+      if (typeof state.hasSelectedMode === 'boolean') {
+        setStateValue('hasSelectedMode', state.hasSelectedMode);
+        modeOverlay.classList.toggle('hidden', state.hasSelectedMode);
+      }
+    }
+
+    function applyMappedObjectAssignments(state, assignments) {
+      assignments.forEach(([key, mapper]) => {
+        if (state[key] !== undefined) {
+          setStateValue(key, mapper(state[key]));
+        }
+      });
+    }
+
+    function restoreShopState(state) {
+      const hasShopOpen = typeof state.shopOpen === 'boolean';
+      const hasShopOpening = typeof state.shopOpening === 'boolean';
+      if ((hasShopOpen || hasShopOpening) && typeof actions.restoreShopState === 'function') {
+        actions.restoreShopState({
+          shopOpen: hasShopOpen ? state.shopOpen : false,
+          shopOpening: hasShopOpening ? state.shopOpening : false
+        });
+      }
+    }
+
+    function restoreVisualState(state) {
+      if (typeof actions.restoreOverlayVisibility === 'function') {
+        actions.restoreOverlayVisibility({
+          resultVisible: state.resultVisible,
+          pauseVisible: state.pauseVisible,
+          waveVisible: state.waveVisible,
+          shopVisible: state.shopVisible
+        });
+      }
+    }
+
+    function refreshRuntimeUi() {
+      const primaryState = getPrimaryGameState();
+      if (typeof actions.restoreRuntimeByPrimaryState === 'function') {
+        actions.restoreRuntimeByPrimaryState(primaryState);
+      }
+      if (typeof actions.syncPauseButtonVisibility === 'function') {
+        actions.syncPauseButtonVisibility();
+      }
+      if (typeof actions.updateTouchHint === 'function') {
+        actions.updateTouchHint();
+      }
+      if (typeof actions.updateStatusUI === 'function') {
+        actions.updateStatusUI();
+      }
+    }
+
+    function getOverlayVisibilitySnapshot() {
+      return {
+        resultVisible: resultOverlay.classList.contains('show'),
+        pauseVisible: pauseOverlay.classList.contains('show'),
+        waveVisible: waveOverlay.classList.contains('show'),
+        shopVisible: actions.getShopOverlayElement().classList.contains('show')
+      };
+    }
+
+    function getTextSnapshot() {
+      return {
+        resultText: resultText.textContent,
+        timerText: timerDisplay.textContent,
+        scoreText: scoreDisplay.textContent
+      };
+    }
+
     function getSnapshot() {
       const state = getState();
       return {
         snake: state.snake.map(seg => ({ ...seg })),
-        foods: state.foods.map(food => ({
-          x: food.x,
-          y: food.y,
-          type: Object.keys(FOOD_TYPES).find((key) => FOOD_TYPES[key] === food.type) || food.type?.effect || null,
-          pulsePhase: food.pulsePhase ?? 0,
-          dangerShakePhase: food.dangerShakePhase ?? 0,
-          windSpinPhase: food.windSpinPhase ?? 0
-        })),
+        foods: state.foods.map(serializeFood),
         obstacles: state.obstacles.map(obs => ({ ...obs })),
-        snakeSkins: state.snakeSkins.map(skin => ({
-          centerX: skin.centerX,
-          centerY: skin.centerY,
-          cells: skin.cells ? skin.cells.map(c => ({ ...c })) : [],
-          spawnTime: skin.spawnTime
-        })),
+        snakeSkins: state.snakeSkins.map(cloneSnakeSkin),
         foodEatenCount: state.foodEatenCount,
         teleportInvincibleSteps: state.teleportInvincibleSteps,
         direction: { ...state.direction },
@@ -93,44 +227,18 @@ window.SnakeDebugApi = {
         teleportTrailTimer: state.teleportTrailTimer,
         headGlowTimer: state.headGlowTimer,
         selectedModule: state.selectedModule || null,
-        resultVisible: resultOverlay.classList.contains('show'),
-        pauseVisible: pauseOverlay.classList.contains('show'),
-        waveVisible: waveOverlay.classList.contains('show'),
-        shopVisible: actions.getShopOverlayElement().classList.contains('show'),
-        resultText: resultText.textContent,
-        timerText: timerDisplay.textContent,
-        scoreText: scoreDisplay.textContent
+        ...getOverlayVisibilitySnapshot(),
+        ...getTextSnapshot()
       };
     }
 
     function setSnapshot(state = {}) {
-      if (Array.isArray(state.snake)) {
-        setStateValue('snake', state.snake.map(seg => ({ ...seg })));
-      }
-      if (Array.isArray(state.foods)) {
-        setStateValue('foods', state.foods.map(food => {
-          const type = typeof food.type === 'string' ? FOOD_TYPES[food.type] : food.type;
-          return {
-            x: food.x,
-            y: food.y,
-            type,
-            pulsePhase: food.pulsePhase ?? 0,
-            dangerShakePhase: food.dangerShakePhase ?? 0,
-            windSpinPhase: food.windSpinPhase ?? 0
-          };
-        }));
-      }
-      if (Array.isArray(state.obstacles)) {
-        setStateValue('obstacles', state.obstacles.map(obs => ({ ...obs })));
-      }
-      if (Array.isArray(state.snakeSkins)) {
-        setStateValue('snakeSkins', state.snakeSkins.map(skin => ({
-          centerX: skin.centerX,
-          centerY: skin.centerY,
-          cells: skin.cells ? skin.cells.map(c => ({ ...c })) : [],
-          spawnTime: skin.spawnTime
-        })));
-      }
+      applyMappedArrayAssignments(state, [
+        ['snake', (seg) => ({ ...seg })],
+        ['foods', deserializeFood],
+        ['obstacles', (obs) => ({ ...obs })],
+        ['snakeSkins', cloneSnakeSkin]
+      ]);
 
       const scalarAssignments = [
         ['foodEatenCount', 'number'],
@@ -160,79 +268,32 @@ window.SnakeDebugApi = {
         ['headGlowTimer', 'number']
       ];
 
-      scalarAssignments.forEach(([key, expectedType]) => {
-        if (typeof state[key] === expectedType) {
-          setStateValue(key, state[key]);
-        }
-      });
+      applyScalarAssignments(state, scalarAssignments);
+      applyRuntimeStateSetters(state);
+      applyModeSelectionState(state);
 
-      if (typeof state.isPaused === 'boolean' && typeof actions.setPausedState === 'function') {
-        actions.setPausedState(state.isPaused);
-      }
-      if (typeof state.isWaveTransition === 'boolean' && typeof actions.setWaveTransitionState === 'function') {
-        actions.setWaveTransitionState(state.isWaveTransition);
-      }
-      if (typeof state.waveCeremonyState === 'string' && typeof actions.setCeremonyState === 'function') {
-        actions.setCeremonyState(state.waveCeremonyState);
-      }
-      if (typeof state.hasSelectedMode === 'boolean') {
-        setStateValue('hasSelectedMode', state.hasSelectedMode);
-        modeOverlay.classList.toggle('hidden', state.hasSelectedMode);
-      }
-      if (state.direction) setStateValue('direction', { ...state.direction });
-      if (state.nextDirection) setStateValue('nextDirection', { ...state.nextDirection });
-      if (state.ceremonyKey !== undefined) setStateValue('ceremonyKey', state.ceremonyKey ? { ...state.ceremonyKey } : null);
-      if (state.ceremonyChest !== undefined) setStateValue('ceremonyChest', state.ceremonyChest ? { ...state.ceremonyChest } : null);
+      if (state.direction) setStateValue('direction', cloneVector(state.direction));
+      if (state.nextDirection) setStateValue('nextDirection', cloneVector(state.nextDirection));
       if (state.terrainDotType !== undefined) setStateValue('terrainDotType', state.terrainDotType);
-      if (state.startIndicator !== undefined) setStateValue('startIndicator', state.startIndicator ? { ...state.startIndicator } : null);
-      if (state.teleportPreview !== undefined) setStateValue('teleportPreview', state.teleportPreview ? { ...state.teleportPreview } : null);
+      applyMappedObjectAssignments(state, [
+        ['ceremonyKey', cloneOptionalState],
+        ['ceremonyChest', cloneOptionalState],
+        ['startIndicator', cloneOptionalState],
+        ['teleportPreview', cloneOptionalState]
+      ]);
 
-      const hasShopOpen = typeof state.shopOpen === 'boolean';
-      const hasShopOpening = typeof state.shopOpening === 'boolean';
-      if ((hasShopOpen || hasShopOpening) && typeof actions.restoreShopState === 'function') {
-        actions.restoreShopState({
-          shopOpen: hasShopOpen ? state.shopOpen : false,
-          shopOpening: hasShopOpening ? state.shopOpening : false
-        });
-      }
+      restoreShopState(state);
 
       if (typeof state.currentMode === 'string' && MODE_CONFIGS[state.currentMode]) {
         actions.applyModeConfig(state.currentMode);
       }
 
-      if (typeof actions.restoreOverlayVisibility === 'function') {
-        actions.restoreOverlayVisibility({
-          resultVisible: state.resultVisible,
-          pauseVisible: state.pauseVisible,
-          waveVisible: state.waveVisible,
-          shopVisible: state.shopVisible
-        });
-      }
-
-      const primaryState = getPrimaryGameState();
-      if (typeof actions.restoreRuntimeByPrimaryState === 'function') {
-        actions.restoreRuntimeByPrimaryState(primaryState);
-      }
-      if (typeof actions.syncPauseButtonVisibility === 'function') {
-        actions.syncPauseButtonVisibility();
-      }
-      if (typeof actions.updateTouchHint === 'function') {
-        actions.updateTouchHint();
-      }
-      if (typeof actions.updateStatusUI === 'function') {
-        actions.updateStatusUI();
-      }
+      restoreVisualState(state);
+      refreshRuntimeUi();
     }
 
     function setFoods(foodDefs) {
-      setStateValue('foods', foodDefs.map(food => ({
-        x: food.x,
-        y: food.y,
-        type: FOOD_TYPES[food.type],
-        pulsePhase: food.pulsePhase ?? 0,
-        dangerShakePhase: food.dangerShakePhase ?? 0,
-        windSpinPhase: food.windSpinPhase ?? 0
-      })));
+      setStateValue('foods', foodDefs.map(deserializeFood));
     }
 
     return {
