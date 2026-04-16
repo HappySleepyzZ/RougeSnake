@@ -1046,6 +1046,26 @@
         const pauseOverlay = document.getElementById('pauseOverlay');
         const resumeBtn = document.getElementById('resumeBtn');
         const pauseRestartBtn = document.getElementById('pauseRestartBtn');
+
+        function setPausedState(nextPaused) {
+            isPaused = nextPaused;
+        }
+
+        function clearWaveTransitionState() {
+            isWaveTransition = false;
+        }
+
+        function setWaveTransitionState(nextTransitioning) {
+            if (nextTransitioning) {
+                isWaveTransition = true;
+            } else {
+                clearWaveTransitionState();
+            }
+        }
+
+        function setCeremonyState(nextState) {
+            waveCeremonyState = nextState;
+        }
         
         function pauseGame() {
             if (getPrimaryGameState() !== 'RUNNING') return;
@@ -3690,26 +3710,21 @@
             requestAnimationFrame(animStep);
         }
 
-        function gameOver(reason) {
-            resetRunState();
-            isGameOver = true;
-            syncPauseButtonVisibility(); // V18
-            
+        function applyGameOverPresentation() {
+            syncPauseButtonVisibility();
             flashEffect('death');
             flashAlpha = 0.9;
             backgroundHue = 0;
-            
             showResult('death');
         }
 
-        function startGame() {
-            if (getPrimaryGameState() === 'RUNNING' || !hasSelectedMode) return;
-            
-            resizeCanvas();
-            clearInterval(gameLoop);
-            gameLoop = null;
-            initGame();
-            
+        function gameOver(reason) {
+            resetRunState();
+            isGameOver = true;
+            applyGameOverPresentation();
+        }
+
+        function beginGameplaySession() {
             isWaitingForStart = false;
             isGameRunning = true;
             showTutorial = false;
@@ -3717,13 +3732,21 @@
             isGameOver = false;
             isLevelComplete = false;
             totalPausedTime = 0;
-            syncPauseButtonVisibility(); // V18: 显示暂停按钮
-            hideResult();
-            updateTouchHint();
-            
-            restartGameLoopWithCurrentState();
         }
 
+        function startGame() {
+            if (getPrimaryGameState() === 'RUNNING' || !hasSelectedMode) return;
+
+            resizeCanvas();
+            stopGameLoop();
+            initGame();
+            beginGameplaySession();
+            syncPauseButtonVisibility();
+            hideResult();
+            updateTouchHint();
+
+            restartGameLoopWithCurrentState();
+        }
         function updateTouchHint() {
             if (!touchHintEl) return;
             touchHintEl.textContent = isWaitingForStart
@@ -3770,13 +3793,13 @@
         function setRuntimeStateValue(key, value) {
             switch (key) {
                 case 'isPaused':
-                    isPaused = value;
+                    setPausedState(value);
                     break;
                 case 'isWaveTransition':
-                    isWaveTransition = value;
+                    setWaveTransitionState(value);
                     break;
                 case 'waveCeremonyState':
-                    waveCeremonyState = value;
+                    setCeremonyState(value);
                     break;
                 case 'hasSelectedMode':
                     hasSelectedMode = value;
