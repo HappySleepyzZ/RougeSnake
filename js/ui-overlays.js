@@ -43,11 +43,19 @@ window.SnakeUiOverlays = {
       setModeOverlayVisibility(false);
     }
 
+    function getOverlayVisibilityEntries() {
+      return [
+        ['resultVisible', resultOverlay],
+        ['pauseVisible', pauseOverlay],
+        ['waveVisible', waveOverlay],
+        ['shopVisible', getShopOverlayElement()]
+      ];
+    }
+
     function closeAllOverlays() {
-      resultOverlay.classList.remove('show');
-      pauseOverlay.classList.remove('show');
-      waveOverlay.classList.remove('show');
-      getShopOverlayElement().classList.remove('show');
+      getOverlayVisibilityEntries().forEach(([, overlay]) => {
+        overlay.classList.remove('show');
+      });
     }
 
     function showExclusiveOverlay(overlay) {
@@ -77,10 +85,17 @@ window.SnakeUiOverlays = {
 
     function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
       closeAllOverlays();
-      setOverlayVisibility(resultOverlay, resultVisible);
-      setOverlayVisibility(pauseOverlay, pauseVisible);
-      setOverlayVisibility(waveOverlay, waveVisible);
-      setOverlayVisibility(getShopOverlayElement(), shopVisible);
+      const visibilityState = { resultVisible, pauseVisible, waveVisible, shopVisible };
+      getOverlayVisibilityEntries().forEach(([key, overlay]) => {
+        setOverlayVisibility(overlay, visibilityState[key]);
+      });
+    }
+
+    function getOverlayVisibilitySnapshot() {
+      return getOverlayVisibilityEntries().reduce((snapshot, [key, overlay]) => {
+        snapshot[key] = overlay.classList.contains('show');
+        return snapshot;
+      }, {});
     }
 
     const overlayApi = {
@@ -92,6 +107,7 @@ window.SnakeUiOverlays = {
       showShopOverlay,
       showWaveOverlay,
       showOnlyResultOverlay,
+      getOverlayVisibilitySnapshot,
       restoreOverlayVisibility
     };
 

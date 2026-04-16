@@ -222,6 +222,23 @@ window.SnakeInputHelpers = {
       handleButtonDirectionInput(button);
     }
 
+    function bindTouchControl(button) {
+      button.addEventListener('click', () => {
+        handleButtonDirectionInput(button);
+      });
+      button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        activateTouchControl(button);
+      }, { passive: false });
+      button.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') {
+          e.preventDefault();
+          activateTouchControl(button);
+        }
+      });
+    }
+
     function bind() {
       document.addEventListener('keydown', handleKeyboardDirectionInput);
       document.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -229,20 +246,7 @@ window.SnakeInputHelpers = {
       document.addEventListener('touchend', handleSwipeDirectionInput, { passive: true });
       canvas.addEventListener('click', handleCanvasClick);
       touchControls.forEach((button) => {
-        button.addEventListener('click', () => {
-          handleButtonDirectionInput(button);
-        });
-        button.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          activateTouchControl(button);
-        }, { passive: false });
-        button.addEventListener('pointerdown', (e) => {
-          if (e.pointerType === 'touch') {
-            e.preventDefault();
-            activateTouchControl(button);
-          }
-        });
+        bindTouchControl(button);
       });
     }
 

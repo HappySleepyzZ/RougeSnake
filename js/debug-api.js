@@ -174,13 +174,20 @@ window.SnakeDebugApi = {
       refreshRuntimeUi();
     }
 
-    function getOverlayVisibilitySnapshot() {
+    function getLocalOverlayVisibilitySnapshot() {
       return {
         resultVisible: resultOverlay.classList.contains('show'),
         pauseVisible: pauseOverlay.classList.contains('show'),
         waveVisible: waveOverlay.classList.contains('show'),
         shopVisible: actions.getShopOverlayElement().classList.contains('show')
       };
+    }
+
+    function getOverlayVisibilitySnapshot() {
+      if (typeof actions.getOverlayVisibilitySnapshot === 'function') {
+        return actions.getOverlayVisibilitySnapshot();
+      }
+      return getLocalOverlayVisibilitySnapshot();
     }
 
     function getTextSnapshot() {
