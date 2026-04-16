@@ -70,6 +70,18 @@ window.SnakeRuntimeState = {
       return getState().isPaused;
     }
 
+    function createCeremonyStateGuard(expectedState) {
+      return function checkCeremonyState() {
+        return getCeremonyState() === expectedState;
+      };
+    }
+
+    function createComputedStateGuard(computeState) {
+      return function checkComputedState() {
+        return computeState();
+      };
+    }
+
     const runtimeStateGuards = {
       getPrimaryGameState() {
         const state = getState();
@@ -96,30 +108,16 @@ window.SnakeRuntimeState = {
       isInWaitingTutorialState() {
         return getState().showTutorial && runtimeStateGuards.getPrimaryGameState() === 'WAITING';
       },
-      isCeremonyPlayingState() {
-        return getCeremonyState() === 'PLAYING';
-      },
-      isCeremonyKeyState() {
-        return getCeremonyState() === 'KEY_SPAWN';
-      },
-      isCeremonyChestState() {
-        return getCeremonyState() === 'CHEST_SPAWN';
-      },
-      isCeremonyLootBurstState() {
-        return getCeremonyState() === 'LOOT_BURST';
-      },
-      isShopState() {
-        return computeShopState();
-      },
+      isCeremonyPlayingState: createCeremonyStateGuard('PLAYING'),
+      isCeremonyKeyState: createCeremonyStateGuard('KEY_SPAWN'),
+      isCeremonyChestState: createCeremonyStateGuard('CHEST_SPAWN'),
+      isCeremonyLootBurstState: createCeremonyStateGuard('LOOT_BURST'),
+      isShopState: createComputedStateGuard(computeShopState),
       isShopOpeningState() {
         return getState().shopOpening;
       },
-      isWaveTransitionState() {
-        return computeWaveTransitionState();
-      },
-      isPausedState() {
-        return computePausedState();
-      }
+      isWaveTransitionState: createComputedStateGuard(computeWaveTransitionState),
+      isPausedState: createComputedStateGuard(computePausedState)
     };
 
     function runRuntimeStateGuard(name, fallbackValue) {
@@ -173,6 +171,12 @@ window.SnakeRuntimeState = {
       syncPauseButtonVisibility();
     }
 
+    function createOverlayAction(actionName, getOverlay) {
+      return function showOverlay() {
+        return callActionOrFallback(actionName, () => showOverlayWithPauseSync(getOverlay()));
+      };
+    }
+
     function setOverlayVisibility(overlay, visible) {
       overlay.classList.toggle('show', !!visible);
     }
@@ -189,8 +193,13 @@ window.SnakeRuntimeState = {
       ]);
     }
 
-    function resetTransientState() {
+    function stopActiveRuntimeLoops() {
+      actions.stopGameLoop();
       actions.stopWaveTransitionCountdown();
+    }
+
+    function resetTransientState() {
+      stopActiveRuntimeLoops();
       applyStateAssignments([
         ['waveTransitionTimer', 0],
         ['pauseStartTime', 0],
@@ -209,7 +218,6 @@ window.SnakeRuntimeState = {
         ['isLevelComplete', false]
       ]);
       clearWaveTransitionState();
-      actions.stopGameLoop();
       resetTransientState();
     }
 
@@ -225,17 +233,9 @@ window.SnakeRuntimeState = {
       });
     }
 
-    function showPauseOverlay() {
-      return callActionOrFallback('showPauseOverlay', () => showOverlayWithPauseSync(pauseOverlay));
-    }
-
-    function showShopOverlay() {
-      return callActionOrFallback('showShopOverlay', () => showOverlayWithPauseSync(getShopOverlayElement()));
-    }
-
-    function showWaveOverlay() {
-      return callActionOrFallback('showWaveOverlay', () => showOverlayWithPauseSync(waveOverlay));
-    }
+    const showPauseOverlay = createOverlayAction('showPauseOverlay', () => pauseOverlay);
+    const showShopOverlay = createOverlayAction('showShopOverlay', getShopOverlayElement);
+    const showWaveOverlay = createOverlayAction('showWaveOverlay', () => waveOverlay);
 
     function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
       return callActionOrFallback('restoreOverlayVisibility', () => {
@@ -248,8 +248,7 @@ window.SnakeRuntimeState = {
     }
 
     function restoreRuntimeByPrimaryState(primaryState) {
-      actions.stopGameLoop();
-      actions.stopWaveTransitionCountdown();
+      stopActiveRuntimeLoops();
       if (primaryState === 'WAVE_TRANSITION' && getState().waveTransitionTimer > 0) {
         actions.restartWaveTransitionCountdown();
       } else if (primaryState === 'RUNNING') {
@@ -257,12 +256,28 @@ window.SnakeRuntimeState = {
       }
     }
 
+    function formatPauseSurvivalTime(totalSurvivalTime) {
+      const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
+      const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
+      return `${surviveMin}:${surviveSec}`;
+    }
+
+    function getSelectedModuleLabel(selectedModule) {
+      return selectedModule ? `${selectedModule.icon}${selectedModule.name}` : '';
+    }
+
+    function getPauseOverlayInfoText(state) {
+      return UI_TEXT.pause.info(
+        state.currentWave,
+        state.score,
+        formatPauseSurvivalTime(state.totalSurvivalTime),
+        getSelectedModuleLabel(state.selectedModule)
+      );
+    }
+
     function renderPauseOverlay() {
       const state = getState();
-      const surviveMin = Math.floor(state.totalSurvivalTime / 60).toString().padStart(2, '0');
-      const surviveSec = Math.floor(state.totalSurvivalTime % 60).toString().padStart(2, '0');
-      const modName = state.selectedModule ? `${state.selectedModule.icon}${state.selectedModule.name}` : '';
-      document.getElementById('pauseInfo').textContent = UI_TEXT.pause.info(state.currentWave, state.score, `${surviveMin}:${surviveSec}`, modName);
+      document.getElementById('pauseInfo').textContent = getPauseOverlayInfoText(state);
       showPauseOverlay();
     }
 
@@ -275,13 +290,24 @@ window.SnakeRuntimeState = {
       ]);
     }
 
+    function getWaveTransitionCountdownSeconds() {
+      return Math.max(0, Math.ceil(getState().waveTransitionTimer / 1000));
+    }
+
+    function updateWaveCountdownText() {
+      waveCountdown.textContent = UI_TEXT.wave.nextIn(getWaveTransitionCountdownSeconds());
+    }
+
+    function tickWaveTransitionTimer() {
+      setStateValue('waveTransitionTimer', getState().waveTransitionTimer - 100);
+      updateWaveCountdownText();
+    }
+
     function restartWaveTransitionCountdown() {
       actions.stopWaveTransitionCountdown();
-      waveCountdown.textContent = UI_TEXT.wave.nextIn(Math.max(0, Math.ceil(getState().waveTransitionTimer / 1000)));
+      updateWaveCountdownText();
       setStateValue('waveTransitionInterval', setInterval(() => {
-        setStateValue('waveTransitionTimer', getState().waveTransitionTimer - 100);
-        const secs = Math.max(0, Math.ceil(getState().waveTransitionTimer / 1000));
-        waveCountdown.textContent = UI_TEXT.wave.nextIn(secs);
+        tickWaveTransitionTimer();
         if (getState().waveTransitionTimer <= 0) {
           actions.stopWaveTransitionCountdown();
           actions.closeAllOverlays();
@@ -290,7 +316,7 @@ window.SnakeRuntimeState = {
       }, 100));
     }
 
-    return {
+    const runtimeApi = {
       setPausedState,
       clearWaveTransitionState,
       setWaveTransitionState,
@@ -328,5 +354,7 @@ window.SnakeRuntimeState = {
       restoreRuntimeByPrimaryState,
       restartWaveTransitionCountdown
     };
+
+    return runtimeApi;
   }
 };
