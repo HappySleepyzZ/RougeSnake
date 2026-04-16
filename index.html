@@ -3733,7 +3733,7 @@
             isWaitingForStart = false;
             isGameRunning = true;
             showTutorial = false;
-            isPaused = false;
+            setPausedState(false);
             isGameOver = false;
             isLevelComplete = false;
             totalPausedTime = 0;
@@ -4871,9 +4871,9 @@
             getState: getDebugApiStateSnapshot,
             setStateValue: setDebugApiStateValue,
             actions: {
-                setPausedState: runtimeStateModule ? runtimeStateModule.setPausedState : (value) => { isPaused = value; },
-                setWaveTransitionState: runtimeStateModule ? runtimeStateModule.setWaveTransitionState : (value) => { isWaveTransition = value; },
-                setCeremonyState: runtimeStateModule ? runtimeStateModule.setCeremonyState : (value) => { waveCeremonyState = value; },
+                setPausedState: runtimeStateModule ? runtimeStateModule.setPausedState : (value) => { setPausedState(value); },
+                setWaveTransitionState: runtimeStateModule ? runtimeStateModule.setWaveTransitionState : (value) => { setWaveTransitionState(value); },
+                setCeremonyState: runtimeStateModule ? runtimeStateModule.setCeremonyState : (value) => { setCeremonyState(value); },
                 restoreShopState,
                 applyModeConfig,
                 restoreOverlayVisibility: runtimeStateModule ? runtimeStateModule.restoreOverlayVisibility : null,
