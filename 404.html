@@ -3989,29 +3989,31 @@
             closeAllOverlays();
         }
 
+        function resetPreviewFeedbackState() {
+            teleportPreview = null;
+            teleportTrailTimer = 0;
+            headGlowTimer = 0;
+        }
+
         function resetTransientState() {
             if (runtimeStateModule) return runtimeStateModule.resetTransientState();
-            clearInterval(waveTransitionInterval);
-            waveTransitionInterval = null;
+            stopWaveTransitionCountdown();
             waveTransitionTimer = 0;
             pauseStartTime = 0;
             totalPausedTime = 0;
             lastSlowInterval = null;
-            teleportPreview = null;
-            teleportTrailTimer = 0;
-            headGlowTimer = 0;
+            resetPreviewFeedbackState();
             closeAllOverlays();
         }
 
         function resetRunState() {
             if (runtimeStateModule) return runtimeStateModule.resetRunState();
-            isPaused = false;
+            setPausedState(false);
             isGameRunning = false;
             isGameOver = false;
             isLevelComplete = false;
-            isWaveTransition = false;
-            clearInterval(gameLoop);
-            gameLoop = null;
+            clearWaveTransitionState();
+            stopGameLoop();
             resetTransientState();
         }
 
@@ -4058,16 +4060,14 @@
         }
 
         function restartWaveTransitionCountdown() {
-            clearInterval(waveTransitionInterval);
-            waveTransitionInterval = null;
+            stopWaveTransitionCountdown();
             waveCountdown.textContent = UI_TEXT.wave.nextIn(Math.max(0, Math.ceil(waveTransitionTimer / 1000)));
             waveTransitionInterval = setInterval(() => {
                 waveTransitionTimer -= 100;
                 const secs = Math.max(0, Math.ceil(waveTransitionTimer / 1000));
                 waveCountdown.textContent = UI_TEXT.wave.nextIn(secs);
                 if (waveTransitionTimer <= 0) {
-                    clearInterval(waveTransitionInterval);
-                    waveTransitionInterval = null;
+                    stopWaveTransitionCountdown();
                     closeAllOverlays();
                     advanceWave();
                 }
@@ -4397,8 +4397,7 @@
         }
 
         function stopWaveTransitionCountdown() {
-            clearInterval(waveTransitionInterval);
-            waveTransitionInterval = null;
+            stopWaveTransitionCountdown();
         }
 
         function restoreRuntimeByPrimaryState(primaryState) {
