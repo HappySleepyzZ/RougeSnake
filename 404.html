@@ -2409,19 +2409,9 @@
             };
         }
 
-        // 游戏主循�?        function gameStep() {
-            if (isWaveTransitionState()) return; // 波次过渡中不更新
-            
-            // V16: 波次计时
-            const preambleResult = runRuntimePreambleStep();
-            if (preambleResult.skipped) return;
-            
-            let head = resolveNextHeadMovement();
-            const movementResolution = resolvePortalAndWallInteraction(head);
-            if (movementResolution.blocked) return;
-            head = movementResolution.head;
-
-            // 撞自己检�?- V14: 添加瞬移无敌�?            // V15: 食物吞食判定放松 - 距离 <= 1.0 格即可吞食（只对食物放松，障碍物不变�?            let eatenFoodIndex = -1;
+        // Game loop collision and pickup helpers
+        function findFoodPickupIndex(head) {
+            let eatenFoodIndex = -1;
             let minDist = Infinity;
             const pickupRadius = hasBuff('magnet') ? TUNING.pickup.magnetRadius : TUNING.pickup.defaultRadius;
             for (let i = 0; i < foods.length; i++) {
@@ -2433,59 +2423,101 @@
                     eatenFoodIndex = i;
                 }
             }
+            return eatenFoodIndex;
+        }
 
+        function resolveObstacleCollision(head) {
+            if (!isCeremonyPlayingState()) return false;
+            const hitObstacleIdx = obstacles.findIndex(o => o.x === head.x && o.y === head.y);
+            if (hitObstacleIdx === -1) return false;
+
+            if (selectedModule && selectedModule.special === 'breakObstacle') {
+                obstacles.splice(hitObstacleIdx, 1);
+                score += 5;
+                flashEffect('barrier');
+                updateStatusUI();
+                return false;
+            }
+
+            if (shieldCharges > 0) {
+                shieldCharges--;
+                obstacles.splice(hitObstacleIdx, 1);
+                spawnFloatingText(head.x, head.y, UI_TEXT.floating.shield, '#2ecc71', true);
+                flashEffect('teleport');
+                flashAlpha = 0.3;
+                return false;
+            }
+
+            gameOver('obstacle');
+            return true;
+        }
+
+        function resolveSelfCollision(head, collisionSegments) {
+            if (teleportInvincibleSteps > 0) {
+                teleportInvincibleSteps--;
+                return false;
+            }
+            if (isCeremonyPlayingState() && collisionSegments.some(seg => seg.x === head.x && seg.y === head.y)) {
+                gameOver('self');
+                return true;
+            }
+            return false;
+        }
+
+        function resolveSkinCollision(head) {
+            if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
+                gameOver('skin');
+                return true;
+            }
+            return false;
+        }
+
+        function consumePickedFood(eatenFoodIndex) {
+            if (eatenFoodIndex === -1) return null;
+            const eatenFood = foods[eatenFoodIndex];
+            foods.splice(eatenFoodIndex, 1);
+            return eatenFood;
+        }
+
+        function resolveCollisionAndPickup(head) {
+            const eatenFoodIndex = findFoodPickupIndex(head);
             const willEatFood = eatenFoodIndex !== -1;
             const collisionSegments = willEatFood ? snake : snake.slice(0, -1);
 
-            // V14: 瞬移无敌帧处�?            // V19b: 仪式期间无敌
-            if (teleportInvincibleSteps > 0) {
-                teleportInvincibleSteps--;
-            } else if (isCeremonyPlayingState()) {
-                if (collisionSegments.some(seg => seg.x === head.x && seg.y === head.y)) {
-                    gameOver('self');
-                    return;
-                }
+            if (resolveSelfCollision(head, collisionSegments)) {
+                return { blocked: true, eatenFood: null };
             }
 
-            // 撞石头检�?- V16: 装甲模块碎石（V19b/V21: 仪式与奖励关跳过�?            if (isCeremonyPlayingState()) {
-            const hitObstacleIdx = obstacles.findIndex(o => o.x === head.x && o.y === head.y);
-            if (hitObstacleIdx !== -1) {
-                if (selectedModule && selectedModule.special === 'breakObstacle') {
-                    obstacles.splice(hitObstacleIdx, 1);
-                    score += 5;
-                    flashEffect('barrier');
-                    updateStatusUI();
-                } else if (shieldCharges > 0) {
-                    // V19: 护盾抵消
-                    shieldCharges--;
-                    obstacles.splice(hitObstacleIdx, 1);
-                    spawnFloatingText(head.x, head.y, UI_TEXT.floating.shield, '#2ecc71', true);
-                    flashEffect('teleport');
-                    flashAlpha = 0.3;
-                } else {
-                    gameOver('obstacle');
-                    return;
-                }
-            }
-            } // V19b: end ceremony check
-
-            // V12：撞蛇皮检测（V19b/V21: 仪式与奖励关跳过�?            if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
-                gameOver('skin');
-                return;
+            if (resolveObstacleCollision(head)) {
+                return { blocked: true, eatenFood: null };
             }
 
-            snake.unshift(head);
-
-            let eatenFood = null;
-            if (eatenFoodIndex !== -1) {
-                eatenFood = foods[eatenFoodIndex];
-                foods.splice(eatenFoodIndex, 1);
+            if (resolveSkinCollision(head)) {
+                return { blocked: true, eatenFood: null };
             }
 
-            applyStepConsumption(eatenFood);
-            updateDashAndBoostTimers();
+            return {
+                blocked: false,
+                eatenFood: consumePickedFood(eatenFoodIndex),
+                eatenFoodIndex,
+                willEatFood
+            };
         }
 
+        function runCollisionAndPickupStep(head) {
+            const result = resolveCollisionAndPickup(head);
+            return {
+                blocked: !!result.blocked,
+                eatenFood: result.eatenFood ?? null,
+                eatenFoodIndex: result.eatenFoodIndex ?? -1,
+                willEatFood: !!result.willEatFood,
+                collisionReason: result.blocked ? 'collision' : null
+            };
+        }
+
+        function gameStep() {
+            runGameStepPipeline();
+        }
         function applyStepConsumption(eatenFood) {
             if (eatenFood) {
                 applyFoodEffect(eatenFood.type.effect);
@@ -4205,6 +4237,53 @@
             };
         }
 
+        function runRuntimeMovementStep() {
+            let head = resolveNextHeadMovement();
+            const movementResolution = resolvePortalAndWallInteraction(head);
+            if (movementResolution.blocked) {
+                return { blocked: true, head: null, movementResolution };
+            }
+            return { blocked: false, head: movementResolution.head, movementResolution };
+        }
+
+        function runRuntimeConsumptionStep(head) {
+            const collisionResolution = runCollisionAndPickupStep(head);
+            if (collisionResolution.blocked) {
+                return { blocked: true, collisionResolution };
+            }
+
+            snake.unshift(head);
+            applyStepConsumption(collisionResolution.eatenFood);
+            updateDashAndBoostTimers();
+
+            return {
+                blocked: false,
+                collisionResolution,
+                consumed: !!collisionResolution.eatenFood
+            };
+        }
+
+        function runGameStepPipeline() {
+            const preambleResult = runRuntimePreambleStep();
+            if (preambleResult.skipped) return { completed: false, stage: 'preamble', preambleResult };
+
+            const movementResult = runRuntimeMovementStep();
+            if (movementResult.blocked) return { completed: false, stage: 'movement', preambleResult, movementResult };
+
+            const consumptionResult = runRuntimeConsumptionStep(movementResult.head);
+            if (consumptionResult.blocked) return { completed: false, stage: 'consumption', preambleResult, movementResult, consumptionResult };
+
+            return {
+                completed: true,
+                stage: 'complete',
+                preambleResult,
+                movementResult,
+                consumptionResult,
+                snakeLen: snake.length,
+                score
+            };
+        }
+
         function resetTeleportPreviewState() {
             portalTeleportCooldown = 0;
             teleportPreview = null;
@@ -4778,6 +4857,7 @@
                 canPlaceFoodAt,
                 runShopWavePipeline,
                 runCeremonyPipeline,
+                runGameStepPipeline,
                 // V12：测试辅助函�?                forceGenerateSkin() {
                     generateSnakeSkin();
                 },
