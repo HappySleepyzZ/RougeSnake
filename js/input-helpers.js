@@ -216,6 +216,12 @@ window.SnakeInputHelpers = {
       submitDirectionInput(key);
     }
 
+    function activateTouchControl(button) {
+      touchStartedOnControl = true;
+      touchTracking = false;
+      handleButtonDirectionInput(button);
+    }
+
     function bind() {
       document.addEventListener('keydown', handleKeyboardDirectionInput);
       document.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -229,22 +235,18 @@ window.SnakeInputHelpers = {
         button.addEventListener('touchstart', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          touchStartedOnControl = true;
-          touchTracking = false;
-          handleButtonDirectionInput(button);
+          activateTouchControl(button);
         }, { passive: false });
         button.addEventListener('pointerdown', (e) => {
           if (e.pointerType === 'touch') {
             e.preventDefault();
-            touchStartedOnControl = true;
-            touchTracking = false;
-            handleButtonDirectionInput(button);
+            activateTouchControl(button);
           }
         });
       });
     }
 
-    return {
+    const inputApi = {
       canQueueDirection,
       submitDirectionInput,
       handlePreGameDirectionInput,
@@ -256,5 +258,7 @@ window.SnakeInputHelpers = {
       handleButtonDirectionInput,
       bind
     };
+
+    return inputApi;
   }
 };

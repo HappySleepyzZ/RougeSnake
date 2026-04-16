@@ -163,6 +163,17 @@ window.SnakeDebugApi = {
       }
     }
 
+    function applySnapshotPostRestoreState(state) {
+      restoreShopState(state);
+
+      if (typeof state.currentMode === 'string' && MODE_CONFIGS[state.currentMode]) {
+        actions.applyModeConfig(state.currentMode);
+      }
+
+      restoreVisualState(state);
+      refreshRuntimeUi();
+    }
+
     function getOverlayVisibilitySnapshot() {
       return {
         resultVisible: resultOverlay.classList.contains('show'),
@@ -178,6 +189,53 @@ window.SnakeDebugApi = {
         timerText: timerDisplay.textContent,
         scoreText: scoreDisplay.textContent
       };
+    }
+
+    const snapshotArrayAssignments = [
+      ['snake', (seg) => ({ ...seg })],
+      ['foods', deserializeFood],
+      ['obstacles', (obs) => ({ ...obs })],
+      ['snakeSkins', cloneSnakeSkin]
+    ];
+
+    const snapshotScalarAssignments = [
+      ['foodEatenCount', 'number'],
+      ['teleportInvincibleSteps', 'number'],
+      ['score', 'number'],
+      ['remainingTime', 'number'],
+      ['gameStartTime', 'number'],
+      ['isGameRunning', 'boolean'],
+      ['isWaitingForStart', 'boolean'],
+      ['waveTransitionTimer', 'number'],
+      ['currentWave', 'number'],
+      ['waveStartTime', 'number'],
+      ['isLevelComplete', 'boolean'],
+      ['isGameOver', 'boolean'],
+      ['showTutorial', 'boolean'],
+      ['tutorialTimer', 'number'],
+      ['currentInterval', 'number'],
+      ['backgroundHue', 'number'],
+      ['speedBoostTimer', 'number'],
+      ['isSpeedBoosted', 'boolean'],
+      ['poisonDebuffEnd', 'number'],
+      ['slowDebuffEnd', 'number'],
+      ['terrainSlowActive', 'boolean'],
+      ['portalTeleportCooldown', 'number'],
+      ['totalPausedTime', 'number'],
+      ['teleportTrailTimer', 'number'],
+      ['headGlowTimer', 'number']
+    ];
+
+    const snapshotObjectAssignments = [
+      ['ceremonyKey', cloneOptionalState],
+      ['ceremonyChest', cloneOptionalState],
+      ['startIndicator', cloneOptionalState],
+      ['teleportPreview', cloneOptionalState]
+    ];
+
+    function applyDirectionalState(state) {
+      if (state.direction) setStateValue('direction', cloneVector(state.direction));
+      if (state.nextDirection) setStateValue('nextDirection', cloneVector(state.nextDirection));
     }
 
     function getSnapshot() {
@@ -233,73 +291,26 @@ window.SnakeDebugApi = {
     }
 
     function setSnapshot(state = {}) {
-      applyMappedArrayAssignments(state, [
-        ['snake', (seg) => ({ ...seg })],
-        ['foods', deserializeFood],
-        ['obstacles', (obs) => ({ ...obs })],
-        ['snakeSkins', cloneSnakeSkin]
-      ]);
-
-      const scalarAssignments = [
-        ['foodEatenCount', 'number'],
-        ['teleportInvincibleSteps', 'number'],
-        ['score', 'number'],
-        ['remainingTime', 'number'],
-        ['gameStartTime', 'number'],
-        ['isGameRunning', 'boolean'],
-        ['isWaitingForStart', 'boolean'],
-        ['waveTransitionTimer', 'number'],
-        ['currentWave', 'number'],
-        ['waveStartTime', 'number'],
-        ['isLevelComplete', 'boolean'],
-        ['isGameOver', 'boolean'],
-        ['showTutorial', 'boolean'],
-        ['tutorialTimer', 'number'],
-        ['currentInterval', 'number'],
-        ['backgroundHue', 'number'],
-        ['speedBoostTimer', 'number'],
-        ['isSpeedBoosted', 'boolean'],
-        ['poisonDebuffEnd', 'number'],
-        ['slowDebuffEnd', 'number'],
-        ['terrainSlowActive', 'boolean'],
-        ['portalTeleportCooldown', 'number'],
-        ['totalPausedTime', 'number'],
-        ['teleportTrailTimer', 'number'],
-        ['headGlowTimer', 'number']
-      ];
-
-      applyScalarAssignments(state, scalarAssignments);
+      applyMappedArrayAssignments(state, snapshotArrayAssignments);
+      applyScalarAssignments(state, snapshotScalarAssignments);
       applyRuntimeStateSetters(state);
       applyModeSelectionState(state);
-
-      if (state.direction) setStateValue('direction', cloneVector(state.direction));
-      if (state.nextDirection) setStateValue('nextDirection', cloneVector(state.nextDirection));
+      applyDirectionalState(state);
       if (state.terrainDotType !== undefined) setStateValue('terrainDotType', state.terrainDotType);
-      applyMappedObjectAssignments(state, [
-        ['ceremonyKey', cloneOptionalState],
-        ['ceremonyChest', cloneOptionalState],
-        ['startIndicator', cloneOptionalState],
-        ['teleportPreview', cloneOptionalState]
-      ]);
-
-      restoreShopState(state);
-
-      if (typeof state.currentMode === 'string' && MODE_CONFIGS[state.currentMode]) {
-        actions.applyModeConfig(state.currentMode);
-      }
-
-      restoreVisualState(state);
-      refreshRuntimeUi();
+      applyMappedObjectAssignments(state, snapshotObjectAssignments);
+      applySnapshotPostRestoreState(state);
     }
 
     function setFoods(foodDefs) {
       setStateValue('foods', foodDefs.map(deserializeFood));
     }
 
-    return {
+    const debugApi = {
       getState: getSnapshot,
       setState: setSnapshot,
       setFoods
     };
+
+    return debugApi;
   }
 };

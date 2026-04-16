@@ -30,14 +30,17 @@ window.SnakeUiOverlays = {
       return resolveRuntimeGuard('canRunGameLoop', canRunGameLoop, false);
     }
 
+    function setModeOverlayVisibility(visible) {
+      modeOverlay.classList.toggle('show', !!visible);
+      modeOverlay.classList.toggle('hidden', !visible);
+    }
+
     function showModeOverlay() {
-      modeOverlay.classList.add('show');
-      modeOverlay.classList.remove('hidden');
+      setModeOverlayVisibility(true);
     }
 
     function hideModeOverlay() {
-      modeOverlay.classList.remove('show');
-      modeOverlay.classList.add('hidden');
+      setModeOverlayVisibility(false);
     }
 
     function closeAllOverlays() {
@@ -53,6 +56,12 @@ window.SnakeUiOverlays = {
       syncPauseButtonVisibility();
     }
 
+    function createExclusiveOverlayAction(getOverlay) {
+      return function showOverlay() {
+        showExclusiveOverlay(getOverlay());
+      };
+    }
+
     function setOverlayVisibility(overlay, visible) {
       overlay.classList.toggle('show', !!visible);
     }
@@ -61,21 +70,10 @@ window.SnakeUiOverlays = {
       pauseBtn.style.display = canRunGameLoopGuarded() ? 'block' : 'none';
     }
 
-    function showPauseOverlay() {
-      showExclusiveOverlay(pauseOverlay);
-    }
-
-    function showShopOverlay() {
-      showExclusiveOverlay(getShopOverlayElement());
-    }
-
-    function showWaveOverlay() {
-      showExclusiveOverlay(waveOverlay);
-    }
-
-    function showOnlyResultOverlay() {
-      showExclusiveOverlay(resultOverlay);
-    }
+    const showPauseOverlay = createExclusiveOverlayAction(() => pauseOverlay);
+    const showShopOverlay = createExclusiveOverlayAction(getShopOverlayElement);
+    const showWaveOverlay = createExclusiveOverlayAction(() => waveOverlay);
+    const showOnlyResultOverlay = createExclusiveOverlayAction(() => resultOverlay);
 
     function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
       closeAllOverlays();
@@ -85,7 +83,7 @@ window.SnakeUiOverlays = {
       setOverlayVisibility(getShopOverlayElement(), shopVisible);
     }
 
-    return {
+    const overlayApi = {
       showModeOverlay,
       hideModeOverlay,
       closeAllOverlays,
@@ -96,5 +94,7 @@ window.SnakeUiOverlays = {
       showOnlyResultOverlay,
       restoreOverlayVisibility
     };
+
+    return overlayApi;
   }
 };
