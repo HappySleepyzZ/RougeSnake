@@ -2516,7 +2516,7 @@
         }
 
         function gameStep() {
-            runGameStepPipeline();
+            return runGameStepPipeline();
         }
         function applyStepConsumption(eatenFood) {
             if (eatenFood) {
@@ -2543,72 +2543,95 @@
         }
 
         // ========== V12：食物效果处�?==========
-        function applyFoodEffect(effect) {
-            headGlowTimer = 0;
-            teleportTrailTimer = 0;
-            teleportPreview = null;
-            
-            // V16: 使用模块的分数修�?            const modScore = (selectedModule && selectedModule.scoreModifiers[effect] !== undefined)
+        function resolveFoodEffectScore(effect) {
+            return (selectedModule && selectedModule.scoreModifiers[effect] !== undefined)
                 ? selectedModule.scoreModifiers[effect]
                 : FOOD_TYPES[effect.toUpperCase()] ? FOOD_TYPES[effect.toUpperCase()].score : 0;
-            
-            // V17b: 飘字
+        }
+
+        function showFoodEffectScoreText(modScore) {
             const head = snake[0];
             const scoreText = modScore >= 0 ? `+${modScore}` : `${modScore}`;
             const scoreColor = modScore >= 0 ? '#4ade80' : '#f87171';
             spawnFloatingText(head.x, head.y, scoreText, scoreColor, Math.abs(modScore) >= 20);
-            
-            switch (effect) {
-                case 'grow':
-                    score += modScore;
-                    updateSpeed();
-                    updateBackgroundHue();
-                    break;
-                    
-                case 'shrink':
-                    // V17b: 缩短1节，�?x1蛇皮
-                    if (snake.length > 3) {
-                        const dropped = snake.pop();
-                        // 留下蛇皮障碍
-                        if (dropped && !isPositionOccupied(dropped.x, dropped.y)) {
-                            snakeSkins.push({
-                                centerX: dropped.x,
-                                centerY: dropped.y,
-                                cells: [{ x: dropped.x, y: dropped.y }],
-                                spawnTime: Date.now()
-                            });
-                        }
-                    }
-                    score += modScore;
-                    isSpeedBoosted = true;
-                    speedBoostTimer = speedBoostDuration;
-                    restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
-                    break;
-                    
-                case 'teleport':
-                    score += modScore;
-                    teleportSwap();
-                    break;
-                    
-                case 'barrier':
-                    score += modScore;
-                    spawnBarrierObstacles();
-                    break;
-                    
-                case 'wind':
-                    score += modScore;
-                    clearObstacles();
-                    break;
+        }
+
+        function applyGrowFoodEffect(modScore) {
+            score += modScore;
+            updateSpeed();
+            updateBackgroundHue();
+        }
+
+        function applyShrinkFoodEffect(modScore) {
+            if (snake.length > 3) {
+                const dropped = snake.pop();
+                if (dropped && !isPositionOccupied(dropped.x, dropped.y)) {
+                    snakeSkins.push({
+                        centerX: dropped.x,
+                        centerY: dropped.y,
+                        cells: [{ x: dropped.x, y: dropped.y }],
+                        spawnTime: Date.now()
+                    });
+                }
             }
-            
+            score += modScore;
+            isSpeedBoosted = true;
+            speedBoostTimer = speedBoostDuration;
+            restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
+        }
+
+        function applyTeleportFoodEffect(modScore) {
+            score += modScore;
+            teleportSwap();
+        }
+
+        function applyBarrierFoodEffect(modScore) {
+            score += modScore;
+            spawnBarrierObstacles();
+        }
+
+        function applyWindFoodEffect(modScore) {
+            score += modScore;
+            clearObstacles();
+        }
+
+        const FOOD_EFFECT_HANDLERS = {
+            grow: applyGrowFoodEffect,
+            shrink: applyShrinkFoodEffect,
+            teleport: applyTeleportFoodEffect,
+            barrier: applyBarrierFoodEffect,
+            wind: applyWindFoodEffect
+        };
+
+        function runFoodEffectHandlerStep(effect, modScore) {
+            const handler = FOOD_EFFECT_HANDLERS[effect];
+            if (handler) {
+                handler(modScore);
+            }
+            return {
+                handlerFound: !!handler,
+                handlerName: handler ? (handler.name || effect) : null,
+                scoreDelta: modScore
+            };
+        }
+
+        function applyFoodEffect(effect) {
+            headGlowTimer = 0;
+            teleportTrailTimer = 0;
+            teleportPreview = null;
+
+            const modScore = resolveFoodEffectScore(effect);
+            showFoodEffectScoreText(modScore);
+            const effectResolution = runFoodEffectHandlerStep(effect, modScore);
+
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem(STORAGE_KEYS.highScore, highScore);
             }
-            
-            updateStatusUI();
-        }
 
+            updateStatusUI();
+            return effectResolution;
+        }
         function updateBackgroundHue() {
             backgroundHue = 240 - (Math.max(0, score) / 500) * 240;
             if (backgroundHue < 0) backgroundHue = 0;
