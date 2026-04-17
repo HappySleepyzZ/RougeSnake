@@ -4188,46 +4188,6 @@
             return false;
         }
 
-        // ========== wave-ceremony 包装层 (Patch 1) ==========
-        function runCeremonyHeadInteractionsStep(head) {
-            const keyResolved = tryResolveKeyCeremony(head);
-            const chestResolved = tryResolveChestCeremony(head);
-            const lootFinished = updateLootBurstCollection(head);
-            return {
-                keyResolved,
-                chestResolved,
-                lootFinished,
-                anyInteraction: keyResolved || chestResolved || lootFinished
-            };
-        }
-
-        function runCeremonyFlowStep(waveElapsed) {
-            const keyStarted = tryStartKeyCeremony(waveElapsed);
-            const ceremonyHead = snake[0];
-            const interactionsResult = runCeremonyHeadInteractionsStep(ceremonyHead);
-            return {
-                keyStarted,
-                interactionsResult,
-                ceremonyActive: isCeremonyPlayingState()
-            };
-        }
-
-        // ========== wave-ceremony Pipeline (Patch 2) ==========
-        function runCeremonyPipeline(waveElapsed) {
-            const flowResult = runCeremonyFlowStep(waveElapsed);
-            const currentState = getPrimaryGameState();
-            
-            return {
-                ...flowResult,
-                currentState,
-                ceremonyPhase: waveCeremonyState || null,
-                keyPosition: ceremonyKey ? { x: ceremonyKey.x, y: ceremonyKey.y } : null,
-                chestPosition: ceremonyChest ? { x: ceremonyChest.x, y: ceremonyChest.y } : null,
-                lootRemaining: lootFoods ? lootFoods.filter(l => !l.eaten).length : 0,
-                lootEaten: lootEatenCount || 0
-            };
-        }
-
         // ========== 原始函数（保持不变） ==========
         function resolveCeremonyHeadInteractions(ceremonyHead) {
             tryResolveKeyCeremony(ceremonyHead);
