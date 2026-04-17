@@ -2098,7 +2098,6 @@
             closeShopState();
             resetTeleportPreviewState();
             closeAllOverlays();
-            startWaveTransition();
             return {
                 closed: true,
                 wasShop: true,
@@ -2107,8 +2106,9 @@
         }
 
         function runWaveTransitionStep() {
-            const flowStarted = beginWaveTransitionFlow();
-            if (!flowStarted) return { started: false };
+            if (!enterWaveTransition()) return { started: false };
+            stopGameLoop();
+            stopWaveTransitionCountdown();
             renderWaveTransitionOverlay();
             restartWaveTransitionCountdown();
             return {
@@ -2119,32 +2119,25 @@
         }
 
         function runWaveAdvanceStep() {
-            completeWaveAdvanceFlow();
+            stopWaveTransitionCountdown();
+            currentWave++;
+            resetTeleportPreviewState();
+            if (currentWave > bestWave) {
+                bestWave = currentWave;
+                localStorage.setItem(STORAGE_KEYS.bestWave, bestWave);
+            }
+            resetWaveProgressState();
+            resetCeremonyState();
+            resetWaveDebuffState();
+            generateWaveTerrain();
+            generateWavePortals();
+            syncPauseButtonVisibility();
+            restartGameLoopWithCurrentState();
             return {
                 advanced: true,
                 newWave: currentWave,
                 loopRestarted: true
             };
-        }
-
-        // ========== shop-wave-flow Pipeline (Patch 2) ==========
-        function runShopWavePipeline(action) {
-            if (action === 'openShop') {
-                return { action: 'openShop', ...runShopOpenStep() };
-            }
-            if (action === 'closeShop') {
-                const closeResult = runShopCloseStep();
-                if (closeResult.transitionStarted) {
-                    const transitionResult = runWaveTransitionStep();
-                    return { action: 'closeShop', closeResult, transitionResult };
-                }
-                return { action: 'closeShop', closeResult };
-            }
-            if (action === 'advanceWave') {
-                const advanceResult = runWaveAdvanceStep();
-                return { action: 'advanceWave', advanceResult };
-            }
-            return { action: 'unknown', success: false };
         }
 
         // ========== 原始函数（保持不变） ==========
@@ -4396,30 +4389,6 @@
             const effectiveInterval = intervalOverride ?? getEffectiveInterval();
             lastSlowInterval = effectiveInterval === 500 ? 500 : null;
             gameLoop = setInterval(gameStep, effectiveInterval);
-        }
-
-        function beginWaveTransitionFlow() {
-            if (!enterWaveTransition()) return false;
-            stopGameLoop();
-            stopWaveTransitionCountdown();
-            return true;
-        }
-
-        function completeWaveAdvanceFlow() {
-            stopWaveTransitionCountdown();
-            currentWave++;
-            resetTeleportPreviewState();
-            if (currentWave > bestWave) {
-                bestWave = currentWave;
-                localStorage.setItem(STORAGE_KEYS.bestWave, bestWave);
-            }
-            resetWaveProgressState();
-            resetCeremonyState();
-            resetWaveDebuffState();
-            generateWaveTerrain();
-            generateWavePortals();
-            syncPauseButtonVisibility();
-            restartGameLoopWithCurrentState();
         }
 
         function restartGameLoopWithCurrentState() {
