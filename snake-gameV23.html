@@ -1091,13 +1091,6 @@
 
         // V16: removed isInfiniteUnlocked / syncModeAvailability (no longer needed)
 
-        function getSkinGenerationThreshold() {
-            const base = currentLevelConfig.skin.generationThreshold;
-            // V16: 通用模块蛇皮阈值 +2
-            if (selectedModule && selectedModule.special === 'slowSkin') return base + TUNING.module.slowSkinThresholdBonus;
-            return base;
-        }
-
         function distanceInCells(ax, ay, bx, by) {
             return Math.hypot(ax - bx, ay - by);
         }
@@ -1124,17 +1117,6 @@
             return true;
         }
 
-        function createFoodInstance(type, x, y) {
-            return {
-                x,
-                y,
-                type,
-                pulsePhase: Math.random() * Math.PI * 2,
-                dangerShakePhase: 0,
-                windSpinPhase: 0
-            };
-        }
-
         function findFoodSpawnCell(type) {
             const padding = currentLevelConfig.foodField.wallPadding;
             const min = padding;
@@ -1144,7 +1126,14 @@
                 const x = Math.floor(Math.random() * (max - min + 1)) + min;
                 const y = Math.floor(Math.random() * (max - min + 1)) + min;
                 if (canPlaceFoodAt(x, y)) {
-                    return createFoodInstance(type, x, y);
+                    return {
+                        x,
+                        y,
+                        type,
+                        pulsePhase: Math.random() * Math.PI * 2,
+                        dangerShakePhase: 0,
+                        windSpinPhase: 0
+                    };
                 }
             }
 
