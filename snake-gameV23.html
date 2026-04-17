@@ -2149,30 +2149,22 @@
 
         // ========== 原始函数（保持不变） ==========
         function openShop() {
-            if (!enterShopState()) return;
-            consumeWaveBuffs();
-            stopGameLoop();
-            syncPauseButtonVisibility();
-            shopItems = rollShopItems();
-            renderShopState();
+            runShopOpenStep();
         }
         
         function closeShop() {
-            if (!isShopState() && !isShopOpeningState()) return;
-            closeShopState();
-            resetTeleportPreviewState();
-            closeAllOverlays();
-            startWaveTransition();
+            const closeResult = runShopCloseStep();
+            if (closeResult.transitionStarted) {
+                runWaveTransitionStep();
+            }
         }
 
         function startWaveTransition() {
-            if (!beginWaveTransitionFlow()) return;
-            renderWaveTransitionOverlay();
-            restartWaveTransitionCountdown();
+            runWaveTransitionStep();
         }
 
         function advanceWave() {
-            completeWaveAdvanceFlow();
+            runWaveAdvanceStep();
         }
         function findSkinAnchorPosition() {
             // V14: 优先在蛇身附近找位置
