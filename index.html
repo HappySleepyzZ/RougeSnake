@@ -1686,66 +1686,6 @@
             return null;
         }
         
-        function drawPortalPairs(time) {
-            portalPairs.forEach(pair => {
-                const pulse = Math.sin(time * 3 + pair.hue) * 0.3 + 0.7;
-                const color = `hsl(${pair.hue}, 80%, 65%)`;
-                const glowColor = `hsla(${pair.hue}, 90%, 70%, ${pulse * 0.5})`;
-                
-                [pair.a, pair.b].forEach((p, index) => {
-                    const px = p.x * cellSize + cellSize / 2;
-                    const py = p.y * cellSize + cellSize / 2;
-                    const r = cellSize * 0.45;
-                    const portalImg = index === 0 ? ICON_IMAGES.portal_a : ICON_IMAGES.portal_b;
-                    
-                    // 外圈光晕
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 12 * pulse;
-                    if (portalImg && portalImg.complete && portalImg.naturalWidth > 0) {
-                        const size = cellSize * 1.15;
-                        ctx.globalAlpha = 0.9 + pulse * 0.1;
-                        ctx.drawImage(portalImg, px - size / 2, py - size / 2, size, size);
-                        ctx.globalAlpha = 1;
-                    } else {
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = 3;
-                        ctx.fillStyle = '#fff';
-                        ctx.beginPath();
-                        ctx.arc(px, py, r, 0, Math.PI * 2);
-                        ctx.stroke();
-                    
-                    // 内圈
-                        ctx.fillStyle = glowColor;
-                        ctx.beginPath();
-                        ctx.arc(px, py, r * 0.6, 0, Math.PI * 2);
-                        ctx.fill();
-                    
-                    // 中心点
-                    ctx.fillStyle = '#fff';
-                        ctx.beginPath();
-                        ctx.fillStyle = '#fff';
-                        ctx.arc(px, py, 2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.shadowBlur = 0;
-                });
-                
-                // 连线（虚线）
-                const ax = pair.a.x * cellSize + cellSize / 2;
-                const ay = pair.a.y * cellSize + cellSize / 2;
-                const bx = pair.b.x * cellSize + cellSize / 2;
-                const by = pair.b.y * cellSize + cellSize / 2;
-                ctx.strokeStyle = `hsla(${pair.hue}, 60%, 50%, 0.15)`;
-                ctx.lineWidth = 1;
-                ctx.setLineDash([4, 6]);
-                ctx.beginPath();
-                ctx.moveTo(ax, ay);
-                ctx.lineTo(bx, by);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            });
-        }
-
         // V17b: 飘字系统
         let floatingTexts = []; // { x, y, text, color, age, maxAge, big }
         function spawnFloatingText(gridX, gridY, text, color, big = false) {
@@ -1759,114 +1699,6 @@
                 big: big
             });
         }
-        function updateAndDrawFloatingTexts(dt) {
-            floatingTexts = floatingTexts.filter(ft => ft.age < ft.maxAge);
-            floatingTexts.forEach(ft => {
-                ft.age += dt;
-                const progress = ft.age / ft.maxAge;
-                const alpha = 1 - progress;
-                const yOffset = -30 * progress; // 向上飘30px
-                const fontSize = ft.big ? cellSize * 1.0 : cellSize * 0.75;
-                
-                ctx.save();
-                ctx.globalAlpha = alpha;
-                ctx.fillStyle = ft.color;
-                // 像素风：用等宽粗体
-                ctx.font = `bold ${Math.round(fontSize)}px "Courier New", monospace`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                
-                // 描边让字更清晰
-                ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-                ctx.lineWidth = 3;
-                ctx.strokeText(ft.text, ft.x, ft.y + yOffset);
-                ctx.fillText(ft.text, ft.x, ft.y + yOffset);
-                
-                // 大额闪光粒子
-                if (ft.big && progress < 0.4) {
-                    const sparkAlpha = (0.4 - progress) * 2;
-                    ctx.fillStyle = `rgba(255, 255, 200, ${sparkAlpha})`;
-                    for (let i = 0; i < 3; i++) {
-                        const angle = (i / 3) * Math.PI * 2 + ft.age * 10;
-                        const dist = 8 + progress * 20;
-                        ctx.beginPath();
-                        ctx.arc(ft.x + Math.cos(angle) * dist, ft.y + yOffset + Math.sin(angle) * dist, 2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-                ctx.restore();
-            });
-        }
-
-        // V19c: 绘制仪式物品（像素风图标）
-        function drawCeremonyItems(time) {
-            // 钥匙
-            if (ceremonyKey && isCeremonyKeyState()) {
-                const kx = ceremonyKey.x * cellSize + cellSize / 2;
-                const ky = ceremonyKey.y * cellSize + cellSize / 2;
-                const kSize = cellSize * 1.2;
-                const kImg = ICON_IMAGES.ceremony_key;
-                ctx.save();
-                ctx.shadowColor = '#ffd700';
-                ctx.shadowBlur = 20;
-                if (kImg && kImg.complete && kImg.naturalWidth > 0) {
-                    ctx.drawImage(kImg, kx - kSize/2, ky - kSize/2, kSize, kSize);
-                } else {
-                    ctx.fillStyle = '#ffd700';
-                    ctx.beginPath();
-                    ctx.arc(kx, ky, kSize * 0.35, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.shadowBlur = 0;
-                ctx.restore();
-            }
-            
-            // 宝箱
-            if (ceremonyChest && isCeremonyChestState()) {
-                const cx = ceremonyChest.x * cellSize + cellSize / 2;
-                const cy = ceremonyChest.y * cellSize + cellSize / 2;
-                const cSize = cellSize * 1.2;
-                const cImg = ICON_IMAGES.ceremony_chest;
-                ctx.save();
-                ctx.shadowColor = '#ff8c00';
-                ctx.shadowBlur = 22;
-                if (cImg && cImg.complete && cImg.naturalWidth > 0) {
-                    ctx.drawImage(cImg, cx - cSize/2, cy - cSize/2, cSize, cSize);
-                } else {
-                    ctx.fillStyle = '#8B4513';
-                    ctx.beginPath();
-                    ctx.roundRect(cx - cSize*0.4, cy - cSize*0.3, cSize*0.8, cSize*0.6, 3);
-                    ctx.fill();
-                }
-                ctx.shadowBlur = 0;
-                ctx.restore();
-            }
-            
-            // 喷出的金币
-            if (isCeremonyLootBurstState()) {
-                const coinImg = ICON_IMAGES.loot_coin;
-                lootFoods.forEach(lf => {
-                    if (lf.eaten) return;
-                    const fx = lf.x * cellSize + cellSize / 2;
-                    const fy = lf.y * cellSize + cellSize / 2;
-                    const fSize = cellSize * 0.85;
-                    ctx.save();
-                    ctx.shadowColor = '#ffd700';
-                    ctx.shadowBlur = 10;
-                    if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
-                        ctx.drawImage(coinImg, fx - fSize/2, fy - fSize/2, fSize, fSize);
-                    } else {
-                        ctx.fillStyle = '#ffd700';
-                        ctx.beginPath();
-                        ctx.arc(fx, fy, fSize * 0.35, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.shadowBlur = 0;
-                    ctx.restore();
-                });
-            }
-        }
-
         function checkTerrainEffects() {
             if (!selectedModule) return;
             const now = Date.now();
@@ -2278,19 +2110,6 @@
             };
         }
 
-        function updateDashAndBoostTimers() {
-            if (dashBurstTicks > 0) {
-                dashBurstTicks--;
-            }
-            if (isSpeedBoosted) {
-                speedBoostTimer -= currentInterval;
-                if (speedBoostTimer <= 0) {
-                    isSpeedBoosted = false;
-                    dashBurstTicks = 0;
-                    restartGameLoopWithCurrentState();
-                }
-            }
-        }
 
         // ========== 原始函数（保持不变） ==========
         function gameStep() {
@@ -2331,7 +2150,17 @@
             } else {
                 snake.pop();
             }
-            updateDashAndBoostTimers();
+            if (dashBurstTicks > 0) {
+                dashBurstTicks--;
+            }
+            if (isSpeedBoosted) {
+                speedBoostTimer -= currentInterval;
+                if (speedBoostTimer <= 0) {
+                    isSpeedBoosted = false;
+                    dashBurstTicks = 0;
+                    restartGameLoopWithCurrentState();
+                }
+            }
         }
 
         // ========== V12：食物效果处理 ==========
@@ -3452,8 +3281,117 @@
             drawPortalsAndWalls();
             drawObstacles(time);
             drawTerrainZones(time); // V16: 地形区域
-            drawPortalPairs(time); // V17c: 传送门
-            drawCeremonyItems(time); // V19: 仪式物品
+            portalPairs.forEach(pair => {
+                const pulse = Math.sin(time * 3 + pair.hue) * 0.3 + 0.7;
+                const color = `hsl(${pair.hue}, 80%, 65%)`;
+                const glowColor = `hsla(${pair.hue}, 90%, 70%, ${pulse * 0.5})`;
+
+                [pair.a, pair.b].forEach((p, index) => {
+                    const px = p.x * cellSize + cellSize / 2;
+                    const py = p.y * cellSize + cellSize / 2;
+                    const r = cellSize * 0.45;
+                    const portalImg = index === 0 ? ICON_IMAGES.portal_a : ICON_IMAGES.portal_b;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 12 * pulse;
+                    if (portalImg && portalImg.complete && portalImg.naturalWidth > 0) {
+                        const size = cellSize * 1.15;
+                        ctx.globalAlpha = 0.9 + pulse * 0.1;
+                        ctx.drawImage(portalImg, px - size / 2, py - size / 2, size, size);
+                        ctx.globalAlpha = 1;
+                    } else {
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 3;
+                        ctx.fillStyle = '#fff';
+                        ctx.beginPath();
+                        ctx.arc(px, py, r, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.fillStyle = glowColor;
+                        ctx.beginPath();
+                        ctx.arc(px, py, r * 0.6, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#fff';
+                        ctx.beginPath();
+                        ctx.arc(px, py, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.shadowBlur = 0;
+                });
+
+                const ax = pair.a.x * cellSize + cellSize / 2;
+                const ay = pair.a.y * cellSize + cellSize / 2;
+                const bx = pair.b.x * cellSize + cellSize / 2;
+                const by = pair.b.y * cellSize + cellSize / 2;
+                ctx.strokeStyle = `hsla(${pair.hue}, 60%, 50%, 0.15)`;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 6]);
+                ctx.beginPath();
+                ctx.moveTo(ax, ay);
+                ctx.lineTo(bx, by);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            });
+            if (ceremonyKey && isCeremonyKeyState()) {
+                const kx = ceremonyKey.x * cellSize + cellSize / 2;
+                const ky = ceremonyKey.y * cellSize + cellSize / 2;
+                const kSize = cellSize * 1.2;
+                const kImg = ICON_IMAGES.ceremony_key;
+                ctx.save();
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 20;
+                if (kImg && kImg.complete && kImg.naturalWidth > 0) {
+                    ctx.drawImage(kImg, kx - kSize / 2, ky - kSize / 2, kSize, kSize);
+                } else {
+                    ctx.fillStyle = '#ffd700';
+                    ctx.beginPath();
+                    ctx.arc(kx, ky, kSize * 0.35, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+
+            if (ceremonyChest && isCeremonyChestState()) {
+                const cx = ceremonyChest.x * cellSize + cellSize / 2;
+                const cy = ceremonyChest.y * cellSize + cellSize / 2;
+                const cSize = cellSize * 1.2;
+                const cImg = ICON_IMAGES.ceremony_chest;
+                ctx.save();
+                ctx.shadowColor = '#ff8c00';
+                ctx.shadowBlur = 22;
+                if (cImg && cImg.complete && cImg.naturalWidth > 0) {
+                    ctx.drawImage(cImg, cx - cSize / 2, cy - cSize / 2, cSize, cSize);
+                } else {
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.roundRect(cx - cSize * 0.4, cy - cSize * 0.3, cSize * 0.8, cSize * 0.6, 3);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+
+            if (isCeremonyLootBurstState()) {
+                const coinImg = ICON_IMAGES.loot_coin;
+                lootFoods.forEach(lf => {
+                    if (lf.eaten) return;
+                    const fx = lf.x * cellSize + cellSize / 2;
+                    const fy = lf.y * cellSize + cellSize / 2;
+                    const fSize = cellSize * 0.85;
+                    ctx.save();
+                    ctx.shadowColor = '#ffd700';
+                    ctx.shadowBlur = 10;
+                    if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
+                        ctx.drawImage(coinImg, fx - fSize / 2, fy - fSize / 2, fSize, fSize);
+                    } else {
+                        ctx.fillStyle = '#ffd700';
+                        ctx.beginPath();
+                        ctx.arc(fx, fy, fSize * 0.35, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.shadowBlur = 0;
+                    ctx.restore();
+                });
+            }
             drawSnakeSkins(time); // V12：绘制蛇皮（3x3区域）
             
             if (isInWaitingTutorialState()) {
@@ -3504,8 +3442,38 @@
                         }
                     }
                 }
-                // V17b: 飘字
-                updateAndDrawFloatingTexts(1/60);
+                floatingTexts = floatingTexts.filter(ft => ft.age < ft.maxAge);
+                floatingTexts.forEach(ft => {
+                    ft.age += 1 / 60;
+                    const progress = ft.age / ft.maxAge;
+                    const alpha = 1 - progress;
+                    const yOffset = -30 * progress;
+                    const fontSize = ft.big ? cellSize * 1.0 : cellSize * 0.75;
+
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = ft.color;
+                    ctx.font = `bold ${Math.round(fontSize)}px "Courier New", monospace`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText(ft.text, ft.x, ft.y + yOffset);
+                    ctx.fillText(ft.text, ft.x, ft.y + yOffset);
+
+                    if (ft.big && progress < 0.4) {
+                        const sparkAlpha = (0.4 - progress) * 2;
+                        ctx.fillStyle = `rgba(255, 255, 200, ${sparkAlpha})`;
+                        for (let i = 0; i < 3; i++) {
+                            const angle = (i / 3) * Math.PI * 2 + ft.age * 10;
+                            const dist = 8 + progress * 20;
+                            ctx.beginPath();
+                            ctx.arc(ft.x + Math.cos(angle) * dist, ft.y + yOffset + Math.sin(angle) * dist, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    ctx.restore();
+                });
             }
         }
 
