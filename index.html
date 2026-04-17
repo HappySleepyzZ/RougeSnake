@@ -1306,25 +1306,6 @@
             updateStatusUI();
         }
 
-        function initGameMode(mode) {
-            // V16: always survival
-            remainingTime = Infinity;
-            gameStartTime = Date.now();
-            waveStartTime = Date.now();
-            currentWave = 1;
-            clearWaveTransitionState();
-            terrainZones = [];
-            // 灵蛇模块扩大穿墙
-            if (selectedModule && selectedModule.special === 'widePortal') {
-                portalWidth = 5;
-            } else {
-                portalWidth = currentLevelConfig.portalWidth;
-            }
-            // V17d: 波1 就生成地形和传送门
-            generateWaveTerrain();
-            generateWavePortals();
-        }
-
         function initGame() {
             const centerX = Math.floor(tileCount / 2);
             const centerY = Math.floor(tileCount / 2);
