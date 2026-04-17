@@ -2596,51 +2596,6 @@
             }
         }
 
-        // V17: 蛇身特效绘制
-        function drawSnakeTrailEffect(time, seg, index) {
-            if (!selectedModule || index === 0) return;
-            const x = seg.x * cellSize + cellSize / 2;
-            const y = seg.y * cellSize + cellSize / 2;
-            const s = cellSize * 0.3;
-            
-            switch (selectedModule.trailEffect) {
-                case 'drip': // 毒尾 - 毒液滴落（最后3节）
-                    if (index >= snake.length - 3) {
-                        const drip = Math.sin(time * 5 + index) * 0.5 + 0.5;
-                        ctx.fillStyle = `rgba(123, 47, 247, ${drip * 0.4})`;
-                        ctx.beginPath();
-                        ctx.arc(x, y + s * 1.5, s * 0.4 * drip, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    break;
-                case 'stripe': // 装甲 - 金属光泽条纹（每隔2节）
-                    if (index % 2 === 0) {
-                        ctx.strokeStyle = 'rgba(200, 220, 240, 0.45)';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.moveTo(x - s, y); ctx.lineTo(x + s, y);
-                        ctx.stroke();
-                    }
-                    break;
-                case 'ghost': // 灵蛇 - 淡金色残影
-                    if (index <= 2) {
-                        const fade = (3 - index) / 3;
-                        ctx.fillStyle = `rgba(245, 200, 66, ${fade * 0.2})`;
-                        ctx.beginPath();
-                        ctx.arc(x, y, s * 1.5 * fade, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    break;
-                case 'pulse': // 通用 - 发光脉动
-                    const glow = Math.sin(time * 2 + index * 0.3) * 0.15 + 0.1;
-                    ctx.fillStyle = `rgba(46, 204, 113, ${glow})`;
-                    ctx.beginPath();
-                    ctx.arc(x, y, s * 1.8, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-            }
-        }
-
         function drawSnake(time) {
             const scale = getScaleFactors();
             const breathFreq = Math.max(0.5, 2 - Math.max(0, score) / 200);
@@ -2659,7 +2614,49 @@
             const hShape = mod.headShape || 'round';
             
             // V17: 先画蛇身特效（在蛇下方）
-            snake.forEach((seg, index) => { drawSnakeTrailEffect(time, seg, index); });
+            snake.forEach((seg, index) => {
+                if (!selectedModule || index === 0) return;
+                const x = seg.x * cellSize + cellSize / 2;
+                const y = seg.y * cellSize + cellSize / 2;
+                const s = cellSize * 0.3;
+                switch (selectedModule.trailEffect) {
+                    case 'drip':
+                        if (index >= snake.length - 3) {
+                            const drip = Math.sin(time * 5 + index) * 0.5 + 0.5;
+                            ctx.fillStyle = `rgba(123, 47, 247, ${drip * 0.4})`;
+                            ctx.beginPath();
+                            ctx.arc(x, y + s * 1.5, s * 0.4 * drip, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+                    case 'stripe':
+                        if (index % 2 === 0) {
+                            ctx.strokeStyle = 'rgba(200, 220, 240, 0.45)';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.moveTo(x - s, y);
+                            ctx.lineTo(x + s, y);
+                            ctx.stroke();
+                        }
+                        break;
+                    case 'ghost':
+                        if (index <= 2) {
+                            const fade = (3 - index) / 3;
+                            ctx.fillStyle = `rgba(245, 200, 66, ${fade * 0.2})`;
+                            ctx.beginPath();
+                            ctx.arc(x, y, s * 1.5 * fade, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+                    case 'pulse':
+                        const glow = Math.sin(time * 2 + index * 0.3) * 0.15 + 0.1;
+                        ctx.fillStyle = `rgba(46, 204, 113, ${glow})`;
+                        ctx.beginPath();
+                        ctx.arc(x, y, s * 1.8, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                }
+            });
             
             // V17fix: 地形 DoT 蛇身持续变色脉动
             let terrainTint = null;
