@@ -2288,22 +2288,6 @@
             };
         }
 
-        function findFoodPickupIndex(head) {
-            let eatenFoodIndex = -1;
-            let minDist = Infinity;
-            const pickupRadius = hasBuff('magnet') ? TUNING.pickup.magnetRadius : TUNING.pickup.defaultRadius;
-            for (let i = 0; i < foods.length; i++) {
-                const dx = head.x - foods[i].x;
-                const dy = head.y - foods[i].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist <= pickupRadius && dist < minDist) {
-                    minDist = dist;
-                    eatenFoodIndex = i;
-                }
-            }
-            return eatenFoodIndex;
-        }
-
         function resolveObstacleCollision(head) {
             if (!isCeremonyPlayingState()) return false;
             const hitObstacleIdx = obstacles.findIndex(o => o.x === head.x && o.y === head.y);
@@ -2358,7 +2342,18 @@
         }
 
         function resolveCollisionAndPickup(head) {
-            const eatenFoodIndex = findFoodPickupIndex(head);
+            let eatenFoodIndex = -1;
+            let minDist = Infinity;
+            const pickupRadius = hasBuff('magnet') ? TUNING.pickup.magnetRadius : TUNING.pickup.defaultRadius;
+            for (let i = 0; i < foods.length; i++) {
+                const dx = head.x - foods[i].x;
+                const dy = head.y - foods[i].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist <= pickupRadius && dist < minDist) {
+                    minDist = dist;
+                    eatenFoodIndex = i;
+                }
+            }
             const willEatFood = eatenFoodIndex !== -1;
             const collisionSegments = willEatFood ? snake : snake.slice(0, -1);
 
