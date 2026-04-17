@@ -1615,23 +1615,6 @@
         }
 
         // ========== V16: 波次系统函数 ==========
-        function getWaveFoodInterval() {
-            // V17fix: 波1就快节奏
-            if (currentWave <= 1) return TUNING.spawn.foodIntervalWave1;
-            if (currentWave <= 2) return TUNING.spawn.foodIntervalWave2;
-            if (currentWave <= 3) return TUNING.spawn.foodIntervalWave2 - 200;
-            return Math.max(TUNING.spawn.foodIntervalMin, TUNING.spawn.foodIntervalWave1 - currentWave * TUNING.spawn.foodIntervalWaveDecay);
-        }
-
-        function getWaveTerrainCount() {
-            // V17d: 波1就有毒雾+减速，波2起传送门
-            if (currentWave <= 1) return { ...TUNING.terrain.baseCounts.wave1 };
-            if (currentWave === 2) return { ...TUNING.terrain.baseCounts.wave2 };
-            if (currentWave === 3) return { ...TUNING.terrain.baseCounts.wave3 };
-            const extra = currentWave - 3;
-            return { poison: 2 + Math.floor(extra / 2), slow: 2 + Math.ceil(extra / 2) };
-        }
-
         function generateTerrainZone(type) {
             const padding = TUNING.terrain.spawnPadding; // V18f: 30x30 适配
             const head = snake[0];
@@ -1655,7 +1638,16 @@
 
         function generateWaveTerrain() {
             terrainZones = [];
-            const counts = getWaveTerrainCount();
+            const counts = currentWave <= 1
+                ? { ...TUNING.terrain.baseCounts.wave1 }
+                : currentWave === 2
+                    ? { ...TUNING.terrain.baseCounts.wave2 }
+                    : currentWave === 3
+                        ? { ...TUNING.terrain.baseCounts.wave3 }
+                        : {
+                            poison: 2 + Math.floor((currentWave - 3) / 2),
+                            slow: 2 + Math.ceil((currentWave - 3) / 2)
+                        };
             for (let i = 0; i < counts.poison; i++) {
                 const zone = generateTerrainZone('poison');
                 if (zone) terrainZones.push(zone);
@@ -2043,36 +2035,6 @@
             restartWaveTransitionCountdown();
         }
 
-        function isValidSkinAnchor(centerX, centerY) {
-            // 边界检查
-            if (centerX < 1 || centerX >= tileCount - 1 || centerY < 1 || centerY >= tileCount - 1) {
-                return false;
-            }
-            
-            // V15: 蛇头周围5格内不生成蛇皮（曼哈顿距离）
-            const head = snake[0];
-            const headDist = Math.abs(centerX - head.x) + Math.abs(centerY - head.y);
-            if (headDist < 5) {
-                return false;
-            }
-            
-            // 检查 3x3 区域的空闲格子数
-            let freeCount = 0;
-            for (let dx = -1; dx <= 1; dx++) {
-                for (let dy = -1; dy <= 1; dy++) {
-                    const x = centerX + dx;
-                    const y = centerY + dy;
-                    
-                    if (!isPositionOccupied(x, y)) {
-                        freeCount++;
-                    }
-                }
-            }
-            
-            // 至少需要 5 格空闲
-            return freeCount >= 5;
-        }
-        
         function generateSnakeSkin(anchor = null) {
             // 检查蛇皮区域数量上限
             let skinRegionCount = snakeSkins.length;
@@ -3951,7 +3913,13 @@
         function updateWaveFoodSpawning() {
             if (!isCeremonyPlayingState()) return;
             foodSpawnTimer += currentInterval;
-            const spawnInterval = getWaveFoodInterval();
+            const spawnInterval = currentWave <= 1
+                ? TUNING.spawn.foodIntervalWave1
+                : currentWave <= 2
+                    ? TUNING.spawn.foodIntervalWave2
+                    : currentWave <= 3
+                        ? TUNING.spawn.foodIntervalWave2 - 200
+                        : Math.max(TUNING.spawn.foodIntervalMin, TUNING.spawn.foodIntervalWave1 - currentWave * TUNING.spawn.foodIntervalWaveDecay);
             if (foodSpawnTimer >= spawnInterval) {
                 foodSpawnTimer = 0;
                 spawnFood();
