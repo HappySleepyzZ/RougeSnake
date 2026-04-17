@@ -4183,41 +4183,35 @@
             right: { x: 1, y: 0 }
         };
 
-        function shouldHandleDirectionInput() {
-            return isWaitingForStart || canAcceptGameplayInput();
-        }
-
-        function getInputHelperStateSnapshot() {
-            return {
-                hasSelectedMode,
-                showTutorial,
-                direction: { ...direction },
-                nextDirection: { ...nextDirection },
-                isGameRunning
-            };
-        }
-
-        function setInputHelperStateValue(key, value) {
-            switch (key) {
-                case 'showTutorial':
-                    showTutorial = value;
-                    break;
-                case 'nextDirection':
-                    nextDirection = value;
-                    break;
-                default:
-                    break;
-            }
-            return value;
-        }
-
         const inputHelpersModule = installRequiredSnakeModule(window.SnakeInputHelpers, 'SnakeInputHelpers', {
             touchControls,
             canvas,
-            getState: getInputHelperStateSnapshot,
-            setStateValue: setInputHelperStateValue,
+            getState() {
+                return {
+                    hasSelectedMode,
+                    showTutorial,
+                    direction: { ...direction },
+                    nextDirection: { ...nextDirection },
+                    isGameRunning
+                };
+            },
+            setStateValue(key, value) {
+                switch (key) {
+                    case 'showTutorial':
+                        showTutorial = value;
+                        break;
+                    case 'nextDirection':
+                        nextDirection = value;
+                        break;
+                    default:
+                        break;
+                }
+                return value;
+            },
             actions: inputHelperActions,
-            shouldHandleDirectionInput,
+            shouldHandleDirectionInput() {
+                return isWaitingForStart || canAcceptGameplayInput();
+            },
             directionInputMap: DIRECTION_INPUT_MAP
         });
 
