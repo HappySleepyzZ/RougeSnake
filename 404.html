@@ -2590,93 +2590,6 @@
             ctx.shadowBlur = 0;
         }
 
-        function drawSnakeSkins(time) {
-            const inset = 0; // V18d: 蛇蜕占满一格
-            const tileRadius = Math.max(3, currentLevelConfig.skin.tileRadius);
-            const skinTexture = TEXTURE_IMAGES.snake_skin;
-            const useSkinTexture = isDrawableIcon(skinTexture);
-            const skinStyle = VISUAL_STYLE_CONFIG.snakeSkin || {};
-
-            snakeSkins.forEach(skin => {
-                if (!skin.cells || skin.cells.length === 0) return;
-
-                const emberPulse = Math.sin(time * 2.4 + skin.spawnTime * 0.002) * 0.08 + 0.22;
-
-                skin.cells.forEach((cell, index) => {
-                    const px = cell.x * cellSize + inset;
-                    const py = cell.y * cellSize + inset;
-                    const tileSize = cellSize - inset * 2;
-                    if (useSkinTexture) {
-                        ctx.save();
-                        ctx.globalAlpha = 0.94;
-                        ctx.shadowColor = skinStyle.shadow || 'rgba(200, 140, 60, 0.6)';
-                        ctx.shadowBlur = 10;
-                        ctx.drawImage(skinTexture, px, py, tileSize, tileSize);
-                        ctx.restore();
-                    } else {
-                        const gradient = ctx.createLinearGradient(px, py, px + tileSize, py + tileSize);
-                        const stops = skinStyle.gradientStops || [
-                            { offset: 0, color: '#8b5e3c' },
-                            { offset: 0.52, color: '#a5714a' },
-                            { offset: 1, color: '#6b3a1f' }
-                        ];
-                        stops.forEach((stop) => gradient.addColorStop(stop.offset, stop.color));
-
-                        ctx.shadowColor = skinStyle.shadow || 'rgba(200, 140, 60, 0.6)';
-                        ctx.shadowBlur = 10;
-                        ctx.fillStyle = gradient;
-                        ctx.beginPath();
-                        ctx.roundRect(px, py, tileSize, tileSize, tileRadius);
-                        ctx.fill();
-                        ctx.strokeStyle = skinStyle.outerBorder || 'rgba(255, 200, 100, 0.5)';
-                        ctx.lineWidth = 1.5;
-                        ctx.beginPath();
-                        ctx.roundRect(px, py, tileSize, tileSize, tileRadius);
-                        ctx.stroke();
-                        ctx.shadowBlur = 0;
-
-                        ctx.strokeStyle = skinStyle.innerBorder || 'rgba(234, 186, 120, 0.28)';
-                        ctx.lineWidth = 1.2;
-                        ctx.beginPath();
-                        ctx.roundRect(px + 0.5, py + 0.5, tileSize - 1, tileSize - 1, tileRadius - 1);
-                        ctx.stroke();
-
-                        ctx.fillStyle = skinStyle.bandFill || 'rgba(33, 15, 6, 0.18)';
-                        ctx.beginPath();
-                        ctx.roundRect(px + tileSize * 0.12, py + tileSize * 0.1, tileSize * 0.76, tileSize * 0.24, 4);
-                        ctx.fill();
-
-                        ctx.strokeStyle = `rgba(${skinStyle.emberStrokeRgb || '255, 184, 92'}, ${emberPulse})`;
-                        ctx.lineWidth = 1.4;
-                        ctx.beginPath();
-                        ctx.moveTo(px + tileSize * 0.18, py + tileSize * 0.72);
-                        ctx.lineTo(px + tileSize * 0.42, py + tileSize * 0.52);
-                        ctx.lineTo(px + tileSize * 0.58, py + tileSize * 0.67);
-                        ctx.lineTo(px + tileSize * 0.82, py + tileSize * 0.38);
-                        ctx.stroke();
-
-                        ctx.strokeStyle = skinStyle.ridgeStroke || 'rgba(24, 10, 4, 0.30)';
-                        ctx.lineWidth = 1;
-                        for (let ridge = 0; ridge < 3; ridge++) {
-                            const ridgeOffset = ridge * tileSize * 0.2;
-                            ctx.beginPath();
-                            ctx.moveTo(px + tileSize * 0.14, py + tileSize * 0.24 + ridgeOffset);
-                            ctx.lineTo(px + tileSize * 0.46, py + tileSize * 0.12 + ridgeOffset);
-                            ctx.lineTo(px + tileSize * 0.82, py + tileSize * 0.2 + ridgeOffset);
-                            ctx.stroke();
-                        }
-
-                        if (index % 2 === 0) {
-                            ctx.fillStyle = skinStyle.sparkle || 'rgba(255, 214, 168, 0.08)';
-                            ctx.beginPath();
-                            ctx.arc(px + tileSize * 0.28, py + tileSize * 0.3, tileSize * 0.14, 0, Math.PI * 2);
-                            ctx.fill();
-                        }
-                    }
-                });
-            });
-        }
-
         // ========== 瞬移视觉引导绘制函数 ==========
         function drawTeleportPreview() {
             if (!teleportPreview) return;
@@ -3323,7 +3236,81 @@
                     ctx.restore();
                 });
             }
-            drawSnakeSkins(time); // V12：绘制蛇皮（3x3区域）
+            const skinInset = 0;
+            const skinTileRadius = Math.max(3, currentLevelConfig.skin.tileRadius);
+            const skinTexture = TEXTURE_IMAGES.snake_skin;
+            const useSkinTexture = isDrawableIcon(skinTexture);
+            const skinStyle = VISUAL_STYLE_CONFIG.snakeSkin || {};
+            snakeSkins.forEach(skin => {
+                if (!skin.cells || skin.cells.length === 0) return;
+                const emberPulse = Math.sin(time * 2.4 + skin.spawnTime * 0.002) * 0.08 + 0.22;
+                skin.cells.forEach((cell, index) => {
+                    const px = cell.x * cellSize + skinInset;
+                    const py = cell.y * cellSize + skinInset;
+                    const tileSize = cellSize - skinInset * 2;
+                    if (useSkinTexture) {
+                        ctx.save();
+                        ctx.globalAlpha = 0.94;
+                        ctx.shadowColor = skinStyle.shadow || 'rgba(200, 140, 60, 0.6)';
+                        ctx.shadowBlur = 10;
+                        ctx.drawImage(skinTexture, px, py, tileSize, tileSize);
+                        ctx.restore();
+                    } else {
+                        const gradient = ctx.createLinearGradient(px, py, px + tileSize, py + tileSize);
+                        const stops = skinStyle.gradientStops || [
+                            { offset: 0, color: '#8b5e3c' },
+                            { offset: 0.52, color: '#a5714a' },
+                            { offset: 1, color: '#6b3a1f' }
+                        ];
+                        stops.forEach((stop) => gradient.addColorStop(stop.offset, stop.color));
+                        ctx.shadowColor = skinStyle.shadow || 'rgba(200, 140, 60, 0.6)';
+                        ctx.shadowBlur = 10;
+                        ctx.fillStyle = gradient;
+                        ctx.beginPath();
+                        ctx.roundRect(px, py, tileSize, tileSize, skinTileRadius);
+                        ctx.fill();
+                        ctx.strokeStyle = skinStyle.outerBorder || 'rgba(255, 200, 100, 0.5)';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.roundRect(px, py, tileSize, tileSize, skinTileRadius);
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                        ctx.strokeStyle = skinStyle.innerBorder || 'rgba(234, 186, 120, 0.28)';
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.roundRect(px + 0.5, py + 0.5, tileSize - 1, tileSize - 1, skinTileRadius - 1);
+                        ctx.stroke();
+                        ctx.fillStyle = skinStyle.bandFill || 'rgba(33, 15, 6, 0.18)';
+                        ctx.beginPath();
+                        ctx.roundRect(px + tileSize * 0.12, py + tileSize * 0.1, tileSize * 0.76, tileSize * 0.24, 4);
+                        ctx.fill();
+                        ctx.strokeStyle = `rgba(${skinStyle.emberStrokeRgb || '255, 184, 92'}, ${emberPulse})`;
+                        ctx.lineWidth = 1.4;
+                        ctx.beginPath();
+                        ctx.moveTo(px + tileSize * 0.18, py + tileSize * 0.72);
+                        ctx.lineTo(px + tileSize * 0.42, py + tileSize * 0.52);
+                        ctx.lineTo(px + tileSize * 0.58, py + tileSize * 0.67);
+                        ctx.lineTo(px + tileSize * 0.82, py + tileSize * 0.38);
+                        ctx.stroke();
+                        ctx.strokeStyle = skinStyle.ridgeStroke || 'rgba(24, 10, 4, 0.30)';
+                        ctx.lineWidth = 1;
+                        for (let ridge = 0; ridge < 3; ridge++) {
+                            const ridgeOffset = ridge * tileSize * 0.2;
+                            ctx.beginPath();
+                            ctx.moveTo(px + tileSize * 0.14, py + tileSize * 0.24 + ridgeOffset);
+                            ctx.lineTo(px + tileSize * 0.46, py + tileSize * 0.12 + ridgeOffset);
+                            ctx.lineTo(px + tileSize * 0.82, py + tileSize * 0.2 + ridgeOffset);
+                            ctx.stroke();
+                        }
+                        if (index % 2 === 0) {
+                            ctx.fillStyle = skinStyle.sparkle || 'rgba(255, 214, 168, 0.08)';
+                            ctx.beginPath();
+                            ctx.arc(px + tileSize * 0.28, py + tileSize * 0.3, tileSize * 0.14, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                });
+            });
             
             if (isInWaitingTutorialState()) {
                 drawTutorial();
