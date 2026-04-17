@@ -845,58 +845,6 @@
             { id: 'clear', name: '清障', icon: '🧹', cost: 3, desc: '清除所有蛇皮障碍', category: 'tool' },
         ];
         
-        function applyShopItem(item) {
-            if (item.cost > 0) {
-                if (item.payType === 'coins') {
-                    coins = Math.max(0, coins - item.cost);
-                } else {
-                    const removeCount = Math.min(item.cost, Math.max(0, snake.length - 2));
-                    for (let i = 0; i < removeCount; i++) {
-                        snake.pop();
-                    }
-                    const shortfall = Math.max(0, item.cost - removeCount);
-                    if (shortfall > 0) {
-                        coins = Math.max(0, coins - shortfall);
-                    }
-                }
-            }
-            
-            switch (item.id) {
-                case 'poison_resist':
-                    activeBuffs.push({ id: 'poison_resist', remaining: 1 });
-                    break;
-                case 'ice_armor':
-                    activeBuffs.push({ id: 'ice_armor', remaining: 1 });
-                    break;
-                case 'shield':
-                    shieldCharges++;
-                    break;
-                case 'dash':
-                    dashCharges++;
-                    break;
-                case 'magnet':
-                    activeBuffs.push({ id: 'magnet', remaining: 1 });
-                    break;
-                case 'clear':
-                    snakeSkins = [];
-                    obstacles = [];
-                    break;
-                case 'heal':
-                    // 加2节
-                    for (let i = 0; i < 2; i++) {
-                        const tail = snake[snake.length - 1];
-                        snake.push({ x: tail.x, y: tail.y });
-                    }
-                    break;
-                case 'grow_tail':
-                    for (let i = 0; i < 4; i++) {
-                        const tail = snake[snake.length - 1];
-                        snake.push({ x: tail.x, y: tail.y });
-                    }
-                    break;
-            }
-        }
-        
         function triggerDashBurst() {
             if (dashCharges <= 0 || dashBurstTicks > 0 || !isGameRunning) return;
             dashCharges--;
@@ -1791,7 +1739,54 @@
                 `;
                 if (canAfford) {
                     btn.onclick = () => {
-                        applyShopItem(item);
+                        if (item.cost > 0) {
+                            if (item.payType === 'coins') {
+                                coins = Math.max(0, coins - item.cost);
+                            } else {
+                                const removeCount = Math.min(item.cost, Math.max(0, snake.length - 2));
+                                for (let i = 0; i < removeCount; i++) {
+                                    snake.pop();
+                                }
+                                const shortfall = Math.max(0, item.cost - removeCount);
+                                if (shortfall > 0) {
+                                    coins = Math.max(0, coins - shortfall);
+                                }
+                            }
+                        }
+
+                        switch (item.id) {
+                            case 'poison_resist':
+                                activeBuffs.push({ id: 'poison_resist', remaining: 1 });
+                                break;
+                            case 'ice_armor':
+                                activeBuffs.push({ id: 'ice_armor', remaining: 1 });
+                                break;
+                            case 'shield':
+                                shieldCharges++;
+                                break;
+                            case 'dash':
+                                dashCharges++;
+                                break;
+                            case 'magnet':
+                                activeBuffs.push({ id: 'magnet', remaining: 1 });
+                                break;
+                            case 'clear':
+                                snakeSkins = [];
+                                obstacles = [];
+                                break;
+                            case 'heal':
+                                for (let i = 0; i < 2; i++) {
+                                    const tail = snake[snake.length - 1];
+                                    snake.push({ x: tail.x, y: tail.y });
+                                }
+                                break;
+                            case 'grow_tail':
+                                for (let i = 0; i < 4; i++) {
+                                    const tail = snake[snake.length - 1];
+                                    snake.push({ x: tail.x, y: tail.y });
+                                }
+                                break;
+                        }
                         closeShop();
                     };
                 } else {
