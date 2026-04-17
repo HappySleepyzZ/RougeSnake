@@ -7,6 +7,8 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
 - Loads a target page with `?test=1`
 - Verifies `window.__snakeTestApi__` exists
 - Verifies `getState()` / `setState()` roundtrip on the debug API
+- Clicks a module button to verify module selection exits the overlay
+- Sends a gameplay direction input to verify the page enters `RUNNING`
 - Captures a screenshot for each target page
 
 ## Local Server

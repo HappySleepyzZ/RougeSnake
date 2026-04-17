@@ -17,6 +17,9 @@
     document.body.setAttribute('data-pass', 'true');
     out.textContent = JSON.stringify({ ok: true, result }, null, 2);
   }
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
   if (!page) {
     fail('missing page parameter');
     return;
@@ -130,7 +133,64 @@
         fail('assertions failed', { checks, before, after, apiKeys: Object.keys(api) });
         return;
       }
-      pass({ checks, beforeScore: before.score, afterScore: after.score, apiKeys: Object.keys(api) });
+      const doc = iframe.contentWindow.document;
+      const modeOverlay = doc.getElementById('modeOverlay');
+      const moduleButtons = Array.from(doc.querySelectorAll('#moduleButtons .mode-btn'));
+      if (!modeOverlay || moduleButtons.length === 0) {
+        fail('missing module selection UI', {
+          hasModeOverlay: !!modeOverlay,
+          moduleButtonCount: moduleButtons.length
+        });
+        return;
+      }
+
+      moduleButtons[0].click();
+      await wait(50);
+
+      const afterModuleSelect = api.getState();
+      const interactionChecks = {
+        hasSelectedMode: afterModuleSelect.hasSelectedMode === true,
+        modeOverlayHidden: modeOverlay.classList.contains('hidden')
+      };
+
+      iframe.contentWindow.document.dispatchEvent(new iframe.contentWindow.KeyboardEvent('keydown', {
+        key: 'ArrowRight',
+        bubbles: true
+      }));
+      await wait(50);
+
+      const afterGameplayInput = api.getState();
+      Object.assign(interactionChecks, {
+        enteredRunningState: afterGameplayInput.isGameRunning === true,
+        leftWaitingState: afterGameplayInput.isWaitingForStart === false
+      });
+
+      const interactionFailed = Object.entries(interactionChecks).filter(([, ok]) => !ok);
+      if (interactionFailed.length) {
+        fail('interaction assertions failed', {
+          checks,
+          interactionChecks,
+          afterModuleSelect,
+          afterGameplayInput,
+          smokeErrors,
+          modeOverlayClass: modeOverlay.className,
+          moduleButtonCount: moduleButtons.length
+        });
+        return;
+      }
+
+      pass({
+        checks,
+        interactionChecks,
+        beforeScore: before.score,
+        afterScore: after.score,
+        runningState: {
+          isGameRunning: afterGameplayInput.isGameRunning,
+          isWaitingForStart: afterGameplayInput.isWaitingForStart,
+          hasSelectedMode: afterGameplayInput.hasSelectedMode
+        },
+        apiKeys: Object.keys(api)
+      });
     } catch (error) {
       fail(error && error.message ? error.message : String(error), { stack: error && error.stack ? error.stack : null });
     }
