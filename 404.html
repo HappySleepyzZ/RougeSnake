@@ -2527,51 +2527,41 @@
         }
 
         // ========== V12：食物效果处理 ==========
-        function applyGrowFoodEffect(modScore) {
-            score += modScore;
-            updateSpeed();
-            updateBackgroundHue();
-        }
-
-        function applyShrinkFoodEffect(modScore) {
-            if (snake.length > 3) {
-                const dropped = snake.pop();
-                if (dropped && !isPositionOccupied(dropped.x, dropped.y)) {
-                    snakeSkins.push({
-                        centerX: dropped.x,
-                        centerY: dropped.y,
-                        cells: [{ x: dropped.x, y: dropped.y }],
-                        spawnTime: Date.now()
-                    });
-                }
-            }
-            score += modScore;
-            isSpeedBoosted = true;
-            speedBoostTimer = speedBoostDuration;
-            restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
-        }
-
-        function applyTeleportFoodEffect(modScore) {
-            score += modScore;
-            teleportSwap();
-        }
-
-        function applyBarrierFoodEffect(modScore) {
-            score += modScore;
-            spawnBarrierObstacles();
-        }
-
-        function applyWindFoodEffect(modScore) {
-            score += modScore;
-            clearObstacles();
-        }
-
         const FOOD_EFFECT_HANDLERS = {
-            grow: applyGrowFoodEffect,
-            shrink: applyShrinkFoodEffect,
-            teleport: applyTeleportFoodEffect,
-            barrier: applyBarrierFoodEffect,
-            wind: applyWindFoodEffect
+            grow: function applyGrowFoodEffect(modScore) {
+                score += modScore;
+                updateSpeed();
+                updateBackgroundHue();
+            },
+            shrink: function applyShrinkFoodEffect(modScore) {
+                if (snake.length > 3) {
+                    const dropped = snake.pop();
+                    if (dropped && !isPositionOccupied(dropped.x, dropped.y)) {
+                        snakeSkins.push({
+                            centerX: dropped.x,
+                            centerY: dropped.y,
+                            cells: [{ x: dropped.x, y: dropped.y }],
+                            spawnTime: Date.now()
+                        });
+                    }
+                }
+                score += modScore;
+                isSpeedBoosted = true;
+                speedBoostTimer = speedBoostDuration;
+                restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
+            },
+            teleport: function applyTeleportFoodEffect(modScore) {
+                score += modScore;
+                teleportSwap();
+            },
+            barrier: function applyBarrierFoodEffect(modScore) {
+                score += modScore;
+                spawnBarrierObstacles();
+            },
+            wind: function applyWindFoodEffect(modScore) {
+                score += modScore;
+                clearObstacles();
+            }
         };
 
         function applyFoodEffect(effect) {
