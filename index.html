@@ -1082,7 +1082,7 @@
             resetRunState();
             pauseBtn.style.display = 'none';
             resetToWaitingState();
-            openModeMenu();
+            showModeOverlay();
         }
         
         resumeBtn.addEventListener('click', resumeGame);
@@ -1226,14 +1226,6 @@
         function hideModeOverlay() {
             hasSelectedMode = true;
             return uiOverlaysModule.hideModeOverlay();
-        }
-
-        function openModeMenu() {
-            showModeOverlay();
-        }
-
-        function closeModeMenu() {
-            hideModeOverlay();
         }
 
         function selectMode(mode) {
@@ -4068,6 +4060,7 @@
             clearWaveTransitionState,
             setWaveTransitionState,
             setCeremonyState,
+            getShopOverlayElement,
             resetPreviewFeedbackState,
             resetTransientState,
             resetRunState,
@@ -4117,11 +4110,6 @@
             showOnlyResultOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule
         } = uiOverlaysModule;
-
-        function getShopOverlayElement() {
-            return document.getElementById('shopOverlay');
-        }
-
 
         function initializeWaitingUI() {
             initWaitingState();
@@ -4537,7 +4525,7 @@
 
         restartBtn.addEventListener('click', () => {
             resetToWaitingState();
-            openModeMenu(); // V16: 重新选模块
+            showModeOverlay(); // V16: 重新选模块
         });
 
         // V16: module selection buttons (generated dynamically)
@@ -4580,7 +4568,7 @@
                     stopGameLoop();
                     applyModeConfig('survival');
                     resetToWaitingState();
-                    closeModeMenu();
+                    hideModeOverlay();
                 });
                 moduleButtonsContainer.appendChild(btn);
             });
@@ -4820,7 +4808,7 @@
         applyModeConfig('survival');
         buildModuleButtons();
         initializeWaitingUI();
-        openModeMenu();
+        showModeOverlay();
         animStep();
     </script>
 </body>
