@@ -1091,14 +1091,6 @@
 
         // V16: removed isInfiniteUnlocked / syncModeAvailability (no longer needed)
 
-        function getStoryTimeLimit() {
-            return currentLevelConfig.story.timeLimit;
-        }
-
-        function getStoryTargetScore() {
-            return currentLevelConfig.story.targetScore;
-        }
-
         function getSkinGenerationThreshold() {
             const base = currentLevelConfig.skin.generationThreshold;
             // V16: 通用模块蛇皮阈值 +2
@@ -1106,36 +1098,11 @@
             return base;
         }
 
-        function getMaxSkinRegions() {
-            return currentLevelConfig.skin.maxRegions;
-        }
-
-        function getInitialFoodCount() {
-            const { min, max } = currentLevelConfig.initialFood;
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-
-        function getFoodWallPadding() {
-            return currentLevelConfig.foodField.wallPadding;
-        }
-
-        function getFoodMinSpacing() {
-            return currentLevelConfig.foodField.minFoodSpacing;
-        }
-
-        function getFoodSolidSpacing() {
-            return currentLevelConfig.foodField.minSolidSpacing;
-        }
-
-        function getFoodMarkerScale() {
-            return currentLevelConfig.foodField.markerScale;
-        }
-
         function distanceInCells(ax, ay, bx, by) {
             return Math.hypot(ax - bx, ay - by);
         }
 
-        function isTooCloseToBoardEdge(x, y, padding = getFoodWallPadding()) {
+        function isTooCloseToBoardEdge(x, y, padding = currentLevelConfig.foodField.wallPadding) {
             return (
                 x < padding ||
                 y < padding ||
@@ -1148,11 +1115,11 @@
             if (isPositionOccupied(x, y)) return false;
             if (isTooCloseToBoardEdge(x, y)) return false;
 
-            if (foods.some(food => distanceInCells(food.x, food.y, x, y) < getFoodMinSpacing())) return false;
-            if (snake.some(seg => distanceInCells(seg.x, seg.y, x, y) < getFoodSolidSpacing())) return false;
-            if (obstacles.some(obs => distanceInCells(obs.x, obs.y, x, y) < getFoodSolidSpacing())) return false;
-            if (snakeSkins.some(skin => skin.cells && skin.cells.some(cell => distanceInCells(cell.x, cell.y, x, y) < getFoodSolidSpacing()))) return false;
-            if (startIndicator && distanceInCells(startIndicator.x, startIndicator.y, x, y) < getFoodSolidSpacing()) return false;
+            if (foods.some(food => distanceInCells(food.x, food.y, x, y) < currentLevelConfig.foodField.minFoodSpacing)) return false;
+            if (snake.some(seg => distanceInCells(seg.x, seg.y, x, y) < currentLevelConfig.foodField.minSolidSpacing)) return false;
+            if (obstacles.some(obs => distanceInCells(obs.x, obs.y, x, y) < currentLevelConfig.foodField.minSolidSpacing)) return false;
+            if (snakeSkins.some(skin => skin.cells && skin.cells.some(cell => distanceInCells(cell.x, cell.y, x, y) < currentLevelConfig.foodField.minSolidSpacing))) return false;
+            if (startIndicator && distanceInCells(startIndicator.x, startIndicator.y, x, y) < currentLevelConfig.foodField.minSolidSpacing) return false;
 
             return true;
         }
@@ -1169,7 +1136,7 @@
         }
 
         function findFoodSpawnCell(type) {
-            const padding = getFoodWallPadding();
+            const padding = currentLevelConfig.foodField.wallPadding;
             const min = padding;
             const max = tileCount - padding - 1;
 
@@ -1436,7 +1403,8 @@
             initGameMode(currentMode);
             
             // 初始生成食物（保证有正分食物）
-            const initialFoodCount = getInitialFoodCount();
+            const { min: initialFoodMin, max: initialFoodMax } = currentLevelConfig.initialFood;
+            const initialFoodCount = Math.floor(Math.random() * (initialFoodMax - initialFoodMin + 1)) + initialFoodMin;
             for (let i = 0; i < initialFoodCount; i++) {
                 spawnFood();
             }
@@ -2035,35 +2003,6 @@
         }
 
         // V19: 商店系统
-        function populateShopItems(shopItemsDiv) {
-            shopItems.forEach(item => {
-                const canAfford = canAffordShopItem(item);
-                const btn = document.createElement('button');
-                btn.className = 'restart-btn';
-                btn.style.cssText = `
-                    background: ${canAfford ? '#2a2a4a' : '#1a1a2a'}; 
-                    border: 1px solid ${canAfford ? '#ffd700' : '#555'}; 
-                    color: ${canAfford ? '#fff' : '#666'};
-                    padding: 10px 16px; text-align: left; font-size: 14px;
-                    display: flex; justify-content: space-between; align-items: center;
-                    width: 100%; border-radius: 8px;
-                `;
-                btn.innerHTML = `
-                    <span>${item.icon} ${item.name} <small style="color:#aaa">${item.desc}</small></span>
-                    <span style="color:${item.cost > 0 ? '#ffd166' : '#2ecc71'}">${getShopItemPriceText(item)}</span>
-                `;
-                if (canAfford) {
-                    btn.onclick = () => {
-                        applyShopItem(item);
-                        closeShop();
-                    };
-                } else {
-                    btn.disabled = true;
-                }
-                shopItemsDiv.appendChild(btn);
-            });
-        }
-
         // ========== shop-wave-flow 包装层 (Patch 1) ==========
         function runWaveAdvanceStep() {
             stopWaveTransitionCountdown();
@@ -2098,7 +2037,32 @@
             const shopItemsDiv = document.getElementById('shopItems');
             shopInfo.textContent = UI_TEXT.shop.info(coins, snake.length, currentWave);
             shopItemsDiv.innerHTML = '';
-            populateShopItems(shopItemsDiv);
+            shopItems.forEach(item => {
+                const canAfford = canAffordShopItem(item);
+                const btn = document.createElement('button');
+                btn.className = 'restart-btn';
+                btn.style.cssText = `
+                    background: ${canAfford ? '#2a2a4a' : '#1a1a2a'}; 
+                    border: 1px solid ${canAfford ? '#ffd700' : '#555'}; 
+                    color: ${canAfford ? '#fff' : '#666'};
+                    padding: 10px 16px; text-align: left; font-size: 14px;
+                    display: flex; justify-content: space-between; align-items: center;
+                    width: 100%; border-radius: 8px;
+                `;
+                btn.innerHTML = `
+                    <span>${item.icon} ${item.name} <small style="color:#aaa">${item.desc}</small></span>
+                    <span style="color:${item.cost > 0 ? '#ffd166' : '#2ecc71'}">${getShopItemPriceText(item)}</span>
+                `;
+                if (canAfford) {
+                    btn.onclick = () => {
+                        applyShopItem(item);
+                        closeShop();
+                    };
+                } else {
+                    btn.disabled = true;
+                }
+                shopItemsDiv.appendChild(btn);
+            });
             document.getElementById('shopSkipBtn').onclick = () => closeShop();
             showShopOverlay();
             finishShopOpening();
@@ -2194,7 +2158,7 @@
         }
         
         function findRandomSkinAnchor() {
-            const padding = getFoodWallPadding();
+            const padding = currentLevelConfig.foodField.wallPadding;
             const min = padding + 1;
             const max = tileCount - padding - 2;
             
@@ -2214,7 +2178,7 @@
         function generateSnakeSkin(anchor = null) {
             // 检查蛇皮区域数量上限
             let skinRegionCount = snakeSkins.length;
-            if (skinRegionCount >= getMaxSkinRegions()) return;
+            if (skinRegionCount >= currentLevelConfig.skin.maxRegions) return;
             
             // 如果没有传入锚点，使用蛇尾作为默认值（兼容旧逻辑）
             const tailPos = anchor || snake[snake.length - 1];
@@ -2585,19 +2549,6 @@
         }
 
         // ========== V12：食物效果处理 ==========
-        function resolveFoodEffectScore(effect) {
-            return (selectedModule && selectedModule.scoreModifiers[effect] !== undefined)
-                ? selectedModule.scoreModifiers[effect]
-                : FOOD_TYPES[effect.toUpperCase()] ? FOOD_TYPES[effect.toUpperCase()].score : 0;
-        }
-
-        function showFoodEffectScoreText(modScore) {
-            const head = snake[0];
-            const scoreText = modScore >= 0 ? `+${modScore}` : `${modScore}`;
-            const scoreColor = modScore >= 0 ? '#4ade80' : '#f87171';
-            spawnFloatingText(head.x, head.y, scoreText, scoreColor, Math.abs(modScore) >= 20);
-        }
-
         function applyGrowFoodEffect(modScore) {
             score += modScore;
             updateSpeed();
@@ -2650,8 +2601,13 @@
             teleportTrailTimer = 0;
             teleportPreview = null;
             
-            const modScore = resolveFoodEffectScore(effect);
-            showFoodEffectScoreText(modScore);
+            const modScore = (selectedModule && selectedModule.scoreModifiers[effect] !== undefined)
+                ? selectedModule.scoreModifiers[effect]
+                : FOOD_TYPES[effect.toUpperCase()] ? FOOD_TYPES[effect.toUpperCase()].score : 0;
+            const head = snake[0];
+            const scoreText = modScore >= 0 ? `+${modScore}` : `${modScore}`;
+            const scoreColor = modScore >= 0 ? '#4ade80' : '#f87171';
+            spawnFloatingText(head.x, head.y, scoreText, scoreColor, Math.abs(modScore) >= 20);
             const handler = FOOD_EFFECT_HANDLERS[effect];
             if (handler) {
                 handler(modScore);
@@ -4064,10 +4020,6 @@
             return true;
         }
 
-        function getTargetLootCount() {
-            return Math.min(TUNING.wave.lootMax, Math.max(TUNING.wave.lootMin, Math.floor(tileCount * TUNING.wave.lootTileFactor)));
-        }
-
         function spawnLootBurstFoods(targetLootCount) {
             for (let i = 0; i < targetLootCount; i++) {
                 for (let att = 0; att < TUNING.generation.lootSpawnAttempts; att++) {
@@ -4091,7 +4043,8 @@
             clearWavePlayfieldState();
             resetLootBurstState();
             lootBurstEndTime = Date.now() + TUNING.wave.lootBurstDuration;
-            spawnLootBurstFoods(getTargetLootCount());
+            const targetLootCount = Math.min(TUNING.wave.lootMax, Math.max(TUNING.wave.lootMin, Math.floor(tileCount * TUNING.wave.lootTileFactor)));
+            spawnLootBurstFoods(targetLootCount);
         }
 
         function tryResolveChestCeremony(head) {
