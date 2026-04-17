@@ -2076,48 +2076,6 @@
         }
 
         // ========== shop-wave-flow 包装层 (Patch 1) ==========
-        function runShopOpenStep() {
-            const entered = enterShopState();
-            if (!entered) return { entered: false, shopOpened: false };
-            consumeWaveBuffs();
-            stopGameLoop();
-            syncPauseButtonVisibility();
-            shopItems = rollShopItems();
-            renderShopState();
-            return {
-                entered: true,
-                shopOpened: true,
-                buffsConsumed: true,
-                loopStopped: true
-            };
-        }
-
-        function runShopCloseStep() {
-            const wasShop = isShopState() || isShopOpeningState();
-            if (!wasShop) return { closed: false, wasShop: false };
-            closeShopState();
-            resetTeleportPreviewState();
-            closeAllOverlays();
-            return {
-                closed: true,
-                wasShop: true,
-                transitionStarted: true
-            };
-        }
-
-        function runWaveTransitionStep() {
-            if (!enterWaveTransition()) return { started: false };
-            stopGameLoop();
-            stopWaveTransitionCountdown();
-            renderWaveTransitionOverlay();
-            restartWaveTransitionCountdown();
-            return {
-                started: true,
-                overlayRendered: true,
-                countdownStarted: true
-            };
-        }
-
         function runWaveAdvanceStep() {
             stopWaveTransitionCountdown();
             currentWave++;
@@ -2142,14 +2100,24 @@
 
         // ========== 原始函数（保持不变） ==========
         function openShop() {
-            runShopOpenStep();
+            if (!enterShopState()) return;
+            consumeWaveBuffs();
+            stopGameLoop();
+            syncPauseButtonVisibility();
+            shopItems = rollShopItems();
+            renderShopState();
         }
         
         function closeShop() {
-            const closeResult = runShopCloseStep();
-            if (closeResult.transitionStarted) {
-                runWaveTransitionStep();
-            }
+            if (!isShopState() && !isShopOpeningState()) return;
+            closeShopState();
+            resetTeleportPreviewState();
+            closeAllOverlays();
+            if (!enterWaveTransition()) return;
+            stopGameLoop();
+            stopWaveTransitionCountdown();
+            renderWaveTransitionOverlay();
+            restartWaveTransitionCountdown();
         }
 
         function findSkinAnchorPosition() {
