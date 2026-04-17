@@ -3043,34 +3043,6 @@
             breathEl.style.boxShadow = `0 0 ${10 * breathIntensity}px ${breathColor}`;
         }
 
-        function drawBackground() {
-            // V18d: 整体提亮
-            const saturation = backgroundHue < 60 ? 70 : 50;
-            const lightness = backgroundHue < 60 ? 32 : 22;
-            
-            ctx.fillStyle = `hsl(${backgroundHue}, ${saturation}%, ${lightness}%)`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            if (flashAlpha > 0) {
-                ctx.fillStyle = flashColor + flashAlpha + ')';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                flashAlpha -= 0.03;
-            }
-            
-            ctx.strokeStyle = `hsla(${backgroundHue}, 25%, 40%, 0.25)`;
-            ctx.lineWidth = 0.5;
-            for (let i = 0; i <= tileCount; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * cellSize, 0);
-                ctx.lineTo(i * cellSize, canvas.height);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(0, i * cellSize);
-                ctx.lineTo(canvas.width, i * cellSize);
-                ctx.stroke();
-            }
-        }
-
         // ========== Portal 视觉增强 ==========
         function drawPortalsAndWalls() {
             const portals = getPortalRanges();
@@ -3225,7 +3197,27 @@
             
             updateTutorialTimer();
             
-            drawBackground();
+            const saturation = backgroundHue < 60 ? 70 : 50;
+            const lightness = backgroundHue < 60 ? 32 : 22;
+            ctx.fillStyle = `hsl(${backgroundHue}, ${saturation}%, ${lightness}%)`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (flashAlpha > 0) {
+                ctx.fillStyle = flashColor + flashAlpha + ')';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                flashAlpha -= 0.03;
+            }
+            ctx.strokeStyle = `hsla(${backgroundHue}, 25%, 40%, 0.25)`;
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= tileCount; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * cellSize, 0);
+                ctx.lineTo(i * cellSize, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * cellSize);
+                ctx.lineTo(canvas.width, i * cellSize);
+                ctx.stroke();
+            }
             drawPortalsAndWalls();
             const obstacleScale = getScaleFactors();
             const rockTexture = TEXTURE_IMAGES.obstacle_rock;
