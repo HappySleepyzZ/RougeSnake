@@ -1425,13 +1425,9 @@
         }
 
         // ========== 统计正分食物数量 ==========
-        function countPositiveFoods() {
-            return foods.filter(f => f.type.isPositive).length;
-        }
-
         // ========== 紧急补位机制 ==========
         function ensurePositiveFood() {
-            const positiveCount = countPositiveFoods();
+            const positiveCount = foods.filter(f => f.type.isPositive).length;
             if (positiveCount < 1) {
                 const positiveTypes = [FOOD_TYPES.GROW, FOOD_TYPES.TELEPORT, FOOD_TYPES.BARRIER];
                 const selectedType = positiveTypes[Math.floor(Math.random() * positiveTypes.length)];
@@ -1449,7 +1445,7 @@
             const maxFoods = Math.floor(Math.random() * 3) + 4;
             if (foods.length >= maxFoods) return;
 
-            const positiveCount = countPositiveFoods();
+            const positiveCount = foods.filter(f => f.type.isPositive).length;
             const mustGeneratePositive = positiveCount < 1;
             let selectedType;
 
