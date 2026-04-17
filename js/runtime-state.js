@@ -7,6 +7,7 @@ window.SnakeRuntimeState = {
       waveOverlay,
       pauseBtn,
       waveCountdown,
+      waveTransitionDuration,
       UI_TEXT,
       getState,
       setStateValue,
@@ -65,6 +66,19 @@ window.SnakeRuntimeState = {
       closeShopState();
       setShopOpenState(true);
       setShopOpeningState(true);
+    }
+
+    function enterShopState() {
+      if (isShopState() || isShopOpeningState()) return false;
+      beginShopOpening();
+      return true;
+    }
+
+    function enterWaveTransition() {
+      if (isWaveTransitionState()) return false;
+      setWaveTransitionState(true);
+      setStateValue('waveTransitionTimer', waveTransitionDuration);
+      return true;
     }
 
     function resetCeremonyState() {
@@ -416,6 +430,8 @@ window.SnakeRuntimeState = {
       restoreShopState,
       finishShopOpening,
       beginShopOpening,
+      enterShopState,
+      enterWaveTransition,
       resetCeremonyState,
       renderPauseOverlay,
       applyPauseTimeCompensation,

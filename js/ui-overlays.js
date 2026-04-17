@@ -6,6 +6,11 @@ window.SnakeUiOverlays = {
       pauseOverlay,
       waveOverlay,
       pauseBtn,
+      waveText,
+      waveCountdown,
+      waveTransitionDuration,
+      UI_TEXT,
+      getCurrentWave,
       getShopOverlayElement,
       actions,
       canRunGameLoop
@@ -83,6 +88,12 @@ window.SnakeUiOverlays = {
     const showWaveOverlay = createExclusiveOverlayAction(() => waveOverlay);
     const showOnlyResultOverlay = createExclusiveOverlayAction(() => resultOverlay);
 
+    function renderWaveTransitionOverlay() {
+      waveText.textContent = UI_TEXT.wave.complete(getCurrentWave());
+      waveCountdown.textContent = UI_TEXT.wave.nextIn(Math.ceil(waveTransitionDuration / 1000));
+      showWaveOverlay();
+    }
+
     function restoreOverlayVisibility({ resultVisible = false, pauseVisible = false, waveVisible = false, shopVisible = false } = {}) {
       closeAllOverlays();
       const visibilityState = { resultVisible, pauseVisible, waveVisible, shopVisible };
@@ -106,6 +117,7 @@ window.SnakeUiOverlays = {
       showPauseOverlay,
       showShopOverlay,
       showWaveOverlay,
+      renderWaveTransitionOverlay,
       showOnlyResultOverlay,
       getOverlayVisibilitySnapshot,
       restoreOverlayVisibility

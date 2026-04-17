@@ -2165,12 +2165,6 @@
             startWaveTransition();
         }
 
-        function renderWaveTransitionOverlay() {
-            waveText.textContent = UI_TEXT.wave.complete(currentWave);
-            waveCountdown.textContent = UI_TEXT.wave.nextIn(Math.ceil(WAVE_TRANSITION_DURATION / 1000));
-            showWaveOverlay();
-        }
-
         function startWaveTransition() {
             if (!beginWaveTransitionFlow()) return;
             renderWaveTransitionOverlay();
@@ -4092,6 +4086,7 @@
             waveOverlay,
             pauseBtn,
             waveCountdown,
+            waveTransitionDuration: WAVE_TRANSITION_DURATION,
             UI_TEXT,
             getState: getRuntimeStateSnapshot,
             setStateValue: setRuntimeStateValue,
@@ -4122,6 +4117,8 @@
             restoreShopState,
             finishShopOpening,
             beginShopOpening,
+            enterShopState,
+            enterWaveTransition,
             resetCeremonyState,
             getShopOverlayElement,
             resetPreviewFeedbackState,
@@ -4165,6 +4162,11 @@
             pauseOverlay,
             waveOverlay,
             pauseBtn,
+            waveText,
+            waveCountdown,
+            waveTransitionDuration: WAVE_TRANSITION_DURATION,
+            UI_TEXT,
+            getCurrentWave: () => currentWave,
             getShopOverlayElement,
             actions: moduleActionBase,
             canRunGameLoop
@@ -4175,6 +4177,7 @@
             showPauseOverlay,
             showShopOverlay,
             showWaveOverlay,
+            renderWaveTransitionOverlay,
             showOnlyResultOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule
         } = uiOverlaysModule;
@@ -4425,19 +4428,6 @@
             generateWavePortals();
             syncPauseButtonVisibility();
             restartGameLoopWithCurrentState();
-        }
-
-        function enterShopState() {
-            if (isShopState() || isShopOpeningState()) return false;
-            beginShopOpening();
-            return true;
-        }
-
-        function enterWaveTransition() {
-            if (isWaveTransitionState()) return false;
-            setWaveTransitionState(true);
-            waveTransitionTimer = WAVE_TRANSITION_DURATION;
-            return true;
         }
 
         function restartGameLoopWithCurrentState() {
