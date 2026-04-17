@@ -325,9 +325,11 @@ window.SnakeRuntimeState = {
     }
 
     function resetToWaitingState() {
+      resetRunState();
       actions.hideResult();
       setStateValue('isWaitingForStart', true);
       actions.initializeWaitingUI();
+      syncPauseButtonVisibility();
     }
 
     function syncPauseButtonVisibility() {
