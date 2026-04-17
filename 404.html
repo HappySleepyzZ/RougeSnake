@@ -3679,7 +3679,12 @@
             applyGameOverPresentation();
         }
 
-        function beginGameplaySession() {
+        function startGame() {
+            if (getPrimaryGameState() === 'RUNNING' || !hasSelectedMode) return;
+            
+            resizeCanvas();
+            stopGameLoop();
+            initGame();
             isWaitingForStart = false;
             isGameRunning = true;
             showTutorial = false;
@@ -3687,15 +3692,6 @@
             isGameOver = false;
             isLevelComplete = false;
             totalPausedTime = 0;
-        }
-
-        function startGame() {
-            if (getPrimaryGameState() === 'RUNNING' || !hasSelectedMode) return;
-            
-            resizeCanvas();
-            stopGameLoop();
-            initGame();
-            beginGameplaySession();
             syncPauseButtonVisibility();
             hideResult();
             updateTouchHint();
