@@ -1061,27 +1061,33 @@
         const resumeBtn = document.getElementById('resumeBtn');
         const pauseRestartBtn = document.getElementById('pauseRestartBtn');
         
-        resumeBtn.addEventListener('click', () => {
+        function pauseGame() {
+            if (getPrimaryGameState() !== 'RUNNING') return;
+            setPausedState(true);
+            pauseStartTime = Date.now();
+            stopGameLoop();
+            runtimeStateModule.renderPauseOverlay();
+        }
+        
+        function resumeGame() {
             if (getPrimaryGameState() !== 'PAUSED') return;
             setPausedState(false);
             const pauseDuration = Date.now() - pauseStartTime;
             runtimeStateModule.applyPauseTimeCompensation(pauseDuration);
             pauseOverlay.classList.remove('show');
             restartGameLoopWithCurrentState();
-        });
-        pauseRestartBtn.addEventListener('click', () => {
+        }
+        
+        function pauseRestart() {
             resetRunState();
             pauseBtn.style.display = 'none';
             resetToWaitingState();
             showModeOverlay();
-        });
-        pauseBtn.addEventListener('click', () => {
-            if (getPrimaryGameState() !== 'RUNNING') return;
-            setPausedState(true);
-            pauseStartTime = Date.now();
-            stopGameLoop();
-            runtimeStateModule.renderPauseOverlay();
-        });
+        }
+        
+        resumeBtn.addEventListener('click', resumeGame);
+        pauseRestartBtn.addEventListener('click', pauseRestart);
+        pauseBtn.addEventListener('click', pauseGame);
 
         // V16: removed isInfiniteUnlocked / syncModeAvailability (no longer needed)
 
