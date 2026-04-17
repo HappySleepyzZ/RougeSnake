@@ -2276,18 +2276,6 @@
             return true;
         }
 
-        function resolveSelfCollision(head, collisionSegments) {
-            if (teleportInvincibleSteps > 0) {
-                teleportInvincibleSteps--;
-                return false;
-            }
-            if (isCeremonyPlayingState() && collisionSegments.some(seg => seg.x === head.x && seg.y === head.y)) {
-                gameOver('self');
-                return true;
-            }
-            return false;
-        }
-
         function resolveCollisionAndPickup(head) {
             let eatenFoodIndex = -1;
             let minDist = Infinity;
@@ -2304,7 +2292,10 @@
             const willEatFood = eatenFoodIndex !== -1;
             const collisionSegments = willEatFood ? snake : snake.slice(0, -1);
 
-            if (resolveSelfCollision(head, collisionSegments)) {
+            if (teleportInvincibleSteps > 0) {
+                teleportInvincibleSteps--;
+            } else if (isCeremonyPlayingState() && collisionSegments.some(seg => seg.x === head.x && seg.y === head.y)) {
+                gameOver('self');
                 return { blocked: true, eatenFood: null };
             }
 
