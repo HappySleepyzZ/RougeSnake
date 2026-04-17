@@ -3856,36 +3856,6 @@
             showModeOverlay(); // V16: 重新选模块
         });
 
-        // V16: module selection buttons (generated dynamically)
-        function buildModuleButtons() {
-            moduleButtonsContainer.innerHTML = '';
-            Object.values(MODULE_TYPES).forEach(mod => {
-                const btn = document.createElement('button');
-                btn.className = 'mode-btn';
-                btn.type = 'button';
-                btn.innerHTML = `
-                    <div class="mode-btn-title">
-                        <span>${mod.icon} ${mod.name}</span>
-                        <span class="mode-lock" style="color:#aaa;font-size:12px">${mod.strength}</span>
-                    </div>
-                    <div class="mode-btn-desc">${mod.desc}<br><span style="color:#e74c3c">${mod.weakness}</span> · <span style="color:#2ecc71">${mod.passive}</span></div>
-                `;
-                btn.addEventListener('click', () => {
-                    selectedModule = mod;
-                    const legendEl = document.getElementById('moduleLegend');
-                    if (legendEl) {
-                        legendEl.innerHTML = `<span class="legend-symbol">${selectedModule.icon}</span> <span>${selectedModule.name}</span>`;
-                    }
-                    hideResult();
-                    stopGameLoop();
-                    applyModeConfig('survival');
-                    resetToWaitingState();
-                    hideModeOverlay();
-                });
-                moduleButtonsContainer.appendChild(btn);
-            });
-        }
-
         if (legendPanel) {
             legendPanel.addEventListener('click', () => {
                 if (legendPanel.classList.contains('collapsed')) {
@@ -4130,7 +4100,32 @@
         }
 
         applyModeConfig('survival');
-        buildModuleButtons();
+        moduleButtonsContainer.innerHTML = '';
+        Object.values(MODULE_TYPES).forEach(mod => {
+            const btn = document.createElement('button');
+            btn.className = 'mode-btn';
+            btn.type = 'button';
+            btn.innerHTML = `
+                <div class="mode-btn-title">
+                    <span>${mod.icon} ${mod.name}</span>
+                    <span class="mode-lock" style="color:#aaa;font-size:12px">${mod.strength}</span>
+                </div>
+                <div class="mode-btn-desc">${mod.desc}<br><span style="color:#e74c3c">${mod.weakness}</span> · <span style="color:#2ecc71">${mod.passive}</span></div>
+            `;
+            btn.addEventListener('click', () => {
+                selectedModule = mod;
+                const legendEl = document.getElementById('moduleLegend');
+                if (legendEl) {
+                    legendEl.innerHTML = `<span class="legend-symbol">${selectedModule.icon}</span> <span>${selectedModule.name}</span>`;
+                }
+                hideResult();
+                stopGameLoop();
+                applyModeConfig('survival');
+                resetToWaitingState();
+                hideModeOverlay();
+            });
+            moduleButtonsContainer.appendChild(btn);
+        });
         initWaitingState();
         updateTouchHint();
         showModeOverlay();
