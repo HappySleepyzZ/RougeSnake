@@ -980,15 +980,13 @@
             restartGameLoopWithCurrentState();
         }
         
-        function pauseRestart() {
+        resumeBtn.addEventListener('click', resumeGame);
+        pauseRestartBtn.addEventListener('click', () => {
             resetRunState();
             pauseBtn.style.display = 'none';
             resetToWaitingState();
             showModeOverlay();
-        }
-        
-        resumeBtn.addEventListener('click', resumeGame);
-        pauseRestartBtn.addEventListener('click', pauseRestart);
+        });
         pauseBtn.addEventListener('click', pauseGame);
 
         // V16: removed isInfiniteUnlocked / syncModeAvailability (no longer needed)
