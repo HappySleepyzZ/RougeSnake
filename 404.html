@@ -2560,7 +2560,11 @@
             totalSurvivalTime = (now - gameStartTime) / 1000;
             const waveElapsed = now - waveStartTime;
             
-            updateCeremonyFlow(waveElapsed);
+            tryStartKeyCeremony(waveElapsed);
+            const ceremonyHead = snake[0];
+            tryResolveKeyCeremony(ceremonyHead);
+            tryResolveChestCeremony(ceremonyHead);
+            updateLootBurstCollection(ceremonyHead);
             updateWaveFoodSpawning();
             checkTerrainEffects();
             updateSlowLoopState();
@@ -4105,11 +4109,6 @@
             spawnFloatingText(lootFood.x, lootFood.y, UI_TEXT.floating.coinGain(1), '#ffd700', false);
         }
 
-        function shouldFinishLootBurst() {
-            const lootRemaining = lootFoods.filter(lf => !lf.eaten).length;
-            return lootRemaining <= 0 || Date.now() >= lootBurstEndTime;
-        }
-
         function updateLootBurstCollection(head) {
             if (!isCeremonyLootBurstState()) return false;
             lootFoods.forEach(lf => {
@@ -4117,24 +4116,12 @@
                     collectLootBurstPickup(head, lf);
                 }
             });
-            if (shouldFinishLootBurst()) {
+            const lootRemaining = lootFoods.filter(lf => !lf.eaten).length;
+            if (lootRemaining <= 0 || Date.now() >= lootBurstEndTime) {
                 openShop();
                 return true;
             }
             return false;
-        }
-
-        // ========== 原始函数（保持不变） ==========
-        function resolveCeremonyHeadInteractions(ceremonyHead) {
-            tryResolveKeyCeremony(ceremonyHead);
-            tryResolveChestCeremony(ceremonyHead);
-            updateLootBurstCollection(ceremonyHead);
-        }
-
-        function updateCeremonyFlow(waveElapsed) {
-            tryStartKeyCeremony(waveElapsed);
-            const ceremonyHead = snake[0];
-            resolveCeremonyHeadInteractions(ceremonyHead);
         }
 
         function updateWaveFoodSpawning() {
