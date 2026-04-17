@@ -3870,13 +3870,13 @@
         function setRuntimeStateValue(key, value) {
             switch (key) {
                 case 'isPaused':
-                    setPausedState(value);
+                    isPaused = value;
                     break;
                 case 'isWaveTransition':
-                    setWaveTransitionState(value);
+                    isWaveTransition = value;
                     break;
                 case 'waveCeremonyState':
-                    setCeremonyState(value);
+                    waveCeremonyState = value;
                     break;
                 case 'hasSelectedMode':
                     hasSelectedMode = value;
