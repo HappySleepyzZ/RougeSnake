@@ -2590,58 +2590,6 @@
             ctx.shadowBlur = 0;
         }
 
-        function drawObstacles(time) {
-            const scale = getScaleFactors();
-            const rockTexture = TEXTURE_IMAGES.obstacle_rock;
-            const useRockTexture = isDrawableIcon(rockTexture);
-            const obstacleStyle = VISUAL_STYLE_CONFIG.obstacleRock || {};
-
-            obstacles.forEach(obs => {
-                const x = obs.x * cellSize + cellSize / 2;
-                const y = obs.y * cellSize + cellSize / 2;
-                const size = scale.obstacle;
-                const pulse = Math.sin(time * 2 + obs.x * 0.7 + obs.y * 0.5) * 0.08 + 0.92;
-
-                if (useRockTexture) {
-                    const drawSize = cellSize * 0.96;
-                    ctx.save();
-                    ctx.globalAlpha = 0.95;
-                    ctx.shadowColor = obstacleStyle.shadow || 'rgba(40, 48, 56, 0.45)';
-                    ctx.shadowBlur = 5;
-                    ctx.drawImage(rockTexture, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
-                    ctx.restore();
-                } else {
-                    ctx.shadowColor = obstacleStyle.shadow || 'rgba(40, 48, 56, 0.45)';
-                    ctx.shadowBlur = 5;
-                    ctx.fillStyle = obstacleStyle.fill || '#5d6d7e';
-                    ctx.beginPath();
-                    ctx.moveTo(x, y - size * pulse);
-                    ctx.lineTo(x + size * 0.9 * pulse, y - size * 0.45 * pulse);
-                    ctx.lineTo(x + size * 0.95 * pulse, y + size * 0.35 * pulse);
-                    ctx.lineTo(x, y + size * pulse);
-                    ctx.lineTo(x - size * 0.95 * pulse, y + size * 0.35 * pulse);
-                    ctx.lineTo(x - size * 0.9 * pulse, y - size * 0.45 * pulse);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-
-                    ctx.strokeStyle = obstacleStyle.highlightStroke || 'rgba(223, 230, 233, 0.4)';
-                    ctx.lineWidth = 1.5;
-                    ctx.beginPath();
-                    ctx.moveTo(x - size * 0.35, y - size * 0.18);
-                    ctx.lineTo(x + size * 0.22, y - size * 0.42);
-                    ctx.lineTo(x + size * 0.45, y - size * 0.08);
-                    ctx.stroke();
-                }
-
-                ctx.fillStyle = obstacleStyle.symbolColor || '#c0392b';
-                ctx.font = `bold ${scale.symbol * 0.72}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(obstacleStyle.symbol || '!', x, y + 1);
-            });
-        }
-
         // ========== V17: 地形区域绘制（增强版） ==========
         function drawTerrainZones(time) {
             terrainZones.forEach(zone => {
@@ -3279,7 +3227,54 @@
             
             drawBackground();
             drawPortalsAndWalls();
-            drawObstacles(time);
+            const obstacleScale = getScaleFactors();
+            const rockTexture = TEXTURE_IMAGES.obstacle_rock;
+            const useRockTexture = isDrawableIcon(rockTexture);
+            const obstacleStyle = VISUAL_STYLE_CONFIG.obstacleRock || {};
+            obstacles.forEach(obs => {
+                const x = obs.x * cellSize + cellSize / 2;
+                const y = obs.y * cellSize + cellSize / 2;
+                const size = obstacleScale.obstacle;
+                const pulse = Math.sin(time * 2 + obs.x * 0.7 + obs.y * 0.5) * 0.08 + 0.92;
+
+                if (useRockTexture) {
+                    const drawSize = cellSize * 0.96;
+                    ctx.save();
+                    ctx.globalAlpha = 0.95;
+                    ctx.shadowColor = obstacleStyle.shadow || 'rgba(40, 48, 56, 0.45)';
+                    ctx.shadowBlur = 5;
+                    ctx.drawImage(rockTexture, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
+                    ctx.restore();
+                } else {
+                    ctx.shadowColor = obstacleStyle.shadow || 'rgba(40, 48, 56, 0.45)';
+                    ctx.shadowBlur = 5;
+                    ctx.fillStyle = obstacleStyle.fill || '#5d6d7e';
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - size * pulse);
+                    ctx.lineTo(x + size * 0.9 * pulse, y - size * 0.45 * pulse);
+                    ctx.lineTo(x + size * 0.95 * pulse, y + size * 0.35 * pulse);
+                    ctx.lineTo(x, y + size * pulse);
+                    ctx.lineTo(x - size * 0.95 * pulse, y + size * 0.35 * pulse);
+                    ctx.lineTo(x - size * 0.9 * pulse, y - size * 0.45 * pulse);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.strokeStyle = obstacleStyle.highlightStroke || 'rgba(223, 230, 233, 0.4)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x - size * 0.35, y - size * 0.18);
+                    ctx.lineTo(x + size * 0.22, y - size * 0.42);
+                    ctx.lineTo(x + size * 0.45, y - size * 0.08);
+                    ctx.stroke();
+                }
+
+                ctx.fillStyle = obstacleStyle.symbolColor || '#c0392b';
+                ctx.font = `bold ${obstacleScale.symbol * 0.72}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(obstacleStyle.symbol || '!', x, y + 1);
+            });
             drawTerrainZones(time); // V16: 地形区域
             portalPairs.forEach(pair => {
                 const pulse = Math.sin(time * 3 + pair.hue) * 0.3 + 0.7;
