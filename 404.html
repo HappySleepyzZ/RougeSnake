@@ -2126,8 +2126,21 @@
         }
 
         // ========== V12：食物效果处理 ==========
-        const FOOD_EFFECT_HANDLERS = {
-            grow: function applyGrowFoodEffect(modScore) {
+        function applyFoodEffect(effect) {
+            headGlowTimer = 0;
+            teleportTrailTimer = 0;
+            teleportPreview = null;
+            
+            const modScore = (selectedModule && selectedModule.scoreModifiers[effect] !== undefined)
+                ? selectedModule.scoreModifiers[effect]
+                : FOOD_TYPES[effect.toUpperCase()] ? FOOD_TYPES[effect.toUpperCase()].score : 0;
+            const head = snake[0];
+            const scoreText = modScore >= 0 ? `+${modScore}` : `${modScore}`;
+            const scoreColor = modScore >= 0 ? '#4ade80' : '#f87171';
+            spawnFloatingText(head.x, head.y, scoreText, scoreColor, Math.abs(modScore) >= 20);
+            let handlerFound = true;
+
+            if (effect === 'grow') {
                 score += modScore;
                 const speed = BASE_SPEED * Math.exp(-TUNING.speed.scoreDecayK * score);
                 const newInterval = Math.max(MIN_SPEED, speed);
@@ -2138,8 +2151,7 @@
                 }
                 backgroundHue = 240 - (Math.max(0, score) / 500) * 240;
                 if (backgroundHue < 0) backgroundHue = 0;
-            },
-            shrink: function applyShrinkFoodEffect(modScore) {
+            } else if (effect === 'shrink') {
                 if (snake.length > 3) {
                     const dropped = snake.pop();
                     if (dropped && !isPositionOccupied(dropped.x, dropped.y)) {
@@ -2155,39 +2167,20 @@
                 isSpeedBoosted = true;
                 speedBoostTimer = speedBoostDuration;
                 restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
-            },
-            teleport: function applyTeleportFoodEffect(modScore) {
+            } else if (effect === 'teleport') {
                 score += modScore;
                 teleportSwap();
-            },
-            barrier: function applyBarrierFoodEffect(modScore) {
+            } else if (effect === 'barrier') {
                 score += modScore;
                 spawnBarrierObstacles();
-            },
-            wind: function applyWindFoodEffect(modScore) {
+            } else if (effect === 'wind') {
                 score += modScore;
                 if (obstacles.length > 0) {
                     obstacles = [];
                     flashEffect('wind');
                 }
-            }
-        };
-
-        function applyFoodEffect(effect) {
-            headGlowTimer = 0;
-            teleportTrailTimer = 0;
-            teleportPreview = null;
-            
-            const modScore = (selectedModule && selectedModule.scoreModifiers[effect] !== undefined)
-                ? selectedModule.scoreModifiers[effect]
-                : FOOD_TYPES[effect.toUpperCase()] ? FOOD_TYPES[effect.toUpperCase()].score : 0;
-            const head = snake[0];
-            const scoreText = modScore >= 0 ? `+${modScore}` : `${modScore}`;
-            const scoreColor = modScore >= 0 ? '#4ade80' : '#f87171';
-            spawnFloatingText(head.x, head.y, scoreText, scoreColor, Math.abs(modScore) >= 20);
-            const handler = FOOD_EFFECT_HANDLERS[effect];
-            if (handler) {
-                handler(modScore);
+            } else {
+                handlerFound = false;
             }
             
             if (score > highScore) {
@@ -2197,8 +2190,8 @@
             
             updateStatusUI();
             return {
-                handlerFound: !!handler,
-                handlerName: handler ? (handler.name || effect) : null,
+                handlerFound,
+                handlerName: handlerFound ? effect : null,
                 scoreDelta: modScore
             };
         }
