@@ -2944,96 +2944,6 @@
             breathEl.style.boxShadow = `0 0 ${10 * breathIntensity}px ${breathColor}`;
         }
 
-        // ========== Portal 视觉增强 ==========
-        function drawPortalsAndWalls() {
-            const portals = getPortalRanges();
-            const time = Date.now() / 1000;
-            
-            const portalPulse = Math.sin(time * 2) * 0.3 + 0.7;
-            
-            // V12：绿色通道光晕
-            ctx.shadowColor = '#00ff88';
-            ctx.shadowBlur = 10;
-            ctx.fillStyle = `rgba(0, 255, 136, ${0.2 * portalPulse})`;
-            
-            ctx.fillRect(portals.top.start * cellSize, 0, (portals.top.end - portals.top.start + 1) * cellSize, cellSize);
-            ctx.fillRect(portals.bottom.start * cellSize, canvas.height - cellSize, (portals.bottom.end - portals.bottom.start + 1) * cellSize, cellSize);
-            ctx.fillRect(0, portals.left.start * cellSize, cellSize, (portals.left.end - portals.left.start + 1) * cellSize);
-            ctx.fillRect(canvas.width - cellSize, portals.right.start * cellSize, cellSize, (portals.right.end - portals.right.start + 1) * cellSize);
-            ctx.shadowBlur = 0;
-            
-            ctx.fillStyle = '#fff';
-            ctx.font = `bold ${cellSize * 0.6}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            const topCenterX = (portals.top.start + (portals.top.end - portals.top.start) / 2 + 0.5) * cellSize;
-            ctx.fillText('↔', topCenterX, cellSize / 2);
-            
-            const bottomCenterX = (portals.bottom.start + (portals.bottom.end - portals.bottom.start) / 2 + 0.5) * cellSize;
-            ctx.fillText('↔', bottomCenterX, canvas.height - cellSize / 2);
-            
-            const leftCenterY = (portals.left.start + (portals.left.end - portals.left.start) / 2 + 0.5) * cellSize;
-            ctx.save();
-            ctx.translate(cellSize / 2, leftCenterY);
-            ctx.rotate(Math.PI / 2);
-            ctx.fillText('↔', 0, 0);
-            ctx.restore();
-            
-            const rightCenterY = (portals.right.start + (portals.right.end - portals.right.start) / 2 + 0.5) * cellSize;
-            ctx.save();
-            ctx.translate(canvas.width - cellSize / 2, rightCenterY);
-            ctx.rotate(Math.PI / 2);
-            ctx.fillText('↔', 0, 0);
-            ctx.restore();
-            
-            const wallColor = '#ff4444';
-            const wallWidth = Math.max(3, cellSize * 0.25);
-            ctx.strokeStyle = wallColor;
-            ctx.lineWidth = wallWidth;
-            ctx.lineCap = 'round';
-            ctx.shadowColor = wallColor;
-            ctx.shadowBlur = 3;
-            
-            ctx.beginPath();
-            ctx.moveTo(0, wallWidth/2);
-            ctx.lineTo(portals.top.start * cellSize, wallWidth/2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo((portals.top.end + 1) * cellSize, wallWidth/2);
-            ctx.lineTo(canvas.width, wallWidth/2);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height - wallWidth/2);
-            ctx.lineTo(portals.bottom.start * cellSize, canvas.height - wallWidth/2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo((portals.bottom.end + 1) * cellSize, canvas.height - wallWidth/2);
-            ctx.lineTo(canvas.width, canvas.height - wallWidth/2);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(wallWidth/2, 0);
-            ctx.lineTo(wallWidth/2, portals.left.start * cellSize);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(wallWidth/2, (portals.left.end + 1) * cellSize);
-            ctx.lineTo(wallWidth/2, canvas.height);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(canvas.width - wallWidth/2, 0);
-            ctx.lineTo(canvas.width - wallWidth/2, portals.right.start * cellSize);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(canvas.width - wallWidth/2, (portals.right.end + 1) * cellSize);
-            ctx.lineTo(canvas.width - wallWidth/2, canvas.height);
-            ctx.stroke();
-            
-            ctx.shadowBlur = 0;
-        }
-
         // ========== 新手引导绘制函数 ==========
         function drawTutorial() {
             if (!showTutorial) return;
@@ -3119,7 +3029,76 @@
                 ctx.lineTo(canvas.width, i * cellSize);
                 ctx.stroke();
             }
-            drawPortalsAndWalls();
+            const portals = getPortalRanges();
+            const portalPulse = Math.sin(time * 2) * 0.3 + 0.7;
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = `rgba(0, 255, 136, ${0.2 * portalPulse})`;
+            ctx.fillRect(portals.top.start * cellSize, 0, (portals.top.end - portals.top.start + 1) * cellSize, cellSize);
+            ctx.fillRect(portals.bottom.start * cellSize, canvas.height - cellSize, (portals.bottom.end - portals.bottom.start + 1) * cellSize, cellSize);
+            ctx.fillRect(0, portals.left.start * cellSize, cellSize, (portals.left.end - portals.left.start + 1) * cellSize);
+            ctx.fillRect(canvas.width - cellSize, portals.right.start * cellSize, cellSize, (portals.right.end - portals.right.start + 1) * cellSize);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${cellSize * 0.6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const topCenterX = (portals.top.start + (portals.top.end - portals.top.start) / 2 + 0.5) * cellSize;
+            ctx.fillText('↔', topCenterX, cellSize / 2);
+            const bottomCenterX = (portals.bottom.start + (portals.bottom.end - portals.bottom.start) / 2 + 0.5) * cellSize;
+            ctx.fillText('↔', bottomCenterX, canvas.height - cellSize / 2);
+            const leftCenterY = (portals.left.start + (portals.left.end - portals.left.start) / 2 + 0.5) * cellSize;
+            ctx.save();
+            ctx.translate(cellSize / 2, leftCenterY);
+            ctx.rotate(Math.PI / 2);
+            ctx.fillText('↔', 0, 0);
+            ctx.restore();
+            const rightCenterY = (portals.right.start + (portals.right.end - portals.right.start) / 2 + 0.5) * cellSize;
+            ctx.save();
+            ctx.translate(canvas.width - cellSize / 2, rightCenterY);
+            ctx.rotate(Math.PI / 2);
+            ctx.fillText('↔', 0, 0);
+            ctx.restore();
+            const wallColor = '#ff4444';
+            const wallWidth = Math.max(3, cellSize * 0.25);
+            ctx.strokeStyle = wallColor;
+            ctx.lineWidth = wallWidth;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = wallColor;
+            ctx.shadowBlur = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, wallWidth / 2);
+            ctx.lineTo(portals.top.start * cellSize, wallWidth / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo((portals.top.end + 1) * cellSize, wallWidth / 2);
+            ctx.lineTo(canvas.width, wallWidth / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - wallWidth / 2);
+            ctx.lineTo(portals.bottom.start * cellSize, canvas.height - wallWidth / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo((portals.bottom.end + 1) * cellSize, canvas.height - wallWidth / 2);
+            ctx.lineTo(canvas.width, canvas.height - wallWidth / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(wallWidth / 2, 0);
+            ctx.lineTo(wallWidth / 2, portals.left.start * cellSize);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(wallWidth / 2, (portals.left.end + 1) * cellSize);
+            ctx.lineTo(wallWidth / 2, canvas.height);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - wallWidth / 2, 0);
+            ctx.lineTo(canvas.width - wallWidth / 2, portals.right.start * cellSize);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - wallWidth / 2, (portals.right.end + 1) * cellSize);
+            ctx.lineTo(canvas.width - wallWidth / 2, canvas.height);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
             const obstacleScale = getScaleFactors();
             const rockTexture = TEXTURE_IMAGES.obstacle_rock;
             const useRockTexture = isDrawableIcon(rockTexture);
