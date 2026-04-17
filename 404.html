@@ -2288,14 +2288,6 @@
             return false;
         }
 
-        function resolveSkinCollision(head) {
-            if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
-                gameOver('skin');
-                return true;
-            }
-            return false;
-        }
-
         function consumePickedFood(eatenFoodIndex) {
             if (eatenFoodIndex === -1) return null;
             const eatenFood = foods[eatenFoodIndex];
@@ -2327,7 +2319,8 @@
                 return { blocked: true, eatenFood: null };
             }
 
-            if (resolveSkinCollision(head)) {
+            if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
+                gameOver('skin');
                 return { blocked: true, eatenFood: null };
             }
 
