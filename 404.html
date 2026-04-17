@@ -2348,7 +2348,8 @@
             grow: function applyGrowFoodEffect(modScore) {
                 score += modScore;
                 updateSpeed();
-                updateBackgroundHue();
+                backgroundHue = 240 - (Math.max(0, score) / 500) * 240;
+                if (backgroundHue < 0) backgroundHue = 0;
             },
             shrink: function applyShrinkFoodEffect(modScore) {
                 if (snake.length > 3) {
@@ -2409,11 +2410,6 @@
                 handlerName: handler ? (handler.name || effect) : null,
                 scoreDelta: modScore
             };
-        }
-
-        function updateBackgroundHue() {
-            backgroundHue = 240 - (Math.max(0, score) / 500) * 240;
-            if (backgroundHue < 0) backgroundHue = 0;
         }
 
         // ========== V12：食物绘制（带旋风动画） ==========
