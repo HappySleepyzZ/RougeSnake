@@ -2571,17 +2571,6 @@
             };
         }
 
-        function runCollisionAndPickupStep(head) {
-            const result = resolveCollisionAndPickup(head);
-            return {
-                blocked: !!result.blocked,
-                eatenFood: result.eatenFood ?? null,
-                eatenFoodIndex: result.eatenFoodIndex ?? -1,
-                willEatFood: !!result.willEatFood,
-                collisionReason: result.blocked ? 'collision' : null
-            };
-        }
-
         function applyStepConsumption(eatenFood) {
             if (eatenFood) {
                 applyFoodEffect(eatenFood.type.effect);
@@ -2627,7 +2616,7 @@
             if (movementResolution.blocked) return;
             head = movementResolution.head;
 
-            const collisionResolution = runCollisionAndPickupStep(head);
+            const collisionResolution = resolveCollisionAndPickup(head);
             if (collisionResolution.blocked) return;
 
             snake.unshift(head);
@@ -2696,18 +2685,6 @@
             wind: applyWindFoodEffect
         };
 
-        function runFoodEffectHandlerStep(effect, modScore) {
-            const handler = FOOD_EFFECT_HANDLERS[effect];
-            if (handler) {
-                handler(modScore);
-            }
-            return {
-                handlerFound: !!handler,
-                handlerName: handler ? (handler.name || effect) : null,
-                scoreDelta: modScore
-            };
-        }
-
         function applyFoodEffect(effect) {
             headGlowTimer = 0;
             teleportTrailTimer = 0;
@@ -2715,7 +2692,10 @@
             
             const modScore = resolveFoodEffectScore(effect);
             showFoodEffectScoreText(modScore);
-            const effectResolution = runFoodEffectHandlerStep(effect, modScore);
+            const handler = FOOD_EFFECT_HANDLERS[effect];
+            if (handler) {
+                handler(modScore);
+            }
             
             if (score > highScore) {
                 highScore = score;
@@ -2723,7 +2703,11 @@
             }
             
             updateStatusUI();
-            return effectResolution;
+            return {
+                handlerFound: !!handler,
+                handlerName: handler ? (handler.name || effect) : null,
+                scoreDelta: modScore
+            };
         }
 
         function updateBackgroundHue() {
