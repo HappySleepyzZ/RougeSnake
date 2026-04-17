@@ -2590,51 +2590,6 @@
             ctx.shadowBlur = 0;
         }
 
-        // ========== 瞬移视觉引导绘制函数 ==========
-        function drawTeleportPreview() {
-            if (!teleportPreview) return;
-            if (teleportTrailTimer <= 0) {
-                teleportPreview = null;
-                return;
-            }
-            
-            const time = Date.now() / 1000;
-            const x = teleportPreview.x * cellSize + cellSize / 2;
-            const y = teleportPreview.y * cellSize + cellSize / 2;
-            
-            const pulse = Math.sin(time * 10) * 0.5 + 0.5;
-            // V12：绿色瞬移预览
-            ctx.fillStyle = `rgba(39, 174, 96, ${pulse})`;
-            ctx.beginPath();
-            ctx.arc(x, y, cellSize * 0.6, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.shadowColor = '#27ae60';
-            ctx.shadowBlur = 15;
-            ctx.strokeStyle = `rgba(46, 204, 113, ${pulse})`;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(x, y, cellSize * 0.6, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-            
-            if (teleportTrailTimer > 0) {
-                const headX = snake[0].x * cellSize + cellSize / 2;
-                const headY = snake[0].y * cellSize + cellSize / 2;
-                
-                ctx.strokeStyle = '#2ecc71';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.moveTo(headX, headY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                
-                teleportTrailTimer -= 16;
-            }
-        }
-
         // ========== V12：蛇绘制（绿色） ==========
         // V17: 蛇头形状绘制
         function drawSnakeHead(x, y, size, shape) {
