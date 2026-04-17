@@ -2170,55 +2170,39 @@
         }
 
         // 游戏主循环
-        function resolveWallWrapCoordinate(head, portals) {
-            if (head.x < 0) {
-                if (!isCeremonyPlayingState()) {
-                    return { head: { ...head, x: tileCount - 1 }, hitWall: false };
-                }
-                if (head.y >= portals.left.start && head.y <= portals.left.end) {
-                    return { head: { ...head, x: tileCount - 1 }, hitWall: false };
-                }
-                return { head, hitWall: true };
-            }
-            if (head.x >= tileCount) {
-                if (!isCeremonyPlayingState()) {
-                    return { head: { ...head, x: 0 }, hitWall: false };
-                }
-                if (head.y >= portals.right.start && head.y <= portals.right.end) {
-                    return { head: { ...head, x: 0 }, hitWall: false };
-                }
-                return { head, hitWall: true };
-            }
-            if (head.y < 0) {
-                if (!isCeremonyPlayingState()) {
-                    return { head: { ...head, y: tileCount - 1 }, hitWall: false };
-                }
-                if (head.x >= portals.top.start && head.x <= portals.top.end) {
-                    return { head: { ...head, y: tileCount - 1 }, hitWall: false };
-                }
-                return { head, hitWall: true };
-            }
-            if (head.y >= tileCount) {
-                if (!isCeremonyPlayingState()) {
-                    return { head: { ...head, y: 0 }, hitWall: false };
-                }
-                if (head.x >= portals.bottom.start && head.x <= portals.bottom.end) {
-                    return { head: { ...head, y: 0 }, hitWall: false };
-                }
-                return { head, hitWall: true };
-            }
-            return { head, hitWall: false };
-        }
-
         function resolvePortalAndWallInteraction(head) {
             const portals = getPortalRanges();
-            const wallResolution = resolveWallWrapCoordinate(head, portals);
-            if (wallResolution.hitWall) {
+            let resolvedHead = head;
+            let hitWall = false;
+            if (head.x < 0) {
+                if (!isCeremonyPlayingState() || (head.y >= portals.left.start && head.y <= portals.left.end)) {
+                    resolvedHead = { ...head, x: tileCount - 1 };
+                } else {
+                    hitWall = true;
+                }
+            } else if (head.x >= tileCount) {
+                if (!isCeremonyPlayingState() || (head.y >= portals.right.start && head.y <= portals.right.end)) {
+                    resolvedHead = { ...head, x: 0 };
+                } else {
+                    hitWall = true;
+                }
+            } else if (head.y < 0) {
+                if (!isCeremonyPlayingState() || (head.x >= portals.top.start && head.x <= portals.top.end)) {
+                    resolvedHead = { ...head, y: tileCount - 1 };
+                } else {
+                    hitWall = true;
+                }
+            } else if (head.y >= tileCount) {
+                if (!isCeremonyPlayingState() || (head.x >= portals.bottom.start && head.x <= portals.bottom.end)) {
+                    resolvedHead = { ...head, y: 0 };
+                } else {
+                    hitWall = true;
+                }
+            }
+            if (hitWall) {
                 gameOver('wall');
                 return { head, blocked: true };
             }
-
-            let resolvedHead = wallResolution.head;
 
             let portalHit = null;
             if (portalTeleportCooldown > 0) {
