@@ -2288,13 +2288,6 @@
             return false;
         }
 
-        function consumePickedFood(eatenFoodIndex) {
-            if (eatenFoodIndex === -1) return null;
-            const eatenFood = foods[eatenFoodIndex];
-            foods.splice(eatenFoodIndex, 1);
-            return eatenFood;
-        }
-
         function resolveCollisionAndPickup(head) {
             let eatenFoodIndex = -1;
             let minDist = Infinity;
@@ -2326,20 +2319,10 @@
 
             return {
                 blocked: false,
-                eatenFood: consumePickedFood(eatenFoodIndex),
+                eatenFood: eatenFoodIndex === -1 ? null : foods.splice(eatenFoodIndex, 1)[0],
                 eatenFoodIndex,
                 willEatFood
             };
-        }
-
-        function applyStepConsumption(eatenFood) {
-            if (eatenFood) {
-                applyFoodEffect(eatenFood.type.effect);
-                spawnFood();
-                ensurePositiveFood();
-                return;
-            }
-            snake.pop();
         }
 
         function updateDashAndBoostTimers() {
@@ -2388,7 +2371,13 @@
             if (collisionResolution.blocked) return;
 
             snake.unshift(head);
-            applyStepConsumption(collisionResolution.eatenFood);
+            if (collisionResolution.eatenFood) {
+                applyFoodEffect(collisionResolution.eatenFood.type.effect);
+                spawnFood();
+                ensurePositiveFood();
+            } else {
+                snake.pop();
+            }
             updateDashAndBoostTimers();
         }
 
