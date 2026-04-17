@@ -2043,53 +2043,6 @@
             restartWaveTransitionCountdown();
         }
 
-        function findSkinAnchorPosition() {
-            // V14: 优先在蛇身附近找位置
-            const tailIndex = Math.floor(snake.length / 2); // 蛇身后半段开始
-            
-            // 尝试在蛇尾延伸方向 2-4 格处
-            if (snake.length >= 2) {
-                const tail = snake[snake.length - 1];
-                const beforeTail = snake[snake.length - 2];
-                const tailDirX = tail.x - beforeTail.x;
-                const tailDirY = tail.y - beforeTail.y;
-                
-                for (let dist = 2; dist <= 4; dist++) {
-                    const centerX = tail.x + tailDirX * dist;
-                    const centerY = tail.y + tailDirY * dist;
-                    
-                    if (isValidSkinAnchor(centerX, centerY)) {
-                        return { x: centerX, y: centerY };
-                    }
-                }
-            }
-            
-            // 尝试在蛇身后半段两侧 1-3 格处
-            for (let i = tailIndex; i < snake.length; i++) {
-                const seg = snake[i];
-                const offsets = [
-                    { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
-                    { dx: 0, dy: 1 }, { dx: 0, dy: -1 },
-                    { dx: 2, dy: 0 }, { dx: -2, dy: 0 },
-                    { dx: 0, dy: 2 }, { dx: 0, dy: -2 },
-                    { dx: 3, dy: 0 }, { dx: -3, dy: 0 },
-                    { dx: 0, dy: 3 }, { dx: 0, dy: -3 }
-                ];
-                
-                for (const offset of offsets) {
-                    const centerX = seg.x + offset.dx;
-                    const centerY = seg.y + offset.dy;
-                    
-                    if (isValidSkinAnchor(centerX, centerY)) {
-                        return { x: centerX, y: centerY };
-                    }
-                }
-            }
-            
-            // 兜底：随机位置
-            return findRandomSkinAnchor();
-        }
-        
         function isValidSkinAnchor(centerX, centerY) {
             // 边界检查
             if (centerX < 1 || centerX >= tileCount - 1 || centerY < 1 || centerY >= tileCount - 1) {
@@ -2120,24 +2073,6 @@
             return freeCount >= 5;
         }
         
-        function findRandomSkinAnchor() {
-            const padding = currentLevelConfig.foodField.wallPadding;
-            const min = padding + 1;
-            const max = tileCount - padding - 2;
-            
-            for (let attempts = 0; attempts < TUNING.generation.snakeSkinAnchorAttempts; attempts++) {
-                const centerX = Math.floor(Math.random() * (max - min + 1)) + min;
-                const centerY = Math.floor(Math.random() * (max - min + 1)) + min;
-                
-                if (isValidSkinAnchor(centerX, centerY)) {
-                    return { x: centerX, y: centerY };
-                }
-            }
-            
-            console.log('[蛇皮V14] 未找到合适的锚点位置');
-            return null;
-        }
-
         function generateSnakeSkin(anchor = null) {
             // 检查蛇皮区域数量上限
             let skinRegionCount = snakeSkins.length;
