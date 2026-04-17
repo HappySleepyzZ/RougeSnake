@@ -237,6 +237,51 @@ window.SnakeRuntimeState = {
       ]);
     }
 
+    function resetTeleportPreviewState() {
+      applyStateAssignments([
+        ['portalTeleportCooldown', 0],
+        ['teleportPreview', null],
+        ['teleportTrailTimer', 0]
+      ]);
+    }
+
+    function resetWaveDebuffState() {
+      applyStateAssignments([
+        ['poisonDebuffEnd', 0],
+        ['slowDebuffEnd', 0],
+        ['terrainDotType', null]
+      ]);
+    }
+
+    function resetWaveProgressState() {
+      clearWaveTransitionState();
+      applyStateAssignments([
+        ['waveStartTime', Date.now()],
+        ['foodSpawnTimer', 0]
+      ]);
+    }
+
+    function clearWavePlayfieldState() {
+      resetTeleportPreviewState();
+      applyStateAssignments([
+        ['foods', []],
+        ['obstacles', []],
+        ['snakeSkins', []],
+        ['terrainZones', []],
+        ['portalPairs', []]
+      ]);
+      resetWaveDebuffState();
+    }
+
+    function resetLootBurstState() {
+      applyStateAssignments([
+        ['lootFoods', []],
+        ['lootEatenCount', 0],
+        ['lootTotalCount', 0],
+        ['lootBurstEndTime', 0]
+      ]);
+    }
+
     function stopActiveRuntimeLoops() {
       actions.stopGameLoop();
       actions.stopWaveTransitionCountdown();
@@ -394,6 +439,11 @@ window.SnakeRuntimeState = {
       closeAllOverlays,
       hideTransientOverlays,
       resetPreviewFeedbackState,
+      resetTeleportPreviewState,
+      resetWaveDebuffState,
+      resetWaveProgressState,
+      clearWavePlayfieldState,
+      resetLootBurstState,
       resetTransientState,
       resetRunState,
       resetToWaitingState,

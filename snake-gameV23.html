@@ -3960,6 +3960,20 @@
                 gameStartTime,
                 pauseStartTime,
                 lastSlowInterval,
+                foods,
+                obstacles,
+                snakeSkins,
+                terrainZones,
+                portalPairs,
+                poisonDebuffEnd,
+                slowDebuffEnd,
+                terrainDotType,
+                portalTeleportCooldown,
+                foodSpawnTimer,
+                lootFoods,
+                lootEatenCount,
+                lootTotalCount,
+                lootBurstEndTime,
                 teleportPreview,
                 teleportTrailTimer,
                 headGlowTimer
@@ -3991,6 +4005,48 @@
                     break;
                 case 'lastSlowInterval':
                     lastSlowInterval = value;
+                    break;
+                case 'foods':
+                    foods = value;
+                    break;
+                case 'obstacles':
+                    obstacles = value;
+                    break;
+                case 'snakeSkins':
+                    snakeSkins = value;
+                    break;
+                case 'terrainZones':
+                    terrainZones = value;
+                    break;
+                case 'portalPairs':
+                    portalPairs = value;
+                    break;
+                case 'poisonDebuffEnd':
+                    poisonDebuffEnd = value;
+                    break;
+                case 'slowDebuffEnd':
+                    slowDebuffEnd = value;
+                    break;
+                case 'terrainDotType':
+                    terrainDotType = value;
+                    break;
+                case 'portalTeleportCooldown':
+                    portalTeleportCooldown = value;
+                    break;
+                case 'foodSpawnTimer':
+                    foodSpawnTimer = value;
+                    break;
+                case 'lootFoods':
+                    lootFoods = value;
+                    break;
+                case 'lootEatenCount':
+                    lootEatenCount = value;
+                    break;
+                case 'lootTotalCount':
+                    lootTotalCount = value;
+                    break;
+                case 'lootBurstEndTime':
+                    lootBurstEndTime = value;
                     break;
                 case 'teleportPreview':
                     teleportPreview = value;
@@ -4069,6 +4125,11 @@
             resetCeremonyState,
             getShopOverlayElement,
             resetPreviewFeedbackState,
+            resetTeleportPreviewState,
+            resetWaveDebuffState,
+            resetWaveProgressState,
+            clearWavePlayfieldState,
+            resetLootBurstState,
             resetTransientState,
             resetRunState,
             resetToWaitingState,
@@ -4122,41 +4183,6 @@
             initWaitingState();
             updateTouchHint();
         }
-        function resetTeleportPreviewState() {
-            portalTeleportCooldown = 0;
-            teleportPreview = null;
-            teleportTrailTimer = 0;
-        }
-
-        function resetWaveProgressState() {
-            clearWaveTransitionState();
-            waveStartTime = Date.now();
-            foodSpawnTimer = 0;
-        }
-
-        function resetWaveDebuffState() {
-            poisonDebuffEnd = 0;
-            slowDebuffEnd = 0;
-            terrainDotType = null;
-        }
-
-        function clearWavePlayfieldState() {
-            resetTeleportPreviewState();
-            foods = [];
-            obstacles = [];
-            snakeSkins = [];
-            terrainZones = [];
-            portalPairs = [];
-            resetWaveDebuffState();
-        }
-
-        function resetLootBurstState() {
-            lootFoods = [];
-            lootEatenCount = 0;
-            lootTotalCount = 0;
-            lootBurstEndTime = 0;
-        }
-
         function tryStartKeyCeremony(waveElapsed) {
             if (waveElapsed < WAVE_DURATION || !isCeremonyPlayingState()) return false;
             setCeremonyState('KEY_SPAWN');
@@ -4346,7 +4372,7 @@
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule,
             advanceWave,
             restartWaveTransitionCountdown,
-            resetLootBurstState: (...args) => resetLootBurstState(...args)
+            resetLootBurstState
         });
 
         const debugApiActions = {
