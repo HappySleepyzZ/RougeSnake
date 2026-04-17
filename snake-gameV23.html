@@ -3665,18 +3665,14 @@
             requestAnimationFrame(animStep);
         }
 
-        function applyGameOverPresentation() {
+        function gameOver(reason) {
+            resetRunState();
+            isGameOver = true;
             syncPauseButtonVisibility();
             flashEffect('death');
             flashAlpha = 0.9;
             backgroundHue = 0;
             showResult('death');
-        }
-
-        function gameOver(reason) {
-            resetRunState();
-            isGameOver = true;
-            applyGameOverPresentation();
         }
 
         function startGame() {
