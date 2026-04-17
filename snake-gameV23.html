@@ -845,25 +845,6 @@
             { id: 'clear', name: '清障', icon: '🧹', cost: 3, desc: '清除所有蛇皮障碍', category: 'tool' },
         ];
         
-        function rollShopItems() {
-            const shuffled = [...SHOP_POOL].sort(() => Math.random() - 0.5);
-            const picked = shuffled.slice(0, 3);
-            // 固定恢复选项
-            picked.push({ id: 'heal', name: '回复', icon: '❤️', cost: 3, payType: 'coins', desc: '+2节蛇身', category: 'heal' });
-            picked.push({ id: 'grow_tail', name: '加长', icon: '🐍', cost: 5, payType: 'coins', desc: '+4节蛇身', category: 'heal' });
-            return picked;
-        }
-        
-        function getShopItemPriceText(item) {
-            if (!item || item.cost <= 0) return '免费';
-            if (item.payType === 'coins') return `${item.cost} 金币`;
-            const bodyPay = Math.min(item.cost, Math.max(0, snake.length - 2));
-            const coinPay = Math.max(0, item.cost - bodyPay);
-            if (coinPay > 0 && bodyPay > 0) return `-${bodyPay}节 + ${coinPay}金币`;
-            if (coinPay > 0) return `${coinPay} 金币`;
-            return `-${item.cost} 节`;
-        }
-
         function applyShopItem(item) {
             if (item.cost > 0) {
                 if (item.payType === 'coins') {
