@@ -33,6 +33,50 @@ window.SnakeRuntimeState = {
       setStateValue('waveCeremonyState', nextState);
     }
 
+    function setShopOpenState(nextOpen) {
+      setStateValue('shopOpen', nextOpen);
+    }
+
+    function setShopOpeningState(nextOpening) {
+      setStateValue('shopOpening', nextOpening);
+    }
+
+    function closeShopState() {
+      setShopOpeningState(false);
+      setShopOpenState(false);
+    }
+
+    function restoreShopState({ shopOpen = false, shopOpening = false } = {}) {
+      closeShopState();
+      if (shopOpen) {
+        setShopOpenState(true);
+      }
+      if (shopOpening) {
+        setShopOpeningState(true);
+      }
+    }
+
+    function finishShopOpening() {
+      setShopOpeningState(false);
+    }
+
+    function beginShopOpening() {
+      setCeremonyState('SHOP');
+      closeShopState();
+      setShopOpenState(true);
+      setShopOpeningState(true);
+    }
+
+    function resetCeremonyState() {
+      setCeremonyState('PLAYING');
+      setStateValue('ceremonyKey', null);
+      setStateValue('ceremonyChest', null);
+      if (actions && typeof actions.resetLootBurstState === 'function') {
+        actions.resetLootBurstState();
+      }
+      closeShopState();
+    }
+
     function callActionOrFallback(name, fallback, ...args) {
       if (actions && typeof actions[name] === 'function') {
         return actions[name](...args);
@@ -321,6 +365,13 @@ window.SnakeRuntimeState = {
       clearWaveTransitionState,
       setWaveTransitionState,
       setCeremonyState,
+      setShopOpenState,
+      setShopOpeningState,
+      closeShopState,
+      restoreShopState,
+      finishShopOpening,
+      beginShopOpening,
+      resetCeremonyState,
       renderPauseOverlay,
       applyPauseTimeCompensation,
       showModeOverlay,

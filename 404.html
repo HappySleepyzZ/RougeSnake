@@ -4060,6 +4060,13 @@
             clearWaveTransitionState,
             setWaveTransitionState,
             setCeremonyState,
+            setShopOpenState,
+            setShopOpeningState,
+            closeShopState,
+            restoreShopState,
+            finishShopOpening,
+            beginShopOpening,
+            resetCeremonyState,
             getShopOverlayElement,
             resetPreviewFeedbackState,
             resetTransientState,
@@ -4115,49 +4122,6 @@
             initWaitingState();
             updateTouchHint();
         }
-
-        function resetCeremonyState() {
-            setCeremonyState('PLAYING');
-            ceremonyKey = null;
-            ceremonyChest = null;
-            resetLootBurstState();
-            closeShopState();
-        }
-
-        function beginShopOpening() {
-            setCeremonyState('SHOP');
-            closeShopState();
-            setShopOpenState(true);
-            setShopOpeningState(true);
-        }
-
-        function finishShopOpening() {
-            setShopOpeningState(false);
-        }
-
-        function setShopOpenState(nextOpen) {
-            shopOpen = nextOpen;
-        }
-
-        function setShopOpeningState(nextOpening) {
-            shopOpening = nextOpening;
-        }
-
-        function closeShopState() {
-            setShopOpeningState(false);
-            setShopOpenState(false);
-        }
-
-        function restoreShopState({ shopOpen: nextShopOpen = false, shopOpening: nextShopOpening = false } = {}) {
-            closeShopState();
-            if (nextShopOpen) {
-                setShopOpenState(true);
-            }
-            if (nextShopOpening) {
-                setShopOpeningState(true);
-            }
-        }
-
         function resetTeleportPreviewState() {
             portalTeleportCooldown = 0;
             teleportPreview = null;
@@ -4381,7 +4345,8 @@
             showWaveOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule,
             advanceWave,
-            restartWaveTransitionCountdown
+            restartWaveTransitionCountdown,
+            resetLootBurstState: (...args) => resetLootBurstState(...args)
         });
 
         const debugApiActions = {
