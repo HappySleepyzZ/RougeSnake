@@ -2250,32 +2250,6 @@
             };
         }
 
-        function resolveObstacleCollision(head) {
-            if (!isCeremonyPlayingState()) return false;
-            const hitObstacleIdx = obstacles.findIndex(o => o.x === head.x && o.y === head.y);
-            if (hitObstacleIdx === -1) return false;
-
-            if (selectedModule && selectedModule.special === 'breakObstacle') {
-                obstacles.splice(hitObstacleIdx, 1);
-                score += 5;
-                flashEffect('barrier');
-                updateStatusUI();
-                return false;
-            }
-
-            if (shieldCharges > 0) {
-                shieldCharges--;
-                obstacles.splice(hitObstacleIdx, 1);
-                spawnFloatingText(head.x, head.y, UI_TEXT.floating.shield, '#2ecc71', true);
-                flashEffect('teleport');
-                flashAlpha = 0.3;
-                return false;
-            }
-
-            gameOver('obstacle');
-            return true;
-        }
-
         function resolveCollisionAndPickup(head) {
             let eatenFoodIndex = -1;
             let minDist = Infinity;
@@ -2299,8 +2273,25 @@
                 return { blocked: true, eatenFood: null };
             }
 
-            if (resolveObstacleCollision(head)) {
-                return { blocked: true, eatenFood: null };
+            if (isCeremonyPlayingState()) {
+                const hitObstacleIdx = obstacles.findIndex(o => o.x === head.x && o.y === head.y);
+                if (hitObstacleIdx !== -1) {
+                    if (selectedModule && selectedModule.special === 'breakObstacle') {
+                        obstacles.splice(hitObstacleIdx, 1);
+                        score += 5;
+                        flashEffect('barrier');
+                        updateStatusUI();
+                    } else if (shieldCharges > 0) {
+                        shieldCharges--;
+                        obstacles.splice(hitObstacleIdx, 1);
+                        spawnFloatingText(head.x, head.y, UI_TEXT.floating.shield, '#2ecc71', true);
+                        flashEffect('teleport');
+                        flashAlpha = 0.3;
+                    } else {
+                        gameOver('obstacle');
+                        return { blocked: true, eatenFood: null };
+                    }
+                }
             }
 
             if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
