@@ -2004,28 +2004,6 @@
 
         // V19: 商店系统
         // ========== shop-wave-flow 包装层 (Patch 1) ==========
-        function runWaveAdvanceStep() {
-            stopWaveTransitionCountdown();
-            currentWave++;
-            resetTeleportPreviewState();
-            if (currentWave > bestWave) {
-                bestWave = currentWave;
-                localStorage.setItem(STORAGE_KEYS.bestWave, bestWave);
-            }
-            resetWaveProgressState();
-            resetCeremonyState();
-            resetWaveDebuffState();
-            generateWaveTerrain();
-            generateWavePortals();
-            syncPauseButtonVisibility();
-            restartGameLoopWithCurrentState();
-            return {
-                advanced: true,
-                newWave: currentWave,
-                loopRestarted: true
-            };
-        }
-
         // ========== 原始函数（保持不变） ==========
         function openShop() {
             if (!enterShopState()) return;
@@ -4129,7 +4107,27 @@
             showShopOverlay,
             showWaveOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule,
-            advanceWave: runWaveAdvanceStep,
+            advanceWave() {
+                stopWaveTransitionCountdown();
+                currentWave++;
+                resetTeleportPreviewState();
+                if (currentWave > bestWave) {
+                    bestWave = currentWave;
+                    localStorage.setItem(STORAGE_KEYS.bestWave, bestWave);
+                }
+                resetWaveProgressState();
+                resetCeremonyState();
+                resetWaveDebuffState();
+                generateWaveTerrain();
+                generateWavePortals();
+                syncPauseButtonVisibility();
+                restartGameLoopWithCurrentState();
+                return {
+                    advanced: true,
+                    newWave: currentWave,
+                    loopRestarted: true
+                };
+            },
             restartWaveTransitionCountdown,
             resetLootBurstState
         });
