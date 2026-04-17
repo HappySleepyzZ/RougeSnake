@@ -2152,13 +2152,6 @@
             }
         }
 
-        function startWaveTransition() {
-            runWaveTransitionStep();
-        }
-
-        function advanceWave() {
-            runWaveAdvanceStep();
-        }
         function findSkinAnchorPosition() {
             // V14: 优先在蛇身附近找位置
             const tailIndex = Math.floor(snake.length / 2); // 蛇身后半段开始
@@ -2595,7 +2588,6 @@
             }
         }
 
-        // ========== runtime-loop 包装层 (Patch 1) ==========
         // ========== 原始函数（保持不变） ==========
         function gameStep() {
             if (isWaveTransitionState()) return; // 波次过渡中不更新
@@ -4234,7 +4226,7 @@
             showShopOverlay,
             showWaveOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule,
-            advanceWave,
+            advanceWave: runWaveAdvanceStep,
             restartWaveTransitionCountdown,
             resetLootBurstState
         });
