@@ -1061,26 +1061,6 @@
         const resumeBtn = document.getElementById('resumeBtn');
         const pauseRestartBtn = document.getElementById('pauseRestartBtn');
         
-        function setPausedState(nextPaused) {
-            isPaused = nextPaused;
-        }
-
-        function clearWaveTransitionState() {
-            isWaveTransition = false;
-        }
-
-        function setWaveTransitionState(nextTransitioning) {
-            if (nextTransitioning) {
-                isWaveTransition = true;
-            } else {
-                clearWaveTransitionState();
-            }
-        }
-
-        function setCeremonyState(nextState) {
-            waveCeremonyState = nextState;
-        }
-
         function pauseGame() {
             if (getPrimaryGameState() !== 'RUNNING') return;
             setPausedState(true);
@@ -4084,6 +4064,10 @@
             isShopOpeningState,
             isWaveTransitionState,
             isPausedState,
+            setPausedState,
+            clearWaveTransitionState,
+            setWaveTransitionState,
+            setCeremonyState,
             resetPreviewFeedbackState,
             resetTransientState,
             resetRunState,
