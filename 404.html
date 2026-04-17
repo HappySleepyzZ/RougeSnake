@@ -2677,31 +2677,6 @@
             });
         }
 
-                function drawStartIndicator(time) {
-            if (!startIndicator) return;
-            
-            const scale = getScaleFactors();
-            const bounce = Math.sin(time * 4) * 4;
-            const x = startIndicator.x * cellSize + cellSize / 2;
-            const y = startIndicator.y * cellSize + cellSize / 2 + bounce;
-            const size = scale.snakeHead;
-            
-            // V12：绿色引导指示
-            ctx.shadowColor = '#27ae60';
-            ctx.shadowBlur = 15;
-            ctx.fillStyle = '#2ecc71';
-            ctx.beginPath();
-            ctx.roundRect(x - size, y - size, size * 2, size * 2, 4);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            
-            ctx.fillStyle = '#fff';
-            ctx.font = `bold ${scale.symbol}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('▶', x, y);
-        }
-
         // ========== 瞬移视觉引导绘制函数 ==========
         function drawTeleportPreview() {
             if (!teleportPreview) return;
@@ -3378,7 +3353,25 @@
             
             if (getPrimaryGameState() === 'WAITING') {
                 drawSnake(time);
-                drawStartIndicator(time);
+                if (startIndicator) {
+                    const scale = getScaleFactors();
+                    const bounce = Math.sin(time * 4) * 4;
+                    const x = startIndicator.x * cellSize + cellSize / 2;
+                    const y = startIndicator.y * cellSize + cellSize / 2 + bounce;
+                    const size = scale.snakeHead;
+                    ctx.shadowColor = '#27ae60';
+                    ctx.shadowBlur = 15;
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.beginPath();
+                    ctx.roundRect(x - size, y - size, size * 2, size * 2, 4);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `bold ${scale.symbol}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('▶', x, y);
+                }
             } else if (isGameRunning) {
                 foods.forEach(food => drawFood(food, time));
                 drawSnake(time);
