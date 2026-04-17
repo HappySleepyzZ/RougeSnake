@@ -2064,17 +2064,6 @@
             });
         }
 
-        function renderShopState() {
-            const shopInfo = document.getElementById('shopInfo');
-            const shopItemsDiv = document.getElementById('shopItems');
-            shopInfo.textContent = UI_TEXT.shop.info(coins, snake.length, currentWave);
-            shopItemsDiv.innerHTML = '';
-            populateShopItems(shopItemsDiv);
-            document.getElementById('shopSkipBtn').onclick = () => closeShop();
-            showShopOverlay();
-            finishShopOpening();
-        }
-
         // ========== shop-wave-flow 包装层 (Patch 1) ==========
         function runWaveAdvanceStep() {
             stopWaveTransitionCountdown();
@@ -2105,7 +2094,14 @@
             stopGameLoop();
             syncPauseButtonVisibility();
             shopItems = rollShopItems();
-            renderShopState();
+            const shopInfo = document.getElementById('shopInfo');
+            const shopItemsDiv = document.getElementById('shopItems');
+            shopInfo.textContent = UI_TEXT.shop.info(coins, snake.length, currentWave);
+            shopItemsDiv.innerHTML = '';
+            populateShopItems(shopItemsDiv);
+            document.getElementById('shopSkipBtn').onclick = () => closeShop();
+            showShopOverlay();
+            finishShopOpening();
         }
         
         function closeShop() {
@@ -4043,10 +4039,6 @@
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule
         } = uiOverlaysModule;
 
-        function initializeWaitingUI() {
-            initWaitingState();
-            updateTouchHint();
-        }
         function tryStartKeyCeremony(waveElapsed) {
             if (waveElapsed < WAVE_DURATION || !isCeremonyPlayingState()) return false;
             setCeremonyState('KEY_SPAWN');
@@ -4186,7 +4178,10 @@
             hideResult,
             showModeOverlay,
             hideModeOverlay,
-            initializeWaitingUI,
+            initializeWaitingUI() {
+                initWaitingState();
+                updateTouchHint();
+            },
             restartGameLoopWithCurrentState,
             closeAllOverlays,
             syncPauseButtonVisibility,
@@ -4585,7 +4580,8 @@
 
         applyModeConfig('survival');
         buildModuleButtons();
-        initializeWaitingUI();
+        initWaitingState();
+        updateTouchHint();
         showModeOverlay();
         animStep();
     </script>

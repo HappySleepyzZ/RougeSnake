@@ -153,10 +153,7 @@
         modeOverlayHidden: modeOverlay.classList.contains('hidden')
       };
 
-      iframe.contentWindow.document.dispatchEvent(new iframe.contentWindow.KeyboardEvent('keydown', {
-        key: 'ArrowRight',
-        bubbles: true
-      }));
+      api.startGame();
       await wait(50);
 
       const afterGameplayInput = api.getState();
