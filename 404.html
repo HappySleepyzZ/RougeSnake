@@ -3579,19 +3579,15 @@
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule
         } = uiOverlaysModule;
 
-        function collectLootBurstPickup(head, lootFood) {
-            lootFood.eaten = true;
-            lootEatenCount++;
-            coins += 1;
-            score += 5;
-            spawnFloatingText(lootFood.x, lootFood.y, UI_TEXT.floating.coinGain(1), '#ffd700', false);
-        }
-
         function updateLootBurstCollection(head) {
             if (!isCeremonyLootBurstState()) return false;
             lootFoods.forEach(lf => {
                 if (!lf.eaten && head.x === lf.x && head.y === lf.y) {
-                    collectLootBurstPickup(head, lf);
+                    lf.eaten = true;
+                    lootEatenCount++;
+                    coins += 1;
+                    score += 5;
+                    spawnFloatingText(lf.x, lf.y, UI_TEXT.floating.coinGain(1), '#ffd700', false);
                 }
             });
             const lootRemaining = lootFoods.filter(lf => !lf.eaten).length;
