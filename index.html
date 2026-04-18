@@ -1739,75 +1739,6 @@
         }
 
         // 游戏主循环
-        function resolvePortalAndWallInteraction(head) {
-            const portals = getPortalRanges();
-            let resolvedHead = head;
-            let hitWall = false;
-            if (head.x < 0) {
-                if (!isCeremonyPlayingState() || (head.y >= portals.left.start && head.y <= portals.left.end)) {
-                    resolvedHead = { ...head, x: tileCount - 1 };
-                } else {
-                    hitWall = true;
-                }
-            } else if (head.x >= tileCount) {
-                if (!isCeremonyPlayingState() || (head.y >= portals.right.start && head.y <= portals.right.end)) {
-                    resolvedHead = { ...head, x: 0 };
-                } else {
-                    hitWall = true;
-                }
-            } else if (head.y < 0) {
-                if (!isCeremonyPlayingState() || (head.x >= portals.top.start && head.x <= portals.top.end)) {
-                    resolvedHead = { ...head, y: tileCount - 1 };
-                } else {
-                    hitWall = true;
-                }
-            } else if (head.y >= tileCount) {
-                if (!isCeremonyPlayingState() || (head.x >= portals.bottom.start && head.x <= portals.bottom.end)) {
-                    resolvedHead = { ...head, y: 0 };
-                } else {
-                    hitWall = true;
-                }
-            }
-            if (hitWall) {
-                gameOver('wall');
-                return { head, blocked: true };
-            }
-
-            let portalHit = null;
-            if (portalTeleportCooldown > 0) {
-                portalTeleportCooldown--;
-            } else {
-                for (const pair of portalPairs) {
-                    if (resolvedHead.x === pair.a.x && resolvedHead.y === pair.a.y) {
-                        portalHit = { dest: pair.b, pair };
-                        break;
-                    }
-                    if (resolvedHead.x === pair.b.x && resolvedHead.y === pair.b.y) {
-                        portalHit = { dest: pair.a, pair };
-                        break;
-                    }
-                }
-            }
-
-            if (portalHit) {
-                resolvedHead = {
-                    x: portalHit.dest.x,
-                    y: portalHit.dest.y
-                };
-                portalTeleportCooldown = TUNING.portal.teleportCooldownFrames;
-                teleportInvincibleSteps = 3;
-                headGlowTimer = HEAD_GLOW_DURATION;
-                flashEffect('teleport');
-                flashAlpha = 0.3;
-            }
-
-            return {
-                head: resolvedHead,
-                blocked: false,
-                portalHit
-            };
-        }
-
         function resolveCollisionAndPickup(head) {
             let eatenFoodIndex = -1;
             let minDist = Infinity;
@@ -2020,9 +1951,64 @@
                 x: snake[0].x + direction.x,
                 y: snake[0].y + direction.y
             };
-            const movementResolution = resolvePortalAndWallInteraction(head);
-            if (movementResolution.blocked) return;
-            head = movementResolution.head;
+            const portals = getPortalRanges();
+            let hitWall = false;
+            if (head.x < 0) {
+                if (!isCeremonyPlayingState() || (head.y >= portals.left.start && head.y <= portals.left.end)) {
+                    head = { ...head, x: tileCount - 1 };
+                } else {
+                    hitWall = true;
+                }
+            } else if (head.x >= tileCount) {
+                if (!isCeremonyPlayingState() || (head.y >= portals.right.start && head.y <= portals.right.end)) {
+                    head = { ...head, x: 0 };
+                } else {
+                    hitWall = true;
+                }
+            } else if (head.y < 0) {
+                if (!isCeremonyPlayingState() || (head.x >= portals.top.start && head.x <= portals.top.end)) {
+                    head = { ...head, y: tileCount - 1 };
+                } else {
+                    hitWall = true;
+                }
+            } else if (head.y >= tileCount) {
+                if (!isCeremonyPlayingState() || (head.x >= portals.bottom.start && head.x <= portals.bottom.end)) {
+                    head = { ...head, y: 0 };
+                } else {
+                    hitWall = true;
+                }
+            }
+            if (hitWall) {
+                gameOver('wall');
+                return;
+            }
+
+            if (portalTeleportCooldown > 0) {
+                portalTeleportCooldown--;
+            } else {
+                let portalHit = null;
+                for (const pair of portalPairs) {
+                    if (head.x === pair.a.x && head.y === pair.a.y) {
+                        portalHit = { dest: pair.b, pair };
+                        break;
+                    }
+                    if (head.x === pair.b.x && head.y === pair.b.y) {
+                        portalHit = { dest: pair.a, pair };
+                        break;
+                    }
+                }
+                if (portalHit) {
+                    head = {
+                        x: portalHit.dest.x,
+                        y: portalHit.dest.y
+                    };
+                    portalTeleportCooldown = TUNING.portal.teleportCooldownFrames;
+                    teleportInvincibleSteps = 3;
+                    headGlowTimer = HEAD_GLOW_DURATION;
+                    flashEffect('teleport');
+                    flashAlpha = 0.3;
+                }
+            }
 
             const collisionResolution = resolveCollisionAndPickup(head);
             if (collisionResolution.blocked) return;
