@@ -3290,49 +3290,6 @@
                 : activeModeConfig.touchHint(currentLevelConfig);
         }
 
-        function getRuntimeStateSnapshot() {
-            return {
-                isGameOver,
-                isLevelComplete,
-                shopOpen,
-                shopOpening,
-                isWaveTransition,
-                isPaused,
-                isWaitingForStart,
-                isGameRunning,
-                waveCeremonyState,
-                hasSelectedMode,
-                showTutorial,
-                totalSurvivalTime,
-                selectedModule,
-                currentWave,
-                score,
-                waveTransitionTimer,
-                totalPausedTime,
-                waveStartTime,
-                gameStartTime,
-                pauseStartTime,
-                lastSlowInterval,
-                foods,
-                obstacles,
-                snakeSkins,
-                terrainZones,
-                portalPairs,
-                poisonDebuffEnd,
-                slowDebuffEnd,
-                terrainDotType,
-                portalTeleportCooldown,
-                foodSpawnTimer,
-                lootFoods,
-                lootEatenCount,
-                lootTotalCount,
-                lootBurstEndTime,
-                teleportPreview,
-                teleportTrailTimer,
-                headGlowTimer
-            };
-        }
-
         function setRuntimeStateValue(key, value) {
             switch (key) {
                 case 'isPaused':
@@ -3447,7 +3404,48 @@
             waveCountdown,
             waveTransitionDuration: WAVE_TRANSITION_DURATION,
             UI_TEXT,
-            getState: getRuntimeStateSnapshot,
+            getState() {
+                return {
+                    isGameOver,
+                    isLevelComplete,
+                    shopOpen,
+                    shopOpening,
+                    isWaveTransition,
+                    isPaused,
+                    isWaitingForStart,
+                    isGameRunning,
+                    waveCeremonyState,
+                    hasSelectedMode,
+                    showTutorial,
+                    totalSurvivalTime,
+                    selectedModule,
+                    currentWave,
+                    score,
+                    waveTransitionTimer,
+                    totalPausedTime,
+                    waveStartTime,
+                    gameStartTime,
+                    pauseStartTime,
+                    lastSlowInterval,
+                    foods,
+                    obstacles,
+                    snakeSkins,
+                    terrainZones,
+                    portalPairs,
+                    poisonDebuffEnd,
+                    slowDebuffEnd,
+                    terrainDotType,
+                    portalTeleportCooldown,
+                    foodSpawnTimer,
+                    lootFoods,
+                    lootEatenCount,
+                    lootTotalCount,
+                    lootBurstEndTime,
+                    teleportPreview,
+                    teleportTrailTimer,
+                    headGlowTimer
+                };
+            },
             setStateValue: setRuntimeStateValue,
             actions: runtimeStateActions
         });
