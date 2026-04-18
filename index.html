@@ -2019,9 +2019,33 @@
             tryResolveKeyCeremony(ceremonyHead);
             tryResolveChestCeremony(ceremonyHead);
             updateLootBurstCollection(ceremonyHead);
-            updateWaveFoodSpawning();
+            if (isCeremonyPlayingState()) {
+                foodSpawnTimer += currentInterval;
+                const spawnInterval = currentWave <= 1
+                    ? TUNING.spawn.foodIntervalWave1
+                    : currentWave <= 2
+                        ? TUNING.spawn.foodIntervalWave2
+                        : currentWave <= 3
+                            ? TUNING.spawn.foodIntervalWave2 - 200
+                            : Math.max(TUNING.spawn.foodIntervalMin, TUNING.spawn.foodIntervalWave1 - currentWave * TUNING.spawn.foodIntervalWaveDecay);
+                if (foodSpawnTimer >= spawnInterval) {
+                    foodSpawnTimer = 0;
+                    spawnFood();
+                    ensurePositiveFood();
+                }
+            }
             checkTerrainEffects();
-            updateSlowLoopState();
+            const isCurrentlySlowed = Date.now() < slowDebuffEnd;
+            if (isCurrentlySlowed && !isPausedState()) {
+                const slowInterval = 500;
+                if (!lastSlowInterval || lastSlowInterval !== slowInterval) {
+                    lastSlowInterval = slowInterval;
+                    restartGameLoopWithCurrentState();
+                }
+            } else if (lastSlowInterval) {
+                lastSlowInterval = null;
+                restartGameLoopWithCurrentState();
+            }
             
             updateStatusUI();
             
@@ -3649,37 +3673,6 @@
                 return true;
             }
             return false;
-        }
-
-        function updateWaveFoodSpawning() {
-            if (!isCeremonyPlayingState()) return;
-            foodSpawnTimer += currentInterval;
-            const spawnInterval = currentWave <= 1
-                ? TUNING.spawn.foodIntervalWave1
-                : currentWave <= 2
-                    ? TUNING.spawn.foodIntervalWave2
-                    : currentWave <= 3
-                        ? TUNING.spawn.foodIntervalWave2 - 200
-                        : Math.max(TUNING.spawn.foodIntervalMin, TUNING.spawn.foodIntervalWave1 - currentWave * TUNING.spawn.foodIntervalWaveDecay);
-            if (foodSpawnTimer >= spawnInterval) {
-                foodSpawnTimer = 0;
-                spawnFood();
-                ensurePositiveFood();
-            }
-        }
-
-        function updateSlowLoopState() {
-            const isCurrentlySlowed = Date.now() < slowDebuffEnd;
-            if (isCurrentlySlowed && !isPausedState()) {
-                const slowInterval = 500;
-                if (!lastSlowInterval || lastSlowInterval !== slowInterval) {
-                    lastSlowInterval = slowInterval;
-                    restartGameLoopWithCurrentState();
-                }
-            } else if (lastSlowInterval) {
-                lastSlowInterval = null;
-                restartGameLoopWithCurrentState();
-            }
         }
 
         function stopGameLoop() {
