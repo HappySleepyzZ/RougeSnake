@@ -845,17 +845,6 @@
             { id: 'clear', name: '清障', icon: '🧹', cost: 3, desc: '清除所有蛇皮障碍', category: 'tool' },
         ];
         
-        function triggerDashBurst() {
-            if (dashCharges <= 0 || dashBurstTicks > 0 || !isGameRunning) return;
-            dashCharges--;
-            dashBurstTicks = 12;
-            isSpeedBoosted = true;
-            speedBoostTimer = Math.max(speedBoostTimer, currentInterval * dashBurstTicks);
-            restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.dashLoopMultiplier, MIN_SPEED));
-            spawnFloatingText(snake[0].x, snake[0].y, UI_TEXT.floating.dash, '#60a5fa', true);
-            updateStatusUI();
-        }
-
         function hasBuff(id) {
             return activeBuffs.some(b => b.id === id);
         }
@@ -3560,7 +3549,16 @@
             pauseGame,
             resumeGame,
             resetToWaitingState,
-            triggerDashBurst,
+            triggerDashBurst() {
+                if (dashCharges <= 0 || dashBurstTicks > 0 || !isGameRunning) return;
+                dashCharges--;
+                dashBurstTicks = 12;
+                isSpeedBoosted = true;
+                speedBoostTimer = Math.max(speedBoostTimer, currentInterval * dashBurstTicks);
+                restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.dashLoopMultiplier, MIN_SPEED));
+                spawnFloatingText(snake[0].x, snake[0].y, UI_TEXT.floating.dash, '#60a5fa', true);
+                updateStatusUI();
+            },
             getPrimaryGameState,
             canAcceptGameplayInput,
             isInTerminalOverlayState,
