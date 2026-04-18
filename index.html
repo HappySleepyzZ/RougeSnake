@@ -3290,110 +3290,6 @@
                 : activeModeConfig.touchHint(currentLevelConfig);
         }
 
-        function setRuntimeStateValue(key, value) {
-            switch (key) {
-                case 'isPaused':
-                    isPaused = value;
-                    break;
-                case 'isWaveTransition':
-                    isWaveTransition = value;
-                    break;
-                case 'waveCeremonyState':
-                    waveCeremonyState = value;
-                    break;
-                case 'hasSelectedMode':
-                    hasSelectedMode = value;
-                    break;
-                case 'waveTransitionTimer':
-                    waveTransitionTimer = value;
-                    break;
-                case 'pauseStartTime':
-                    pauseStartTime = value;
-                    break;
-                case 'totalPausedTime':
-                    totalPausedTime = value;
-                    break;
-                case 'lastSlowInterval':
-                    lastSlowInterval = value;
-                    break;
-                case 'foods':
-                    foods = value;
-                    break;
-                case 'obstacles':
-                    obstacles = value;
-                    break;
-                case 'snakeSkins':
-                    snakeSkins = value;
-                    break;
-                case 'terrainZones':
-                    terrainZones = value;
-                    break;
-                case 'portalPairs':
-                    portalPairs = value;
-                    break;
-                case 'poisonDebuffEnd':
-                    poisonDebuffEnd = value;
-                    break;
-                case 'slowDebuffEnd':
-                    slowDebuffEnd = value;
-                    break;
-                case 'terrainDotType':
-                    terrainDotType = value;
-                    break;
-                case 'portalTeleportCooldown':
-                    portalTeleportCooldown = value;
-                    break;
-                case 'foodSpawnTimer':
-                    foodSpawnTimer = value;
-                    break;
-                case 'lootFoods':
-                    lootFoods = value;
-                    break;
-                case 'lootEatenCount':
-                    lootEatenCount = value;
-                    break;
-                case 'lootTotalCount':
-                    lootTotalCount = value;
-                    break;
-                case 'lootBurstEndTime':
-                    lootBurstEndTime = value;
-                    break;
-                case 'teleportPreview':
-                    teleportPreview = value;
-                    break;
-                case 'teleportTrailTimer':
-                    teleportTrailTimer = value;
-                    break;
-                case 'headGlowTimer':
-                    headGlowTimer = value;
-                    break;
-                case 'isGameRunning':
-                    isGameRunning = value;
-                    break;
-                case 'isGameOver':
-                    isGameOver = value;
-                    break;
-                case 'isLevelComplete':
-                    isLevelComplete = value;
-                    break;
-                case 'isWaitingForStart':
-                    isWaitingForStart = value;
-                    break;
-                case 'waveStartTime':
-                    waveStartTime = value;
-                    break;
-                case 'gameStartTime':
-                    gameStartTime = value;
-                    break;
-                case 'waveTransitionInterval':
-                    waveTransitionInterval = value;
-                    break;
-                default:
-                    break;
-            }
-            return value;
-        }
-
         const runtimeStateActions = {};
         const runtimeStateModule = installRequiredSnakeModule(window.SnakeRuntimeState, 'SnakeRuntimeState', {
             modeOverlay,
@@ -3446,7 +3342,109 @@
                     headGlowTimer
                 };
             },
-            setStateValue: setRuntimeStateValue,
+            setStateValue(key, value) {
+                switch (key) {
+                    case 'isPaused':
+                        isPaused = value;
+                        break;
+                    case 'isWaveTransition':
+                        isWaveTransition = value;
+                        break;
+                    case 'waveCeremonyState':
+                        waveCeremonyState = value;
+                        break;
+                    case 'hasSelectedMode':
+                        hasSelectedMode = value;
+                        break;
+                    case 'waveTransitionTimer':
+                        waveTransitionTimer = value;
+                        break;
+                    case 'pauseStartTime':
+                        pauseStartTime = value;
+                        break;
+                    case 'totalPausedTime':
+                        totalPausedTime = value;
+                        break;
+                    case 'lastSlowInterval':
+                        lastSlowInterval = value;
+                        break;
+                    case 'foods':
+                        foods = value;
+                        break;
+                    case 'obstacles':
+                        obstacles = value;
+                        break;
+                    case 'snakeSkins':
+                        snakeSkins = value;
+                        break;
+                    case 'terrainZones':
+                        terrainZones = value;
+                        break;
+                    case 'portalPairs':
+                        portalPairs = value;
+                        break;
+                    case 'poisonDebuffEnd':
+                        poisonDebuffEnd = value;
+                        break;
+                    case 'slowDebuffEnd':
+                        slowDebuffEnd = value;
+                        break;
+                    case 'terrainDotType':
+                        terrainDotType = value;
+                        break;
+                    case 'portalTeleportCooldown':
+                        portalTeleportCooldown = value;
+                        break;
+                    case 'foodSpawnTimer':
+                        foodSpawnTimer = value;
+                        break;
+                    case 'lootFoods':
+                        lootFoods = value;
+                        break;
+                    case 'lootEatenCount':
+                        lootEatenCount = value;
+                        break;
+                    case 'lootTotalCount':
+                        lootTotalCount = value;
+                        break;
+                    case 'lootBurstEndTime':
+                        lootBurstEndTime = value;
+                        break;
+                    case 'teleportPreview':
+                        teleportPreview = value;
+                        break;
+                    case 'teleportTrailTimer':
+                        teleportTrailTimer = value;
+                        break;
+                    case 'headGlowTimer':
+                        headGlowTimer = value;
+                        break;
+                    case 'isGameRunning':
+                        isGameRunning = value;
+                        break;
+                    case 'isGameOver':
+                        isGameOver = value;
+                        break;
+                    case 'isLevelComplete':
+                        isLevelComplete = value;
+                        break;
+                    case 'isWaitingForStart':
+                        isWaitingForStart = value;
+                        break;
+                    case 'waveStartTime':
+                        waveStartTime = value;
+                        break;
+                    case 'gameStartTime':
+                        gameStartTime = value;
+                        break;
+                    case 'waveTransitionInterval':
+                        waveTransitionInterval = value;
+                        break;
+                    default:
+                        break;
+                }
+                return value;
+            },
             actions: runtimeStateActions
         });
 
