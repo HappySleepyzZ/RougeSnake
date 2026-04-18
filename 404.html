@@ -1471,30 +1471,6 @@
         // V17c: 传送门系统
         let portalPairs = []; // [{ a: {x,y}, b: {x,y}, color }]
         
-        function generatePortalPair() {
-            const padding = TUNING.terrain.spawnPadding; // V18f: 30x30 适配
-            const head = snake[0];
-            for (let attempts = 0; attempts < TUNING.generation.portalSpawnAttempts; attempts++) {
-                const ax = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                const ay = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                if (Math.abs(ax - head.x) + Math.abs(ay - head.y) < TUNING.terrain.minHeadDistance) continue;
-                if (isPositionOccupied(ax, ay)) continue;
-                
-                // B 点至少离 A 6 格（30x30下）
-                for (let att2 = 0; att2 < 50; att2++) {
-                    const bx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                    const by = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                    if (Math.abs(bx - ax) + Math.abs(by - ay) < 6) continue; // V18f: 30x30
-                    if (Math.abs(bx - head.x) + Math.abs(by - head.y) < 5) continue;
-                    if (isPositionOccupied(bx, by)) continue;
-                    
-                    const hue = Math.floor(Math.random() * 360);
-                    return { a: {x: ax, y: ay}, b: {x: bx, y: by}, hue };
-                }
-            }
-            return null;
-        }
-        
         function generateWavePortals() {
             portalPairs = [];
             let count = 0;
@@ -1502,7 +1478,28 @@
             if (currentWave >= 1) count = 1;
             if (currentWave >= 3) count = 2;
             for (let i = 0; i < count; i++) {
-                const pair = generatePortalPair();
+                const padding = TUNING.terrain.spawnPadding;
+                const head = snake[0];
+                let pair = null;
+                for (let attempts = 0; attempts < TUNING.generation.portalSpawnAttempts; attempts++) {
+                    const ax = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
+                    const ay = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
+                    if (Math.abs(ax - head.x) + Math.abs(ay - head.y) < TUNING.terrain.minHeadDistance) continue;
+                    if (isPositionOccupied(ax, ay)) continue;
+
+                    for (let att2 = 0; att2 < 50; att2++) {
+                        const bx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
+                        const by = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
+                        if (Math.abs(bx - ax) + Math.abs(by - ay) < 6) continue;
+                        if (Math.abs(bx - head.x) + Math.abs(by - head.y) < 5) continue;
+                        if (isPositionOccupied(bx, by)) continue;
+
+                        const hue = Math.floor(Math.random() * 360);
+                        pair = { a: { x: ax, y: ay }, b: { x: bx, y: by }, hue };
+                        break;
+                    }
+                    if (pair) break;
+                }
                 if (pair) portalPairs.push(pair);
             }
         }
