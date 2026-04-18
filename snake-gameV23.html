@@ -1965,7 +1965,14 @@
                 spawnFloatingText(Math.floor(tileCount / 2), Math.floor(tileCount / 2), UI_TEXT.floating.keyFound, '#ffd700', true);
             }
             const ceremonyHead = snake[0];
-            tryResolveKeyCeremony(ceremonyHead);
+            if (isCeremonyKeyState() && ceremonyKey && ceremonyHead.x === ceremonyKey.x && ceremonyHead.y === ceremonyKey.y) {
+                setCeremonyState('CHEST_SPAWN');
+                ceremonyKey = null;
+                flashEffect('teleport');
+                flashAlpha = 0.3;
+                ceremonyChest = findCeremonySpawnCell(TUNING.ceremony.chestMinDistance, { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) });
+                spawnFloatingText(ceremonyHead.x, ceremonyHead.y, UI_TEXT.floating.keyGet, '#ffd700', true);
+            }
             tryResolveChestCeremony(ceremonyHead);
             updateLootBurstCollection(ceremonyHead);
             if (isCeremonyPlayingState()) {
@@ -3550,18 +3557,6 @@
             showOnlyResultOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule
         } = uiOverlaysModule;
-
-        function tryResolveKeyCeremony(head) {
-            if (!isCeremonyKeyState() || !ceremonyKey) return false;
-            if (head.x !== ceremonyKey.x || head.y !== ceremonyKey.y) return false;
-            setCeremonyState('CHEST_SPAWN');
-            ceremonyKey = null;
-            flashEffect('teleport');
-            flashAlpha = 0.3;
-            ceremonyChest = findCeremonySpawnCell(TUNING.ceremony.chestMinDistance, { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) });
-            spawnFloatingText(head.x, head.y, UI_TEXT.floating.keyGet, '#ffd700', true);
-            return true;
-        }
 
         function spawnLootBurstFoods(targetLootCount) {
             for (let i = 0; i < targetLootCount; i++) {
