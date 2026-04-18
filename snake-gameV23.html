@@ -1973,7 +1973,28 @@
                 ceremonyChest = findCeremonySpawnCell(TUNING.ceremony.chestMinDistance, { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) });
                 spawnFloatingText(ceremonyHead.x, ceremonyHead.y, UI_TEXT.floating.keyGet, '#ffd700', true);
             }
-            tryResolveChestCeremony(ceremonyHead);
+            if (isCeremonyChestState() && ceremonyChest && ceremonyHead.x === ceremonyChest.x && ceremonyHead.y === ceremonyChest.y) {
+                setCeremonyState('LOOT_BURST');
+                ceremonyChest = null;
+                flashEffect('grow');
+                flashAlpha = 0.4;
+                spawnFloatingText(ceremonyHead.x, ceremonyHead.y, UI_TEXT.floating.coinFrenzy, '#ffd700', true);
+                clearWavePlayfieldState();
+                resetLootBurstState();
+                lootBurstEndTime = Date.now() + TUNING.wave.lootBurstDuration;
+                const targetLootCount = Math.min(TUNING.wave.lootMax, Math.max(TUNING.wave.lootMin, Math.floor(tileCount * TUNING.wave.lootTileFactor)));
+                for (let i = 0; i < targetLootCount; i++) {
+                    for (let att = 0; att < TUNING.generation.lootSpawnAttempts; att++) {
+                        const fx = Math.floor(Math.random() * (tileCount - 2)) + 1;
+                        const fy = Math.floor(Math.random() * (tileCount - 2)) + 1;
+                        if (!isPositionOccupied(fx, fy) && !lootFoods.some(l => l.x === fx && l.y === fy)) {
+                            lootFoods.push({ x: fx, y: fy, eaten: false });
+                            break;
+                        }
+                    }
+                }
+                lootTotalCount = lootFoods.length;
+            }
             updateLootBurstCollection(ceremonyHead);
             if (isCeremonyPlayingState()) {
                 foodSpawnTimer += currentInterval;
@@ -3557,40 +3578,6 @@
             showOnlyResultOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule
         } = uiOverlaysModule;
-
-        function spawnLootBurstFoods(targetLootCount) {
-            for (let i = 0; i < targetLootCount; i++) {
-                for (let att = 0; att < TUNING.generation.lootSpawnAttempts; att++) {
-                    const fx = Math.floor(Math.random() * (tileCount - 2)) + 1;
-                    const fy = Math.floor(Math.random() * (tileCount - 2)) + 1;
-                    if (!isPositionOccupied(fx, fy) && !lootFoods.some(l => l.x === fx && l.y === fy)) {
-                        lootFoods.push({ x: fx, y: fy, eaten: false });
-                        break;
-                    }
-                }
-            }
-            lootTotalCount = lootFoods.length;
-        }
-
-        function beginLootBurst(head) {
-            setCeremonyState('LOOT_BURST');
-            ceremonyChest = null;
-            flashEffect('grow');
-            flashAlpha = 0.4;
-            spawnFloatingText(head.x, head.y, UI_TEXT.floating.coinFrenzy, '#ffd700', true);
-            clearWavePlayfieldState();
-            resetLootBurstState();
-            lootBurstEndTime = Date.now() + TUNING.wave.lootBurstDuration;
-            const targetLootCount = Math.min(TUNING.wave.lootMax, Math.max(TUNING.wave.lootMin, Math.floor(tileCount * TUNING.wave.lootTileFactor)));
-            spawnLootBurstFoods(targetLootCount);
-        }
-
-        function tryResolveChestCeremony(head) {
-            if (!isCeremonyChestState() || !ceremonyChest) return false;
-            if (head.x !== ceremonyChest.x || head.y !== ceremonyChest.y) return false;
-            beginLootBurst(head);
-            return true;
-        }
 
         function collectLootBurstPickup(head, lootFood) {
             lootFood.eaten = true;
