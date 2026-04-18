@@ -3804,125 +3804,6 @@
         resizeCanvas();
         bindDirectionInputHandlers();
 
-        function setDebugApiStateValue(key, value) {
-            switch (key) {
-                case 'snake':
-                    snake = value;
-                    break;
-                case 'foods':
-                    foods = value;
-                    break;
-                case 'obstacles':
-                    obstacles = value;
-                    break;
-                case 'snakeSkins':
-                    snakeSkins = value;
-                    break;
-                case 'foodEatenCount':
-                    foodEatenCount = value;
-                    break;
-                case 'teleportInvincibleSteps':
-                    teleportInvincibleSteps = value;
-                    break;
-                case 'direction':
-                    direction = value;
-                    break;
-                case 'nextDirection':
-                    nextDirection = value;
-                    break;
-                case 'score':
-                    score = value;
-                    break;
-                case 'remainingTime':
-                    remainingTime = value;
-                    break;
-                case 'gameStartTime':
-                    gameStartTime = value;
-                    break;
-                case 'waveStartTime':
-                    waveStartTime = value;
-                    break;
-                case 'currentWave':
-                    currentWave = value;
-                    break;
-                case 'isGameRunning':
-                    isGameRunning = value;
-                    break;
-                case 'isWaitingForStart':
-                    isWaitingForStart = value;
-                    break;
-                case 'waveTransitionTimer':
-                    waveTransitionTimer = value;
-                    break;
-                case 'hasSelectedMode':
-                    hasSelectedMode = value;
-                    break;
-                case 'isLevelComplete':
-                    isLevelComplete = value;
-                    break;
-                case 'isGameOver':
-                    isGameOver = value;
-                    break;
-                case 'showTutorial':
-                    showTutorial = value;
-                    break;
-                case 'tutorialTimer':
-                    tutorialTimer = value;
-                    break;
-                case 'currentInterval':
-                    currentInterval = value;
-                    break;
-                case 'backgroundHue':
-                    backgroundHue = value;
-                    break;
-                case 'speedBoostTimer':
-                    speedBoostTimer = value;
-                    break;
-                case 'isSpeedBoosted':
-                    isSpeedBoosted = value;
-                    break;
-                case 'poisonDebuffEnd':
-                    poisonDebuffEnd = value;
-                    break;
-                case 'slowDebuffEnd':
-                    slowDebuffEnd = value;
-                    break;
-                case 'terrainSlowActive':
-                    terrainSlowActive = value;
-                    break;
-                case 'terrainDotType':
-                    terrainDotType = value;
-                    break;
-                case 'portalTeleportCooldown':
-                    portalTeleportCooldown = value;
-                    break;
-                case 'totalPausedTime':
-                    totalPausedTime = value;
-                    break;
-                case 'startIndicator':
-                    startIndicator = value;
-                    break;
-                case 'teleportPreview':
-                    teleportPreview = value;
-                    break;
-                case 'teleportTrailTimer':
-                    teleportTrailTimer = value;
-                    break;
-                case 'headGlowTimer':
-                    headGlowTimer = value;
-                    break;
-                case 'ceremonyKey':
-                    ceremonyKey = value;
-                    break;
-                case 'ceremonyChest':
-                    ceremonyChest = value;
-                    break;
-                default:
-                    break;
-            }
-            return value;
-        }
-
         const debugApiModule = installRequiredSnakeModule(window.SnakeDebugApi, 'SnakeDebugApi', {
             modeOverlay,
             resultOverlay,
@@ -3981,7 +3862,124 @@
                     selectedModule
                 };
             },
-            setStateValue: setDebugApiStateValue,
+            setStateValue(key, value) {
+                switch (key) {
+                    case 'snake':
+                        snake = value;
+                        break;
+                    case 'foods':
+                        foods = value;
+                        break;
+                    case 'obstacles':
+                        obstacles = value;
+                        break;
+                    case 'snakeSkins':
+                        snakeSkins = value;
+                        break;
+                    case 'foodEatenCount':
+                        foodEatenCount = value;
+                        break;
+                    case 'teleportInvincibleSteps':
+                        teleportInvincibleSteps = value;
+                        break;
+                    case 'direction':
+                        direction = value;
+                        break;
+                    case 'nextDirection':
+                        nextDirection = value;
+                        break;
+                    case 'score':
+                        score = value;
+                        break;
+                    case 'remainingTime':
+                        remainingTime = value;
+                        break;
+                    case 'gameStartTime':
+                        gameStartTime = value;
+                        break;
+                    case 'waveStartTime':
+                        waveStartTime = value;
+                        break;
+                    case 'currentWave':
+                        currentWave = value;
+                        break;
+                    case 'isGameRunning':
+                        isGameRunning = value;
+                        break;
+                    case 'isWaitingForStart':
+                        isWaitingForStart = value;
+                        break;
+                    case 'waveTransitionTimer':
+                        waveTransitionTimer = value;
+                        break;
+                    case 'hasSelectedMode':
+                        hasSelectedMode = value;
+                        break;
+                    case 'isLevelComplete':
+                        isLevelComplete = value;
+                        break;
+                    case 'isGameOver':
+                        isGameOver = value;
+                        break;
+                    case 'showTutorial':
+                        showTutorial = value;
+                        break;
+                    case 'tutorialTimer':
+                        tutorialTimer = value;
+                        break;
+                    case 'currentInterval':
+                        currentInterval = value;
+                        break;
+                    case 'backgroundHue':
+                        backgroundHue = value;
+                        break;
+                    case 'speedBoostTimer':
+                        speedBoostTimer = value;
+                        break;
+                    case 'isSpeedBoosted':
+                        isSpeedBoosted = value;
+                        break;
+                    case 'poisonDebuffEnd':
+                        poisonDebuffEnd = value;
+                        break;
+                    case 'slowDebuffEnd':
+                        slowDebuffEnd = value;
+                        break;
+                    case 'terrainSlowActive':
+                        terrainSlowActive = value;
+                        break;
+                    case 'terrainDotType':
+                        terrainDotType = value;
+                        break;
+                    case 'portalTeleportCooldown':
+                        portalTeleportCooldown = value;
+                        break;
+                    case 'totalPausedTime':
+                        totalPausedTime = value;
+                        break;
+                    case 'startIndicator':
+                        startIndicator = value;
+                        break;
+                    case 'teleportPreview':
+                        teleportPreview = value;
+                        break;
+                    case 'teleportTrailTimer':
+                        teleportTrailTimer = value;
+                        break;
+                    case 'headGlowTimer':
+                        headGlowTimer = value;
+                        break;
+                    case 'ceremonyKey':
+                        ceremonyKey = value;
+                        break;
+                    case 'ceremonyChest':
+                        ceremonyChest = value;
+                        break;
+                    default:
+                        break;
+                }
+                return value;
+            },
             actions: debugApiActions
         });
 
