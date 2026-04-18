@@ -1734,47 +1734,6 @@
             restartWaveTransitionCountdown();
         }
 
-        function generateSnakeSkin(anchor = null) {
-            // 检查蛇皮区域数量上限
-            let skinRegionCount = snakeSkins.length;
-            if (skinRegionCount >= currentLevelConfig.skin.maxRegions) return;
-            
-            // 如果没有传入锚点，使用蛇尾作为默认值（兼容旧逻辑）
-            const tailPos = anchor || snake[snake.length - 1];
-            const centerX = tailPos.x;
-            const centerY = tailPos.y;
-            
-            // 生成3x3区域的格子
-            const cells = [];
-            for (let dx = -1; dx <= 1; dx++) {
-                for (let dy = -1; dy <= 1; dy++) {
-                    const x = centerX + dx;
-                    const y = centerY + dy;
-                    
-                    // 边界检查
-                    if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
-                    
-                    // 检查位置是否已被占用
-                    if (!isPositionOccupied(x, y)) {
-                        cells.push({ x, y });
-                    }
-                }
-            }
-            
-            // 至少需要3个格子才能生成（避免完全重叠）
-            if (cells.length >= 3) {
-                const skin = {
-                    centerX,
-                    centerY,
-                    cells,
-                    spawnTime: Date.now()
-                };
-                snakeSkins.push(skin);
-                flashEffect('skin');
-                console.log('[蛇皮V14] 生成3x3区域于:', centerX, centerY, '格子数:', cells.length, '总计区域:', snakeSkins.length);
-            }
-        }
-
         // 更新状态UI
         function pushTimerTrace(snapshot) {
             timerTraceBuffer.push(snapshot);
@@ -4065,7 +4024,38 @@
                 canPlaceFoodAt,
                 // V12：测试辅助函数
                 forceGenerateSkin() {
-                    generateSnakeSkin();
+                    let skinRegionCount = snakeSkins.length;
+                    if (skinRegionCount >= currentLevelConfig.skin.maxRegions) return;
+
+                    const tailPos = snake[snake.length - 1];
+                    const centerX = tailPos.x;
+                    const centerY = tailPos.y;
+
+                    const cells = [];
+                    for (let dx = -1; dx <= 1; dx++) {
+                        for (let dy = -1; dy <= 1; dy++) {
+                            const x = centerX + dx;
+                            const y = centerY + dy;
+
+                            if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
+
+                            if (!isPositionOccupied(x, y)) {
+                                cells.push({ x, y });
+                            }
+                        }
+                    }
+
+                    if (cells.length >= 3) {
+                        const skin = {
+                            centerX,
+                            centerY,
+                            cells,
+                            spawnTime: Date.now()
+                        };
+                        snakeSkins.push(skin);
+                        flashEffect('skin');
+                        console.log('[蛇皮V14] 生成3x3区域于:', centerX, centerY, '格子数:', cells.length, '总计区域:', snakeSkins.length);
+                    }
                 },
                 forceSpawnBarrier() {
                     spawnBarrierObstacles();
