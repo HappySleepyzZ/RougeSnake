@@ -1504,18 +1504,6 @@
             }
         }
         
-        function checkPortalTeleport(headPos) {
-            for (const pair of portalPairs) {
-                if (headPos.x === pair.a.x && headPos.y === pair.a.y) {
-                    return { dest: pair.b, pair };
-                }
-                if (headPos.x === pair.b.x && headPos.y === pair.b.y) {
-                    return { dest: pair.a, pair };
-                }
-            }
-            return null;
-        }
-        
         // V17b: 飘字系统
         let floatingTexts = []; // { x, y, text, color, age, maxAge, big }
         function spawnFloatingText(gridX, gridY, text, color, big = false) {
@@ -1867,7 +1855,16 @@
             if (portalTeleportCooldown > 0) {
                 portalTeleportCooldown--;
             } else {
-                portalHit = checkPortalTeleport(resolvedHead);
+                for (const pair of portalPairs) {
+                    if (resolvedHead.x === pair.a.x && resolvedHead.y === pair.a.y) {
+                        portalHit = { dest: pair.b, pair };
+                        break;
+                    }
+                    if (resolvedHead.x === pair.b.x && resolvedHead.y === pair.b.y) {
+                        portalHit = { dest: pair.a, pair };
+                        break;
+                    }
+                }
             }
 
             if (portalHit) {
