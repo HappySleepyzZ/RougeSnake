@@ -1517,84 +1517,6 @@
                 big: big
             });
         }
-        function checkTerrainEffects() {
-            if (!selectedModule) return;
-            const now = Date.now();
-            const head = snake[0];
-            
-            // V18b: 检测蛇头是否在地形区域内
-            let inTerrain = null;
-            for (const zone of terrainZones) {
-                if (zone.cells.some(c => c.x === head.x && c.y === head.y)) {
-                    inTerrain = zone;
-                    break;
-                }
-            }
-            
-            if (inTerrain) {
-                const zoneKey = inTerrain.type + '_' + inTerrain.centerX + '_' + inTerrain.centerY;
-                terrainDotType = inTerrain.type;
-                
-                if (lastTerrainTrigger !== zoneKey) {
-                    lastTerrainTrigger = zoneKey;
-                    terrainDotStepCounter = 0;
-                }
-                
-                terrainDotStepCounter++;
-                
-                // 进入毒雾 → 刷新毒 debuff 计时器
-                if (inTerrain.type === 'poison' && selectedModule.id !== 'venom') {
-                    poisonDebuffEnd = now + DEBUFF_DURATION;
-                }
-                // 毒尾在毒雾里加分
-                if (inTerrain.type === 'poison' && selectedModule.id === 'venom') {
-                    if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
-                        score += 5;
-                        spawnFloatingText(head.x, head.y, '+5', '#a855f7', false);
-                        updateStatusUI();
-                    }
-                }
-                
-                // 进入减速区 → 刷新减速 debuff 计时器 + 扣分
-                if (inTerrain.type === 'slow') {
-                    const dur = hasBuff('ice_armor') ? DEBUFF_DURATION / 2 : DEBUFF_DURATION; // V19
-                    slowDebuffEnd = now + dur;
-                    if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
-                        score -= 3;
-                        spawnFloatingText(head.x, head.y, '-3', '#60a5fa', false);
-                        updateStatusUI();
-                    }
-                }
-            } else {
-                lastTerrainTrigger = null;
-                terrainDotStepCounter = 0;
-            }
-            
-            // V18b: Debuff 持续判定
-            const isPoisoned = now < poisonDebuffEnd;
-            const isSlowed = now < slowDebuffEnd;
-            
-            // 中毒 DoT：持续扣分 + 飘字
-            if (isPoisoned) {
-                terrainDotType = 'poison';
-                if (Math.random() < 0.1) {
-                    const dmg = hasBuff('poison_resist') ? 1 : 2; // V19: 毒抗减半
-                    score -= dmg;
-                    spawnFloatingText(head.x, head.y, `-${dmg}`, '#c084fc', false);
-                    updateStatusUI();
-                }
-            }
-            
-            // 减速 debuff：只减速，不扣分
-            if (isSlowed) {
-                terrainDotType = terrainDotType || 'slow';
-            }
-            
-            if (!isPoisoned && !isSlowed) {
-                terrainDotType = null;
-            }
-        }
-
         // V19: 商店系统
         // ========== shop-wave-flow 包装层 (Patch 1) ==========
         // ========== 原始函数（保持不变） ==========
@@ -2020,7 +1942,65 @@
                     ensurePositiveFood();
                 }
             }
-            checkTerrainEffects();
+            if (selectedModule) {
+                const terrainNow = Date.now();
+                const terrainHead = snake[0];
+                let inTerrain = null;
+                for (const zone of terrainZones) {
+                    if (zone.cells.some(c => c.x === terrainHead.x && c.y === terrainHead.y)) {
+                        inTerrain = zone;
+                        break;
+                    }
+                }
+                if (inTerrain) {
+                    const zoneKey = inTerrain.type + '_' + inTerrain.centerX + '_' + inTerrain.centerY;
+                    terrainDotType = inTerrain.type;
+                    if (lastTerrainTrigger !== zoneKey) {
+                        lastTerrainTrigger = zoneKey;
+                        terrainDotStepCounter = 0;
+                    }
+                    terrainDotStepCounter++;
+                    if (inTerrain.type === 'poison' && selectedModule.id !== 'venom') {
+                        poisonDebuffEnd = terrainNow + DEBUFF_DURATION;
+                    }
+                    if (inTerrain.type === 'poison' && selectedModule.id === 'venom') {
+                        if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
+                            score += 5;
+                            spawnFloatingText(terrainHead.x, terrainHead.y, '+5', '#a855f7', false);
+                            updateStatusUI();
+                        }
+                    }
+                    if (inTerrain.type === 'slow') {
+                        const dur = hasBuff('ice_armor') ? DEBUFF_DURATION / 2 : DEBUFF_DURATION;
+                        slowDebuffEnd = terrainNow + dur;
+                        if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
+                            score -= 3;
+                            spawnFloatingText(terrainHead.x, terrainHead.y, '-3', '#60a5fa', false);
+                            updateStatusUI();
+                        }
+                    }
+                } else {
+                    lastTerrainTrigger = null;
+                    terrainDotStepCounter = 0;
+                }
+                const isPoisoned = terrainNow < poisonDebuffEnd;
+                const isSlowed = terrainNow < slowDebuffEnd;
+                if (isPoisoned) {
+                    terrainDotType = 'poison';
+                    if (Math.random() < 0.1) {
+                        const dmg = hasBuff('poison_resist') ? 1 : 2;
+                        score -= dmg;
+                        spawnFloatingText(terrainHead.x, terrainHead.y, `-${dmg}`, '#c084fc', false);
+                        updateStatusUI();
+                    }
+                }
+                if (isSlowed) {
+                    terrainDotType = terrainDotType || 'slow';
+                }
+                if (!isPoisoned && !isSlowed) {
+                    terrainDotType = null;
+                }
+            }
             const isCurrentlySlowed = Date.now() < slowDebuffEnd;
             if (isCurrentlySlowed && !isPausedState()) {
                 const slowInterval = 500;
