@@ -1080,10 +1080,6 @@
             return uiOverlaysModule.hideModeOverlay();
         }
 
-        function selectMode(mode) {
-            // V16: no-op, always survival
-        }
-
         // ========== 瞬移视觉引导状态变量 ==========
         let teleportPreview = null;
         let teleportTrailTimer = 0;
@@ -4063,7 +4059,9 @@
                 clearLoop() {
                     stopGameLoop();
                 },
-                selectMode,
+                selectMode(mode) {
+                    // V16: no-op, always survival
+                },
                 spawnFood,
                 ensurePositiveFood,
                 canPlaceFoodAt,
