@@ -1958,7 +1958,12 @@
             totalSurvivalTime = (now - gameStartTime) / 1000;
             const waveElapsed = now - waveStartTime;
             
-            tryStartKeyCeremony(waveElapsed);
+            if (waveElapsed >= WAVE_DURATION && isCeremonyPlayingState()) {
+                setCeremonyState('KEY_SPAWN');
+                clearWavePlayfieldState();
+                ceremonyKey = findCeremonySpawnCell(TUNING.ceremony.keyMinDistance, { x: Math.floor(tileCount / 2), y: TUNING.ceremony.keyFallbackY });
+                spawnFloatingText(Math.floor(tileCount / 2), Math.floor(tileCount / 2), UI_TEXT.floating.keyFound, '#ffd700', true);
+            }
             const ceremonyHead = snake[0];
             tryResolveKeyCeremony(ceremonyHead);
             tryResolveChestCeremony(ceremonyHead);
@@ -3545,15 +3550,6 @@
             showOnlyResultOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule
         } = uiOverlaysModule;
-
-        function tryStartKeyCeremony(waveElapsed) {
-            if (waveElapsed < WAVE_DURATION || !isCeremonyPlayingState()) return false;
-            setCeremonyState('KEY_SPAWN');
-            clearWavePlayfieldState();
-            ceremonyKey = findCeremonySpawnCell(TUNING.ceremony.keyMinDistance, { x: Math.floor(tileCount / 2), y: TUNING.ceremony.keyFallbackY });
-            spawnFloatingText(Math.floor(tileCount / 2), Math.floor(tileCount / 2), UI_TEXT.floating.keyFound, '#ffd700', true);
-            return true;
-        }
 
         function tryResolveKeyCeremony(head) {
             if (!isCeremonyKeyState() || !ceremonyKey) return false;
