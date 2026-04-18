@@ -1233,66 +1233,6 @@
             updateStatusUI();
         }
 
-        function initGame() {
-            const centerX = Math.floor(tileCount / 2);
-            const centerY = Math.floor(tileCount / 2);
-            snake = [
-                { x: centerX, y: centerY },
-                { x: centerX - 1, y: centerY },
-                { x: centerX - 2, y: centerY }
-            ];
-            direction = { x: 1, y: 0 };
-            nextDirection = { x: 1, y: 0 };
-            
-            startIndicator = null;
-            foods = [];
-            obstacles = [];
-            snakeSkins = [];
-            foodEatenCount = 0;
-            score = 0;
-            currentInterval = BASE_SPEED;
-            backgroundHue = 240;
-            speedBoostTimer = 0;
-            isSpeedBoosted = false;
-            dashBurstTicks = 0;
-            isLevelComplete = false;
-            isGameOver = false;
-            
-            // V14: 重置瞬移无敌帧
-            teleportInvincibleSteps = 0;
-            portalTeleportCooldown = 0;
-            
-            teleportPreview = null;
-            teleportTrailTimer = 0;
-            headGlowTimer = 0;
-            
-            remainingTime = Infinity;
-            gameStartTime = Date.now();
-            waveStartTime = Date.now();
-            currentWave = 1;
-            clearWaveTransitionState();
-            terrainZones = [];
-            if (selectedModule && selectedModule.special === 'widePortal') {
-                portalWidth = 5;
-            } else {
-                portalWidth = currentLevelConfig.portalWidth;
-            }
-            generateWaveTerrain();
-            generateWavePortals();
-            
-            // 初始生成食物（保证有正分食物）
-            const { min: initialFoodMin, max: initialFoodMax } = currentLevelConfig.initialFood;
-            const initialFoodCount = Math.floor(Math.random() * (initialFoodMax - initialFoodMin + 1)) + initialFoodMin;
-            for (let i = 0; i < initialFoodCount; i++) {
-                spawnFood();
-            }
-            
-            // 紧急补位 - 确保至少有1个正分食物
-            ensurePositiveFood();
-            
-            updateStatusUI();
-        }
-
         // V12：扩展位置占用检查（包含蛇皮3x3区域）
         function isPositionOccupied(x, y) {
             if (snake.some(seg => seg.x === x && seg.y === y)) return true;
@@ -3309,7 +3249,59 @@
             
             resizeCanvas();
             stopGameLoop();
-            initGame();
+            const centerX = Math.floor(tileCount / 2);
+            const centerY = Math.floor(tileCount / 2);
+            snake = [
+                { x: centerX, y: centerY },
+                { x: centerX - 1, y: centerY },
+                { x: centerX - 2, y: centerY }
+            ];
+            direction = { x: 1, y: 0 };
+            nextDirection = { x: 1, y: 0 };
+
+            startIndicator = null;
+            foods = [];
+            obstacles = [];
+            snakeSkins = [];
+            foodEatenCount = 0;
+            score = 0;
+            currentInterval = BASE_SPEED;
+            backgroundHue = 240;
+            speedBoostTimer = 0;
+            isSpeedBoosted = false;
+            dashBurstTicks = 0;
+            isLevelComplete = false;
+            isGameOver = false;
+
+            teleportInvincibleSteps = 0;
+            portalTeleportCooldown = 0;
+
+            teleportPreview = null;
+            teleportTrailTimer = 0;
+            headGlowTimer = 0;
+
+            remainingTime = Infinity;
+            gameStartTime = Date.now();
+            waveStartTime = Date.now();
+            currentWave = 1;
+            clearWaveTransitionState();
+            terrainZones = [];
+            if (selectedModule && selectedModule.special === 'widePortal') {
+                portalWidth = 5;
+            } else {
+                portalWidth = currentLevelConfig.portalWidth;
+            }
+            generateWaveTerrain();
+            generateWavePortals();
+
+            const { min: initialFoodMin, max: initialFoodMax } = currentLevelConfig.initialFood;
+            const initialFoodCount = Math.floor(Math.random() * (initialFoodMax - initialFoodMin + 1)) + initialFoodMin;
+            for (let i = 0; i < initialFoodCount; i++) {
+                spawnFood();
+            }
+
+            ensurePositiveFood();
+            updateStatusUI();
             isWaitingForStart = false;
             isGameRunning = true;
             showTutorial = false;
