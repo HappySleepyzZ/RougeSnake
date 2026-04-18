@@ -1739,64 +1739,6 @@
         }
 
         // 游戏主循环
-        function resolveCollisionAndPickup(head) {
-            let eatenFoodIndex = -1;
-            let minDist = Infinity;
-            const pickupRadius = hasBuff('magnet') ? TUNING.pickup.magnetRadius : TUNING.pickup.defaultRadius;
-            for (let i = 0; i < foods.length; i++) {
-                const dx = head.x - foods[i].x;
-                const dy = head.y - foods[i].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist <= pickupRadius && dist < minDist) {
-                    minDist = dist;
-                    eatenFoodIndex = i;
-                }
-            }
-            const willEatFood = eatenFoodIndex !== -1;
-            const collisionSegments = willEatFood ? snake : snake.slice(0, -1);
-
-            if (teleportInvincibleSteps > 0) {
-                teleportInvincibleSteps--;
-            } else if (isCeremonyPlayingState() && collisionSegments.some(seg => seg.x === head.x && seg.y === head.y)) {
-                gameOver('self');
-                return { blocked: true, eatenFood: null };
-            }
-
-            if (isCeremonyPlayingState()) {
-                const hitObstacleIdx = obstacles.findIndex(o => o.x === head.x && o.y === head.y);
-                if (hitObstacleIdx !== -1) {
-                    if (selectedModule && selectedModule.special === 'breakObstacle') {
-                        obstacles.splice(hitObstacleIdx, 1);
-                        score += 5;
-                        flashEffect('barrier');
-                        updateStatusUI();
-                    } else if (shieldCharges > 0) {
-                        shieldCharges--;
-                        obstacles.splice(hitObstacleIdx, 1);
-                        spawnFloatingText(head.x, head.y, UI_TEXT.floating.shield, '#2ecc71', true);
-                        flashEffect('teleport');
-                        flashAlpha = 0.3;
-                    } else {
-                        gameOver('obstacle');
-                        return { blocked: true, eatenFood: null };
-                    }
-                }
-            }
-
-            if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
-                gameOver('skin');
-                return { blocked: true, eatenFood: null };
-            }
-
-            return {
-                blocked: false,
-                eatenFood: eatenFoodIndex === -1 ? null : foods.splice(eatenFoodIndex, 1)[0],
-                eatenFoodIndex,
-                willEatFood
-            };
-        }
-
-
         // ========== 原始函数（保持不变） ==========
         function gameStep() {
             if (isWaveTransitionState()) return; // 波次过渡中不更新
@@ -2010,12 +1952,59 @@
                 }
             }
 
-            const collisionResolution = resolveCollisionAndPickup(head);
-            if (collisionResolution.blocked) return;
+            let eatenFoodIndex = -1;
+            let minDist = Infinity;
+            const pickupRadius = hasBuff('magnet') ? TUNING.pickup.magnetRadius : TUNING.pickup.defaultRadius;
+            for (let i = 0; i < foods.length; i++) {
+                const dx = head.x - foods[i].x;
+                const dy = head.y - foods[i].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist <= pickupRadius && dist < minDist) {
+                    minDist = dist;
+                    eatenFoodIndex = i;
+                }
+            }
+            const willEatFood = eatenFoodIndex !== -1;
+            const collisionSegments = willEatFood ? snake : snake.slice(0, -1);
+
+            if (teleportInvincibleSteps > 0) {
+                teleportInvincibleSteps--;
+            } else if (isCeremonyPlayingState() && collisionSegments.some(seg => seg.x === head.x && seg.y === head.y)) {
+                gameOver('self');
+                return;
+            }
+
+            if (isCeremonyPlayingState()) {
+                const hitObstacleIdx = obstacles.findIndex(o => o.x === head.x && o.y === head.y);
+                if (hitObstacleIdx !== -1) {
+                    if (selectedModule && selectedModule.special === 'breakObstacle') {
+                        obstacles.splice(hitObstacleIdx, 1);
+                        score += 5;
+                        flashEffect('barrier');
+                        updateStatusUI();
+                    } else if (shieldCharges > 0) {
+                        shieldCharges--;
+                        obstacles.splice(hitObstacleIdx, 1);
+                        spawnFloatingText(head.x, head.y, UI_TEXT.floating.shield, '#2ecc71', true);
+                        flashEffect('teleport');
+                        flashAlpha = 0.3;
+                    } else {
+                        gameOver('obstacle');
+                        return;
+                    }
+                }
+            }
+
+            if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
+                gameOver('skin');
+                return;
+            }
+
+            const eatenFood = eatenFoodIndex === -1 ? null : foods.splice(eatenFoodIndex, 1)[0];
 
             snake.unshift(head);
-            if (collisionResolution.eatenFood) {
-                applyFoodEffect(collisionResolution.eatenFood.type.effect);
+            if (eatenFood) {
+                applyFoodEffect(eatenFood.type.effect);
                 spawnFood();
                 ensurePositiveFood();
             } else {
