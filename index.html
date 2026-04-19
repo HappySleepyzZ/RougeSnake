@@ -1146,17 +1146,6 @@
         
         // 概率总和：0.40 + 0.15 + 0.10 + 0.20 + 0.15 = 1.00 ✓
 
-        function getPortalRanges() {
-            const center = Math.floor(tileCount / 2);
-            const halfWidth = Math.floor(portalWidth / 2);
-            return {
-                top: { start: center - halfWidth, end: center + halfWidth + (portalWidth % 2 === 0 ? -1 : 0) },
-                bottom: { start: center - halfWidth, end: center + halfWidth + (portalWidth % 2 === 0 ? -1 : 0) },
-                left: { start: center - halfWidth, end: center + halfWidth + (portalWidth % 2 === 0 ? -1 : 0) },
-                right: { start: center - halfWidth, end: center + halfWidth + (portalWidth % 2 === 0 ? -1 : 0) }
-            };
-        }
-
         function initWaitingState() {
             const centerX = Math.floor(tileCount / 2);
             const centerY = Math.floor(tileCount / 2);
@@ -1228,7 +1217,16 @@
             // V17c: 传送门占位
             if (portalPairs.some(p => (p.a.x === x && p.a.y === y) || (p.b.x === x && p.b.y === y))) return true;
             
-            const portals = getPortalRanges();
+            const center = Math.floor(tileCount / 2);
+            const halfWidth = Math.floor(portalWidth / 2);
+            const portalStart = center - halfWidth;
+            const portalEnd = center + halfWidth + (portalWidth % 2 === 0 ? -1 : 0);
+            const portals = {
+                top: { start: portalStart, end: portalEnd },
+                bottom: { start: portalStart, end: portalEnd },
+                left: { start: portalStart, end: portalEnd },
+                right: { start: portalStart, end: portalEnd }
+            };
             if ((y === 0 && x >= portals.top.start && x <= portals.top.end) ||
                 (y === tileCount - 1 && x >= portals.bottom.start && x <= portals.bottom.end) ||
                 (x === 0 && y >= portals.left.start && y <= portals.left.end) ||
@@ -1893,7 +1891,16 @@
                 x: snake[0].x + direction.x,
                 y: snake[0].y + direction.y
             };
-            const portals = getPortalRanges();
+            const center = Math.floor(tileCount / 2);
+            const halfWidth = Math.floor(portalWidth / 2);
+            const portalStart = center - halfWidth;
+            const portalEnd = center + halfWidth + (portalWidth % 2 === 0 ? -1 : 0);
+            const portals = {
+                top: { start: portalStart, end: portalEnd },
+                bottom: { start: portalStart, end: portalEnd },
+                left: { start: portalStart, end: portalEnd },
+                right: { start: portalStart, end: portalEnd }
+            };
             let hitWall = false;
             if (head.x < 0) {
                 if (!isCeremonyPlayingState() || (head.y >= portals.left.start && head.y <= portals.left.end)) {
@@ -2682,7 +2689,16 @@
                 ctx.lineTo(canvas.width, i * cellSize);
                 ctx.stroke();
             }
-            const portals = getPortalRanges();
+            const center = Math.floor(tileCount / 2);
+            const halfWidth = Math.floor(portalWidth / 2);
+            const portalStart = center - halfWidth;
+            const portalEnd = center + halfWidth + (portalWidth % 2 === 0 ? -1 : 0);
+            const portals = {
+                top: { start: portalStart, end: portalEnd },
+                bottom: { start: portalStart, end: portalEnd },
+                left: { start: portalStart, end: portalEnd },
+                right: { start: portalStart, end: portalEnd }
+            };
             const portalPulse = Math.sin(time * 2) * 0.3 + 0.7;
             ctx.shadowColor = '#00ff88';
             ctx.shadowBlur = 10;
