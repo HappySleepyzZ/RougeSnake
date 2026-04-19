@@ -1005,33 +1005,6 @@
             return true;
         }
 
-        function findCeremonySpawnCell(minDistance = 0, fallback = null) {
-            const head = snake[0];
-            for (let attempts = 0; attempts < TUNING.generation.ceremonySpawnAttempts; attempts++) {
-                const x = Math.floor(Math.random() * (tileCount - 4)) + 2;
-                const y = Math.floor(Math.random() * (tileCount - 4)) + 2;
-                const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
-                if (farEnough && !isPositionOccupied(x, y)) {
-                    return { x, y };
-                }
-            }
-
-            if (fallback && !isPositionOccupied(fallback.x, fallback.y)) {
-                return { ...fallback };
-            }
-
-            for (let y = 1; y < tileCount - 1; y++) {
-                for (let x = 1; x < tileCount - 1; x++) {
-                    const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
-                    if (farEnough && !isPositionOccupied(x, y)) {
-                        return { x, y };
-                    }
-                }
-            }
-
-            return fallback ? { ...fallback } : null;
-        }
-
         function applyModeConfig(mode) {
             currentMode = 'survival';
             activeModeConfig = MODE_CONFIGS.survival;
@@ -1758,7 +1731,36 @@
             if (waveElapsed >= WAVE_DURATION && isCeremonyPlayingState()) {
                 setCeremonyState('KEY_SPAWN');
                 clearWavePlayfieldState();
-                ceremonyKey = findCeremonySpawnCell(TUNING.ceremony.keyMinDistance, { x: Math.floor(tileCount / 2), y: TUNING.ceremony.keyFallbackY });
+                {
+                    const minDistance = TUNING.ceremony.keyMinDistance;
+                    const fallback = { x: Math.floor(tileCount / 2), y: TUNING.ceremony.keyFallbackY };
+                    const head = snake[0];
+                    ceremonyKey = null;
+                    for (let attempts = 0; attempts < TUNING.generation.ceremonySpawnAttempts; attempts++) {
+                        const x = Math.floor(Math.random() * (tileCount - 4)) + 2;
+                        const y = Math.floor(Math.random() * (tileCount - 4)) + 2;
+                        const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
+                        if (!farEnough || isPositionOccupied(x, y)) continue;
+                        ceremonyKey = { x, y };
+                        break;
+                    }
+                    if (!ceremonyKey && fallback && !isPositionOccupied(fallback.x, fallback.y)) {
+                        ceremonyKey = { ...fallback };
+                    }
+                    if (!ceremonyKey) {
+                        for (let y = 1; y < tileCount - 1 && !ceremonyKey; y++) {
+                            for (let x = 1; x < tileCount - 1; x++) {
+                                const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
+                                if (!farEnough || isPositionOccupied(x, y)) continue;
+                                ceremonyKey = { x, y };
+                                break;
+                            }
+                        }
+                    }
+                    if (!ceremonyKey) {
+                        ceremonyKey = fallback ? { ...fallback } : null;
+                    }
+                }
                 spawnFloatingText(Math.floor(tileCount / 2), Math.floor(tileCount / 2), UI_TEXT.floating.keyFound, '#ffd700', true);
             }
             const ceremonyHead = snake[0];
@@ -1767,7 +1769,36 @@
                 ceremonyKey = null;
                 flashEffect('teleport');
                 flashAlpha = 0.3;
-                ceremonyChest = findCeremonySpawnCell(TUNING.ceremony.chestMinDistance, { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) });
+                {
+                    const minDistance = TUNING.ceremony.chestMinDistance;
+                    const fallback = { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) };
+                    const head = snake[0];
+                    ceremonyChest = null;
+                    for (let attempts = 0; attempts < TUNING.generation.ceremonySpawnAttempts; attempts++) {
+                        const x = Math.floor(Math.random() * (tileCount - 4)) + 2;
+                        const y = Math.floor(Math.random() * (tileCount - 4)) + 2;
+                        const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
+                        if (!farEnough || isPositionOccupied(x, y)) continue;
+                        ceremonyChest = { x, y };
+                        break;
+                    }
+                    if (!ceremonyChest && fallback && !isPositionOccupied(fallback.x, fallback.y)) {
+                        ceremonyChest = { ...fallback };
+                    }
+                    if (!ceremonyChest) {
+                        for (let y = 1; y < tileCount - 1 && !ceremonyChest; y++) {
+                            for (let x = 1; x < tileCount - 1; x++) {
+                                const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
+                                if (!farEnough || isPositionOccupied(x, y)) continue;
+                                ceremonyChest = { x, y };
+                                break;
+                            }
+                        }
+                    }
+                    if (!ceremonyChest) {
+                        ceremonyChest = fallback ? { ...fallback } : null;
+                    }
+                }
                 spawnFloatingText(ceremonyHead.x, ceremonyHead.y, UI_TEXT.floating.keyGet, '#ffd700', true);
             }
             if (isCeremonyChestState() && ceremonyChest && ceremonyHead.x === ceremonyChest.x && ceremonyHead.y === ceremonyChest.y) {
