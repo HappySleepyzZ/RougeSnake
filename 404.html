@@ -1605,7 +1605,8 @@
             closeAllOverlays();
             if (!enterWaveTransition()) return;
             stopGameLoop();
-            stopWaveTransitionCountdown();
+            clearInterval(waveTransitionInterval);
+            waveTransitionInterval = null;
             renderWaveTransitionOverlay();
             restartWaveTransitionCountdown();
         }
@@ -3901,13 +3902,11 @@
             gameLoop = null;
         }
 
-        function stopWaveTransitionCountdown() {
-            clearInterval(waveTransitionInterval);
-            waveTransitionInterval = null;
-        }
-
         Object.assign(runtimeStateActions, {
-            stopWaveTransitionCountdown,
+            stopWaveTransitionCountdown() {
+                clearInterval(waveTransitionInterval);
+                waveTransitionInterval = null;
+            },
             stopGameLoop,
             hideResult,
             showModeOverlay,
@@ -3929,7 +3928,8 @@
             showWaveOverlay,
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule,
             advanceWave() {
-                stopWaveTransitionCountdown();
+                clearInterval(waveTransitionInterval);
+                waveTransitionInterval = null;
                 currentWave++;
                 resetTeleportPreviewState();
                 if (currentWave > bestWave) {
