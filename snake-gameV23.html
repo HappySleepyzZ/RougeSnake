@@ -1640,13 +1640,6 @@
         }
 
         // 更新状态UI
-        function pushTimerTrace(snapshot) {
-            timerTraceBuffer.push(snapshot);
-            if (timerTraceBuffer.length > TIMER_TRACE_LIMIT) {
-                timerTraceBuffer.shift();
-            }
-        }
-
         function captureTimerTrace(nowOverride = Date.now()) {
             const waveElapsed = waveStartTime ? (nowOverride - waveStartTime) : null;
             const waveRemaining = waveElapsed === null ? null : (WAVE_DURATION - waveElapsed) / 1000;
@@ -1688,7 +1681,10 @@
                 }
             }
             
-            pushTimerTrace(captureTimerTrace());
+            timerTraceBuffer.push(captureTimerTrace());
+            if (timerTraceBuffer.length > TIMER_TRACE_LIMIT) {
+                timerTraceBuffer.shift();
+            }
 
             // V18b: debuff 状态显示
             const now2 = Date.now();
@@ -4231,7 +4227,10 @@
                 },
                 captureTimerTrace() {
                     const snap = captureTimerTrace();
-                    pushTimerTrace(snap);
+                    timerTraceBuffer.push(snap);
+                    if (timerTraceBuffer.length > TIMER_TRACE_LIMIT) {
+                        timerTraceBuffer.shift();
+                    }
                     return snap;
                 },
                 exportTimerTrace() {
