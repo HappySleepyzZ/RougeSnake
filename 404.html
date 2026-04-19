@@ -1611,22 +1611,6 @@
         }
 
         // 更新状态UI
-        function captureTimerTrace(nowOverride = Date.now()) {
-            const waveElapsed = waveStartTime ? (nowOverride - waveStartTime) : null;
-            const waveRemaining = waveElapsed === null ? null : (WAVE_DURATION - waveElapsed) / 1000;
-            return {
-                now: nowOverride,
-                timerText: timerDisplay.textContent,
-                waveStartTime,
-                waveElapsed,
-                waveRemaining,
-                waveCeremonyState,
-                isWaveTransition,
-                isPaused,
-                currentWave
-            };
-        }
-
         function updateStatusUI() {
             // V16: wave display
             const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
@@ -1652,7 +1636,22 @@
                 }
             }
             
-            timerTraceBuffer.push(captureTimerTrace());
+            {
+                const nowSnapshot = Date.now();
+                const waveElapsed = waveStartTime ? (nowSnapshot - waveStartTime) : null;
+                const waveRemaining = waveElapsed === null ? null : (WAVE_DURATION - waveElapsed) / 1000;
+                timerTraceBuffer.push({
+                    now: nowSnapshot,
+                    timerText: timerDisplay.textContent,
+                    waveStartTime,
+                    waveElapsed,
+                    waveRemaining,
+                    waveCeremonyState,
+                    isWaveTransition,
+                    isPaused,
+                    currentWave
+                });
+            }
             if (timerTraceBuffer.length > TIMER_TRACE_LIMIT) {
                 timerTraceBuffer.shift();
             }
@@ -4280,7 +4279,20 @@
                     timerTraceBuffer = [];
                 },
                 captureTimerTrace() {
-                    const snap = captureTimerTrace();
+                    const nowSnapshot = Date.now();
+                    const waveElapsed = waveStartTime ? (nowSnapshot - waveStartTime) : null;
+                    const waveRemaining = waveElapsed === null ? null : (WAVE_DURATION - waveElapsed) / 1000;
+                    const snap = {
+                        now: nowSnapshot,
+                        timerText: timerDisplay.textContent,
+                        waveStartTime,
+                        waveElapsed,
+                        waveRemaining,
+                        waveCeremonyState,
+                        isWaveTransition,
+                        isPaused,
+                        currentWave
+                    };
                     timerTraceBuffer.push(snap);
                     if (timerTraceBuffer.length > TIMER_TRACE_LIMIT) {
                         timerTraceBuffer.shift();
