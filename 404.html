@@ -1005,21 +1005,9 @@
             return true;
         }
 
-        function applyModeConfig(mode) {
-            currentMode = 'survival';
-            activeModeConfig = MODE_CONFIGS.survival;
-            currentModeRules = { timeLimit: Infinity, targetScore: null };
-            remainingTime = Infinity;
-        }
-
         function showModeOverlay() {
             hasSelectedMode = false;
             return uiOverlaysModule.showModeOverlay();
-        }
-
-        function hideModeOverlay() {
-            hasSelectedMode = true;
-            return uiOverlaysModule.hideModeOverlay();
         }
 
         // ========== 瞬移视觉引导状态变量 ==========
@@ -3914,7 +3902,10 @@
             stopGameLoop,
             hideResult,
             showModeOverlay,
-            hideModeOverlay,
+            hideModeOverlay() {
+                hasSelectedMode = true;
+                return uiOverlaysModule.hideModeOverlay();
+            },
             initializeWaitingUI() {
                 initWaitingState();
                 updateTouchHint();
@@ -3959,7 +3950,12 @@
             setWaveTransitionState,
             setCeremonyState,
             restoreShopState,
-            applyModeConfig,
+            applyModeConfig() {
+                currentMode = 'survival';
+                activeModeConfig = MODE_CONFIGS.survival;
+                currentModeRules = { timeLimit: Infinity, targetScore: null };
+                remainingTime = Infinity;
+            },
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule,
             restoreRuntimeByPrimaryState,
             syncPauseButtonVisibility,
@@ -4331,7 +4327,10 @@
             };
         }
 
-        applyModeConfig('survival');
+        currentMode = 'survival';
+        activeModeConfig = MODE_CONFIGS.survival;
+        currentModeRules = { timeLimit: Infinity, targetScore: null };
+        remainingTime = Infinity;
         moduleButtonsContainer.innerHTML = '';
         Object.values(MODULE_TYPES).forEach(mod => {
             const btn = document.createElement('button');
@@ -4352,9 +4351,13 @@
                 }
                 hideResult();
                 stopGameLoop();
-                applyModeConfig('survival');
+                currentMode = 'survival';
+                activeModeConfig = MODE_CONFIGS.survival;
+                currentModeRules = { timeLimit: Infinity, targetScore: null };
+                remainingTime = Infinity;
                 resetToWaitingState();
-                hideModeOverlay();
+                hasSelectedMode = true;
+                uiOverlaysModule.hideModeOverlay();
             });
             moduleButtonsContainer.appendChild(btn);
         });
