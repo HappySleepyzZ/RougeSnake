@@ -1685,21 +1685,6 @@
         }
 
         // 显示过关/失败结果
-        function showResult(type) {
-            showOnlyResultOverlay();
-            
-            if (type === 'death') {
-                resultIcon.textContent = UI_TEXT.icon.death;
-                resultText.textContent = currentWave > bestWave - 1 ? UI_TEXT.result.newRecord : UI_TEXT.result.gameOver;
-                resultText.style.color = '#e74c3c';
-            }
-            
-            const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
-            const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
-            const moduleName = selectedModule ? `${selectedModule.icon}${selectedModule.name}` : '';
-            resultScore.textContent = UI_TEXT.hud.resultSummary(currentWave, score, `${surviveMin}:${surviveSec}`, moduleName);
-        }
-
         function hideResult() {
             closeAllOverlays();
         }
@@ -3547,7 +3532,16 @@
             flashEffect('death');
             flashAlpha = 0.9;
             backgroundHue = 0;
-            showResult('death');
+            showOnlyResultOverlay();
+            resultIcon.textContent = UI_TEXT.icon.death;
+            resultText.textContent = currentWave > bestWave - 1 ? UI_TEXT.result.newRecord : UI_TEXT.result.gameOver;
+            resultText.style.color = '#e74c3c';
+            {
+                const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
+                const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
+                const moduleName = selectedModule ? `${selectedModule.icon}${selectedModule.name}` : '';
+                resultScore.textContent = UI_TEXT.hud.resultSummary(currentWave, score, `${surviveMin}:${surviveSec}`, moduleName);
+            }
         }
 
         function startGame() {
@@ -4265,7 +4259,18 @@
                 queueDirection,
                 gameStep,
                 hideResult,
-                showResult,
+                showResult(type) {
+                    showOnlyResultOverlay();
+                    if (type === 'death') {
+                        resultIcon.textContent = UI_TEXT.icon.death;
+                        resultText.textContent = currentWave > bestWave - 1 ? UI_TEXT.result.newRecord : UI_TEXT.result.gameOver;
+                        resultText.style.color = '#e74c3c';
+                    }
+                    const surviveMin = Math.floor(totalSurvivalTime / 60).toString().padStart(2, '0');
+                    const surviveSec = Math.floor(totalSurvivalTime % 60).toString().padStart(2, '0');
+                    const moduleName = selectedModule ? `${selectedModule.icon}${selectedModule.name}` : '';
+                    resultScore.textContent = UI_TEXT.hud.resultSummary(currentWave, score, `${surviveMin}:${surviveSec}`, moduleName);
+                },
                 getState: debugApiModule.getState,
                 setState: debugApiModule.setState,
                 setFoods: debugApiModule.setFoods,
