@@ -42,7 +42,7 @@ foreach ($page in $Pages) {
 
     $safeName = ($pageName -replace "[^a-zA-Z0-9_-]", "-")
     $screenshotPath = Join-Path $outputRoot "$safeName.png"
-    $profileDir = Join-Path $env:TEMP "rougesnake-smoke-$safeName"
+    $profileDir = Join-Path $env:TEMP ("rougesnake-smoke-{0}-{1}" -f $safeName, [System.Guid]::NewGuid().ToString("N"))
     $targetUrl = "{0}?page={1}" -f $harnessUrl, [System.Uri]::EscapeDataString($page)
 
     & $browserPath `

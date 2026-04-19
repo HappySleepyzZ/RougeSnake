@@ -9,6 +9,10 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
 - Verifies `getState()` / `setState()` roundtrip on the debug API
 - Clicks a module button to verify module selection exits the overlay
 - Sends a gameplay direction input to verify the page enters `RUNNING`
+- Exercises deeper runtime hooks via the debug API:
+  - `forceSpawnBarrier()`
+  - `captureTimerTrace()`
+  - `showResult('death')`
 - Captures a screenshot for each target page
 
 ## Local Server

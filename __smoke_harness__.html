@@ -162,6 +162,44 @@
         leftWaitingState: afterGameplayInput.isWaitingForStart === false
       });
 
+      const barrierBefore = Array.isArray(afterGameplayInput.obstacles) ? afterGameplayInput.obstacles.length : null;
+      let barrierAfter = barrierBefore;
+      if (typeof api.forceSpawnBarrier === 'function') {
+        api.forceSpawnBarrier();
+        await wait(20);
+        const afterBarrierSpawn = api.getState();
+        barrierAfter = Array.isArray(afterBarrierSpawn.obstacles) ? afterBarrierSpawn.obstacles.length : null;
+        Object.assign(interactionChecks, {
+          barrierSpawned: typeof barrierBefore === 'number' && typeof barrierAfter === 'number' && barrierAfter >= barrierBefore
+        });
+      }
+
+      let timerTraceSnapshot = null;
+      let timerTraceLength = null;
+      if (typeof api.captureTimerTrace === 'function' && typeof api.getTimerTrace === 'function') {
+        timerTraceSnapshot = api.captureTimerTrace();
+        const timerTrace = api.getTimerTrace();
+        timerTraceLength = Array.isArray(timerTrace) ? timerTrace.length : null;
+        Object.assign(interactionChecks, {
+          timerTraceCaptured: !!(timerTraceSnapshot && typeof timerTraceSnapshot.currentWave === 'number'),
+          timerTraceBuffered: typeof timerTraceLength === 'number' && timerTraceLength > 0
+        });
+      }
+
+      let afterShowResult = null;
+      if (typeof api.showResult === 'function') {
+        api.showResult('death');
+        await wait(20);
+        afterShowResult = api.getState();
+        Object.assign(interactionChecks, {
+          resultOverlayVisible: afterShowResult.resultVisible === true
+        });
+        if (typeof api.hideResult === 'function') {
+          api.hideResult();
+          await wait(20);
+        }
+      }
+
       const interactionFailed = Object.entries(interactionChecks).filter(([, ok]) => !ok);
       if (interactionFailed.length) {
         fail('interaction assertions failed', {
@@ -169,6 +207,11 @@
           interactionChecks,
           afterModuleSelect,
           afterGameplayInput,
+          barrierBefore,
+          barrierAfter,
+          timerTraceSnapshot,
+          timerTraceLength,
+          afterShowResult,
           smokeErrors,
           modeOverlayClass: modeOverlay.className,
           moduleButtonCount: moduleButtons.length
@@ -186,6 +229,11 @@
           isWaitingForStart: afterGameplayInput.isWaitingForStart,
           hasSelectedMode: afterGameplayInput.hasSelectedMode
         },
+        barrierBefore,
+        barrierAfter,
+        timerTraceSnapshot,
+        timerTraceLength,
+        resultVisibleAfterShow: afterShowResult ? afterShowResult.resultVisible : null,
         apiKeys: Object.keys(api)
       });
     } catch (error) {
