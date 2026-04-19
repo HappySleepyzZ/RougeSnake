@@ -1259,56 +1259,6 @@
             }
         }
 
-        function teleportSwap() {
-            if (snake.length < 2) return;
-            
-            const oldHeadPos = { x: snake[0].x, y: snake[0].y };
-            const oldTailPos = { x: snake[snake.length - 1].x, y: snake[snake.length - 1].y };
-            
-            teleportPreview = { x: oldTailPos.x, y: oldTailPos.y };
-            teleportTrailTimer = TELEPORT_TRAIL_DURATION;
-            
-            const oldDirection = { x: direction.x, y: direction.y };
-            
-            snake = snake.reverse();
-            snake[0] = { x: oldTailPos.x, y: oldTailPos.y };
-            snake[snake.length - 1] = { x: oldHeadPos.x, y: oldHeadPos.y };
-            
-            // V15: 翻转后方向根据新蛇头和新第二节计算，符合视觉直觉
-            const newHead = snake[0];
-            const newSecond = snake[1];
-            const newDirection = {
-                x: newHead.x - newSecond.x,
-                y: newHead.y - newSecond.y
-            };
-            
-            // 如果计算出的方向为 (0,0)（极端情况），fallback 到简单取反
-            if (newDirection.x === 0 && newDirection.y === 0) {
-                newDirection.x = -oldDirection.x;
-                newDirection.y = -oldDirection.y;
-            }
-            
-            direction = newDirection;
-            nextDirection = { ...newDirection };
-            
-            headGlowTimer = HEAD_GLOW_DURATION;
-            
-            flashEffect('teleport');
-            
-            teleportPauseTimer = TELEPORT_PAUSE_DURATION;
-            stopGameLoop();
-            
-            setTimeout(() => {
-                if (isGameRunning && !isLevelComplete && !isGameOver) {
-                    teleportPauseTimer = 0;
-                    restartGameLoopWithInterval();
-                }
-            }, TELEPORT_PAUSE_DURATION);
-            
-            // V14: 设置瞬移无敌帧
-            teleportInvincibleSteps = 3;
-        }
-
         let flashAlpha = 0;
         let flashColor = 'rgba(255, 255, 255, ';
         function flashEffect(color = 'white') {
@@ -2018,7 +1968,39 @@
                     restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
                 } else if (effect === 'teleport') {
                     score += modScore;
-                    teleportSwap();
+                    if (snake.length >= 2) {
+                        const oldHeadPos = { x: snake[0].x, y: snake[0].y };
+                        const oldTailPos = { x: snake[snake.length - 1].x, y: snake[snake.length - 1].y };
+                        teleportPreview = { x: oldTailPos.x, y: oldTailPos.y };
+                        teleportTrailTimer = TELEPORT_TRAIL_DURATION;
+                        const oldDirection = { x: direction.x, y: direction.y };
+                        snake = snake.reverse();
+                        snake[0] = { x: oldTailPos.x, y: oldTailPos.y };
+                        snake[snake.length - 1] = { x: oldHeadPos.x, y: oldHeadPos.y };
+                        const newHead = snake[0];
+                        const newSecond = snake[1];
+                        const newDirection = {
+                            x: newHead.x - newSecond.x,
+                            y: newHead.y - newSecond.y
+                        };
+                        if (newDirection.x === 0 && newDirection.y === 0) {
+                            newDirection.x = -oldDirection.x;
+                            newDirection.y = -oldDirection.y;
+                        }
+                        direction = newDirection;
+                        nextDirection = { ...newDirection };
+                        headGlowTimer = HEAD_GLOW_DURATION;
+                        flashEffect('teleport');
+                        teleportPauseTimer = TELEPORT_PAUSE_DURATION;
+                        stopGameLoop();
+                        setTimeout(() => {
+                            if (isGameRunning && !isLevelComplete && !isGameOver) {
+                                teleportPauseTimer = 0;
+                                restartGameLoopWithInterval();
+                            }
+                        }, TELEPORT_PAUSE_DURATION);
+                        teleportInvincibleSteps = 3;
+                    }
                 } else if (effect === 'barrier') {
                     score += modScore;
                     {
