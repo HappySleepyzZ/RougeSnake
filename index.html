@@ -1331,57 +1331,6 @@
         // ========== 路障食物生成石头（上限15，永久存在） ==========
         const MAX_OBSTACLES = TUNING.generation.maxObstacles;
         
-        function spawnBarrierObstacles() {
-            const headPos = snake[0];
-            const stoneCount = Math.floor(Math.random() * 4) + 3; // 3-6个石头
-            
-            // 上限检查
-            const currentObstacleCount = obstacles.length;
-            const canSpawnCount = Math.min(stoneCount, MAX_OBSTACLES - currentObstacleCount);
-            
-            if (canSpawnCount <= 0) {
-                console.log('[路障V13] 石头已达上限15，跳过生成');
-                return;
-            }
-            
-            for (let i = 0; i < canSpawnCount; i++) {
-                let attempts = 0;
-                let targetX, targetY;
-                
-                do {
-                    targetX = Math.floor(Math.random() * tileCount);
-                    targetY = Math.floor(Math.random() * tileCount);
-                    attempts++;
-                    
-                    // 检查是否避开蛇头范围（蛇头周围3格内不生成）
-                    const dx = Math.abs(targetX - headPos.x);
-                    const dy = Math.abs(targetY - headPos.y);
-                    const tooCloseToHead = dx <= 3 && dy <= 3;
-                    
-                    if (tooCloseToHead) continue;
-                    
-                    if (!isPositionOccupied(targetX, targetY)) {
-                        const obstacle = {
-                            x: targetX,
-                            y: targetY,
-                            spawnTime: Date.now()
-                            // V13: 删除 duration 字段，石头永久存在
-                        };
-                        obstacles.push(obstacle);
-                        break;
-                    }
-                } while (attempts < 100);
-            }
-            
-            flashEffect('barrier');
-            
-            // V13: 上限15（不再允许超过）
-            if (obstacles.length > MAX_OBSTACLES) {
-                obstacles = obstacles.slice(-MAX_OBSTACLES);
-            }
-        }
-
-
         // ========== V16: 波次系统函数 ==========
         function generateWaveTerrain() {
             terrainZones = [];
@@ -2072,7 +2021,42 @@
                     teleportSwap();
                 } else if (effect === 'barrier') {
                     score += modScore;
-                    spawnBarrierObstacles();
+                    {
+                        const headPos = snake[0];
+                        const stoneCount = Math.floor(Math.random() * 4) + 3;
+                        const currentObstacleCount = obstacles.length;
+                        const canSpawnCount = Math.min(stoneCount, MAX_OBSTACLES - currentObstacleCount);
+                        if (canSpawnCount <= 0) {
+                            console.log('[路障V13] 石头已达上限15，跳过生成');
+                        } else {
+                            for (let i = 0; i < canSpawnCount; i++) {
+                                let attempts = 0;
+                                let targetX;
+                                let targetY;
+                                do {
+                                    targetX = Math.floor(Math.random() * tileCount);
+                                    targetY = Math.floor(Math.random() * tileCount);
+                                    attempts++;
+                                    const dx = Math.abs(targetX - headPos.x);
+                                    const dy = Math.abs(targetY - headPos.y);
+                                    const tooCloseToHead = dx <= 3 && dy <= 3;
+                                    if (tooCloseToHead) continue;
+                                    if (!isPositionOccupied(targetX, targetY)) {
+                                        obstacles.push({
+                                            x: targetX,
+                                            y: targetY,
+                                            spawnTime: Date.now()
+                                        });
+                                        break;
+                                    }
+                                } while (attempts < 100);
+                            }
+                            flashEffect('barrier');
+                            if (obstacles.length > MAX_OBSTACLES) {
+                                obstacles = obstacles.slice(-MAX_OBSTACLES);
+                            }
+                        }
+                    }
                 } else if (effect === 'wind') {
                     score += modScore;
                     if (obstacles.length > 0) {
@@ -4354,7 +4338,40 @@
                     }
                 },
                 forceSpawnBarrier() {
-                    spawnBarrierObstacles();
+                    const headPos = snake[0];
+                    const stoneCount = Math.floor(Math.random() * 4) + 3;
+                    const currentObstacleCount = obstacles.length;
+                    const canSpawnCount = Math.min(stoneCount, MAX_OBSTACLES - currentObstacleCount);
+                    if (canSpawnCount <= 0) {
+                        console.log('[路障V13] 石头已达上限15，跳过生成');
+                        return;
+                    }
+                    for (let i = 0; i < canSpawnCount; i++) {
+                        let attempts = 0;
+                        let targetX;
+                        let targetY;
+                        do {
+                            targetX = Math.floor(Math.random() * tileCount);
+                            targetY = Math.floor(Math.random() * tileCount);
+                            attempts++;
+                            const dx = Math.abs(targetX - headPos.x);
+                            const dy = Math.abs(targetY - headPos.y);
+                            const tooCloseToHead = dx <= 3 && dy <= 3;
+                            if (tooCloseToHead) continue;
+                            if (!isPositionOccupied(targetX, targetY)) {
+                                obstacles.push({
+                                    x: targetX,
+                                    y: targetY,
+                                    spawnTime: Date.now()
+                                });
+                                break;
+                            }
+                        } while (attempts < 100);
+                    }
+                    flashEffect('barrier');
+                    if (obstacles.length > MAX_OBSTACLES) {
+                        obstacles = obstacles.slice(-MAX_OBSTACLES);
+                    }
                 }
             };
         }
