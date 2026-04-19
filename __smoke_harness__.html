@@ -200,6 +200,32 @@
         }
       }
 
+      let afterOpenShop = null;
+      let afterCloseShop = null;
+      let shopItemCount = null;
+      if (typeof api.openShop === 'function') {
+        api.openShop();
+        await wait(20);
+        afterOpenShop = api.getState();
+        const shopItems = Array.from(doc.querySelectorAll('#shopItems .restart-btn'));
+        shopItemCount = shopItems.length;
+        Object.assign(interactionChecks, {
+          shopOpened: afterOpenShop.shopOpen === true || afterOpenShop.shopOpening === true,
+          shopItemsRendered: shopItemCount > 0
+        });
+
+        const shopSkipBtn = doc.getElementById('shopSkipBtn');
+        if (shopSkipBtn) {
+          shopSkipBtn.click();
+          await wait(20);
+          afterCloseShop = api.getState();
+          Object.assign(interactionChecks, {
+            shopClosed: afterCloseShop.shopOpen === false && afterCloseShop.shopOpening === false,
+            enteredWaveTransition: afterCloseShop.isWaveTransition === true
+          });
+        }
+      }
+
       const interactionFailed = Object.entries(interactionChecks).filter(([, ok]) => !ok);
       if (interactionFailed.length) {
         fail('interaction assertions failed', {
@@ -212,6 +238,9 @@
           timerTraceSnapshot,
           timerTraceLength,
           afterShowResult,
+          afterOpenShop,
+          afterCloseShop,
+          shopItemCount,
           smokeErrors,
           modeOverlayClass: modeOverlay.className,
           moduleButtonCount: moduleButtons.length
@@ -234,6 +263,9 @@
         timerTraceSnapshot,
         timerTraceLength,
         resultVisibleAfterShow: afterShowResult ? afterShowResult.resultVisible : null,
+        shopItemCount,
+        shopStateAfterOpen: afterOpenShop ? { shopOpen: afterOpenShop.shopOpen, shopOpening: afterOpenShop.shopOpening } : null,
+        shopStateAfterClose: afterCloseShop ? { shopOpen: afterCloseShop.shopOpen, shopOpening: afterCloseShop.shopOpening, isWaveTransition: afterCloseShop.isWaveTransition } : null,
         apiKeys: Object.keys(api)
       });
     } catch (error) {
