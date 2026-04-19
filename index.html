@@ -1585,29 +1585,36 @@
                                 }
                                 break;
                         }
-                        closeShop();
+                        if (!isShopState() && !isShopOpeningState()) return;
+                        closeShopState();
+                        resetTeleportPreviewState();
+                        closeAllOverlays();
+                        if (!enterWaveTransition()) return;
+                        stopGameLoop();
+                        clearInterval(waveTransitionInterval);
+                        waveTransitionInterval = null;
+                        renderWaveTransitionOverlay();
+                        restartWaveTransitionCountdown();
                     };
                 } else {
                     btn.disabled = true;
                 }
                 shopItemsDiv.appendChild(btn);
             });
-            document.getElementById('shopSkipBtn').onclick = () => closeShop();
+            document.getElementById('shopSkipBtn').onclick = () => {
+                if (!isShopState() && !isShopOpeningState()) return;
+                closeShopState();
+                resetTeleportPreviewState();
+                closeAllOverlays();
+                if (!enterWaveTransition()) return;
+                stopGameLoop();
+                clearInterval(waveTransitionInterval);
+                waveTransitionInterval = null;
+                renderWaveTransitionOverlay();
+                restartWaveTransitionCountdown();
+            };
             showShopOverlay();
             finishShopOpening();
-        }
-        
-        function closeShop() {
-            if (!isShopState() && !isShopOpeningState()) return;
-            closeShopState();
-            resetTeleportPreviewState();
-            closeAllOverlays();
-            if (!enterWaveTransition()) return;
-            stopGameLoop();
-            clearInterval(waveTransitionInterval);
-            waveTransitionInterval = null;
-            renderWaveTransitionOverlay();
-            restartWaveTransitionCountdown();
         }
 
         // 更新状态UI
