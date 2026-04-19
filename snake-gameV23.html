@@ -955,31 +955,27 @@
         const resumeBtn = document.getElementById('resumeBtn');
         const pauseRestartBtn = document.getElementById('pauseRestartBtn');
         
-        function pauseGame() {
-            if (getPrimaryGameState() !== 'RUNNING') return;
-            setPausedState(true);
-            pauseStartTime = Date.now();
-            stopGameLoop();
-            runtimeStateModule.renderPauseOverlay();
-        }
-        
-        function resumeGame() {
+        resumeBtn.addEventListener('click', () => {
             if (getPrimaryGameState() !== 'PAUSED') return;
             setPausedState(false);
             const pauseDuration = Date.now() - pauseStartTime;
             runtimeStateModule.applyPauseTimeCompensation(pauseDuration);
             pauseOverlay.classList.remove('show');
             restartGameLoopWithInterval();
-        }
-        
-        resumeBtn.addEventListener('click', resumeGame);
+        });
         pauseRestartBtn.addEventListener('click', () => {
             resetRunState();
             pauseBtn.style.display = 'none';
             resetToWaitingState();
             showModeOverlay();
         });
-        pauseBtn.addEventListener('click', pauseGame);
+        pauseBtn.addEventListener('click', () => {
+            if (getPrimaryGameState() !== 'RUNNING') return;
+            setPausedState(true);
+            pauseStartTime = Date.now();
+            stopGameLoop();
+            runtimeStateModule.renderPauseOverlay();
+        });
 
         // V16: removed isInfiniteUnlocked / syncModeAvailability (no longer needed)
 
@@ -3842,8 +3838,21 @@
         const inputHelperActions = {
             ...moduleActionBase,
             startGame,
-            pauseGame,
-            resumeGame,
+            pauseGame() {
+                if (getPrimaryGameState() !== 'RUNNING') return;
+                setPausedState(true);
+                pauseStartTime = Date.now();
+                stopGameLoop();
+                runtimeStateModule.renderPauseOverlay();
+            },
+            resumeGame() {
+                if (getPrimaryGameState() !== 'PAUSED') return;
+                setPausedState(false);
+                const pauseDuration = Date.now() - pauseStartTime;
+                runtimeStateModule.applyPauseTimeCompensation(pauseDuration);
+                pauseOverlay.classList.remove('show');
+                restartGameLoopWithInterval();
+            },
             resetToWaitingState,
             triggerDashBurst() {
                 if (dashCharges <= 0 || dashBurstTicks > 0 || !isGameRunning) return;
