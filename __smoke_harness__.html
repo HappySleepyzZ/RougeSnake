@@ -226,6 +226,21 @@
         }
       }
 
+      let afterAdvanceWave = null;
+      if (typeof api.advanceWave === 'function') {
+        const waveBeforeAdvance = api.getState();
+        api.advanceWave();
+        await wait(20);
+        afterAdvanceWave = api.getState();
+        const terrainZones = Array.isArray(afterAdvanceWave.terrainZones) ? afterAdvanceWave.terrainZones : [];
+        const portalPairs = Array.isArray(afterAdvanceWave.portalPairs) ? afterAdvanceWave.portalPairs : [];
+        Object.assign(interactionChecks, {
+          waveAdvanced: afterAdvanceWave.currentWave === waveBeforeAdvance.currentWave + 1,
+          terrainGenerated: terrainZones.length > 0,
+          portalsGenerated: portalPairs.length > 0
+        });
+      }
+
       const interactionFailed = Object.entries(interactionChecks).filter(([, ok]) => !ok);
       if (interactionFailed.length) {
         fail('interaction assertions failed', {
@@ -240,6 +255,7 @@
           afterShowResult,
           afterOpenShop,
           afterCloseShop,
+          afterAdvanceWave,
           shopItemCount,
           smokeErrors,
           modeOverlayClass: modeOverlay.className,
@@ -266,6 +282,11 @@
         shopItemCount,
         shopStateAfterOpen: afterOpenShop ? { shopOpen: afterOpenShop.shopOpen, shopOpening: afterOpenShop.shopOpening } : null,
         shopStateAfterClose: afterCloseShop ? { shopOpen: afterCloseShop.shopOpen, shopOpening: afterCloseShop.shopOpening, isWaveTransition: afterCloseShop.isWaveTransition } : null,
+        waveStateAfterAdvance: afterAdvanceWave ? {
+          currentWave: afterAdvanceWave.currentWave,
+          terrainZoneCount: Array.isArray(afterAdvanceWave.terrainZones) ? afterAdvanceWave.terrainZones.length : null,
+          portalPairCount: Array.isArray(afterAdvanceWave.portalPairs) ? afterAdvanceWave.portalPairs.length : null
+        } : null,
         apiKeys: Object.keys(api)
       });
     } catch (error) {
