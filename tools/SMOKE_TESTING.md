@@ -13,7 +13,7 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
   - `forceSpawnBarrier()`
   - `captureTimerTrace()`
   - `showResult('death')`
-  - `openShop()` and shop skip close flow
+  - `openShop()` and shop purchase / skip close flow
   - `advanceWave()` terrain / portal generation
 - Captures a screenshot for each target page
 

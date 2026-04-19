@@ -201,9 +201,11 @@
       }
 
       let afterOpenShop = null;
+      let afterShopPurchase = null;
       let afterCloseShop = null;
       let shopItemCount = null;
       if (typeof api.openShop === 'function') {
+        api.setState({ coins: 99 });
         api.openShop();
         await wait(20);
         afterOpenShop = api.getState();
@@ -214,15 +216,26 @@
           shopItemsRendered: shopItemCount > 0
         });
 
-        const shopSkipBtn = doc.getElementById('shopSkipBtn');
-        if (shopSkipBtn) {
-          shopSkipBtn.click();
+        const purchasableButton = shopItems.find((button) => !button.disabled);
+        if (purchasableButton) {
+          purchasableButton.click();
           await wait(20);
-          afterCloseShop = api.getState();
+          afterShopPurchase = api.getState();
           Object.assign(interactionChecks, {
-            shopClosed: afterCloseShop.shopOpen === false && afterCloseShop.shopOpening === false,
-            enteredWaveTransition: afterCloseShop.isWaveTransition === true
+            shopClosedAfterPurchase: afterShopPurchase.shopOpen === false && afterShopPurchase.shopOpening === false,
+            enteredWaveTransitionAfterPurchase: afterShopPurchase.isWaveTransition === true
           });
+        } else {
+          const shopSkipBtn = doc.getElementById('shopSkipBtn');
+          if (shopSkipBtn) {
+            shopSkipBtn.click();
+            await wait(20);
+            afterCloseShop = api.getState();
+            Object.assign(interactionChecks, {
+              shopClosed: afterCloseShop.shopOpen === false && afterCloseShop.shopOpening === false,
+              enteredWaveTransition: afterCloseShop.isWaveTransition === true
+            });
+          }
         }
       }
 
@@ -254,6 +267,7 @@
           timerTraceLength,
           afterShowResult,
           afterOpenShop,
+          afterShopPurchase,
           afterCloseShop,
           afterAdvanceWave,
           shopItemCount,
@@ -281,6 +295,12 @@
         resultVisibleAfterShow: afterShowResult ? afterShowResult.resultVisible : null,
         shopItemCount,
         shopStateAfterOpen: afterOpenShop ? { shopOpen: afterOpenShop.shopOpen, shopOpening: afterOpenShop.shopOpening } : null,
+        shopStateAfterPurchase: afterShopPurchase ? {
+          shopOpen: afterShopPurchase.shopOpen,
+          shopOpening: afterShopPurchase.shopOpening,
+          isWaveTransition: afterShopPurchase.isWaveTransition,
+          coins: afterShopPurchase.coins
+        } : null,
         shopStateAfterClose: afterCloseShop ? { shopOpen: afterCloseShop.shopOpen, shopOpening: afterCloseShop.shopOpening, isWaveTransition: afterCloseShop.isWaveTransition } : null,
         waveStateAfterAdvance: afterAdvanceWave ? {
           currentWave: afterAdvanceWave.currentWave,
