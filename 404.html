@@ -3108,7 +3108,318 @@
                     ctx.fillText('▶', x, y);
                 }
             } else if (isGameRunning) {
-                foods.forEach(food => drawFood(food, time));
+                foods.forEach(food => {
+                    const scale = getScaleFactors();
+                    let x = food.x * cellSize + cellSize / 2;
+                    let y = food.y * cellSize + cellSize / 2;
+
+                    if (food.type.isDanger && !food.type.isWind) {
+                        const shakeAmount = Math.sin(time * 15 + (food.dangerShakePhase || 0)) * 2;
+                        x += shakeAmount;
+                        y += shakeAmount * 0.5;
+                    }
+
+                    const windRotation = food.type.isWind ? (time * 3 + (food.windSpinPhase || 0)) : 0;
+                    const pulse = Math.sin(time * 3 + food.pulsePhase) * 0.05 + 0.95;
+                    const size = cellSize * 0.45 * pulse;
+                    const markerRadius = cellSize * 0.48;
+                    const markerFill = food.type.isDanger
+                        ? 'rgba(94, 17, 17, 0.34)'
+                        : food.type.isWind
+                            ? 'rgba(20, 74, 89, 0.30)'
+                            : 'rgba(36, 49, 24, 0.26)';
+                    const markerStroke = food.type.isDanger
+                        ? 'rgba(255, 196, 196, 0.68)'
+                        : food.type.isWind
+                            ? 'rgba(204, 244, 255, 0.68)'
+                            : 'rgba(252, 245, 214, 0.62)';
+
+                    const iconKey = SHAPE_TO_ICON[food.type.shape];
+                    const iconImg = iconKey ? ICON_IMAGES[iconKey] : null;
+                    const useIcon = iconImg && iconImg.complete && iconImg.naturalWidth > 0;
+
+                    if (!useIcon) {
+                        ctx.save();
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = markerFill;
+                        ctx.beginPath();
+                        ctx.arc(x, y, markerRadius, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = markerStroke;
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.arc(x, y, markerRadius + 1.5, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        if (selectedModule) {
+                            const modScore = selectedModule.scoreModifiers[food.type.effect] || 0;
+                            let auraColor;
+                            if (modScore > 5) auraColor = 'rgba(46, 204, 113, 0.6)';
+                            else if (modScore < -3) auraColor = 'rgba(231, 76, 60, 0.5)';
+                            else auraColor = 'rgba(200, 200, 200, 0.25)';
+
+                            const auraPulse = Math.sin(time * 4 + food.pulsePhase) * 0.3 + 0.7;
+                            ctx.strokeStyle = auraColor;
+                            ctx.lineWidth = 2.5;
+                            ctx.shadowColor = auraColor;
+                            ctx.shadowBlur = 8 * auraPulse;
+                            ctx.beginPath();
+                            ctx.arc(x, y, markerRadius + 4, 0, Math.PI * 2);
+                            ctx.stroke();
+                            ctx.shadowBlur = 0;
+                        }
+                        ctx.restore();
+                    }
+
+                    ctx.shadowColor = food.type.glow;
+                    ctx.shadowBlur = useIcon ? 0 : 12;
+                    ctx.fillStyle = food.type.color;
+
+                    if (windRotation) {
+                        ctx.save();
+                        ctx.translate(x, y);
+                        ctx.rotate(windRotation);
+                        x = 0;
+                        y = 0;
+                    }
+
+                    if (useIcon) {
+                        const drawSize = cellSize * 0.9;
+                        ctx.drawImage(iconImg, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
+                    } else {
+                        switch (food.type.shape) {
+                            case 'grow_orb':
+                                ctx.beginPath();
+                                ctx.moveTo(x, y - size * 0.9);
+                                ctx.lineTo(x + size * 0.7, y + size * 0.2);
+                                ctx.lineTo(x + size * 0.25, y + size * 0.2);
+                                ctx.lineTo(x + size * 0.25, y + size * 0.8);
+                                ctx.lineTo(x - size * 0.25, y + size * 0.8);
+                                ctx.lineTo(x - size * 0.25, y + size * 0.2);
+                                ctx.lineTo(x - size * 0.7, y + size * 0.2);
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(246, 255, 208, 0.95)';
+                                ctx.lineWidth = 2;
+                                ctx.stroke();
+                                break;
+                            case 'teleport_gate':
+                                const ringOffset = size * 0.28;
+                                const ringRadius = size * 0.34;
+                                ctx.lineWidth = 2.6;
+                                ctx.strokeStyle = 'rgba(255, 238, 179, 0.95)';
+                                ctx.beginPath();
+                                ctx.arc(x - ringOffset, y, ringRadius, 0, Math.PI * 2);
+                                ctx.stroke();
+                                ctx.beginPath();
+                                ctx.arc(x + ringOffset, y, ringRadius, 0, Math.PI * 2);
+                                ctx.stroke();
+                                ctx.fillStyle = 'rgba(255, 209, 102, 0.98)';
+                                ctx.beginPath();
+                                ctx.arc(x - ringOffset, y, size * 0.11, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.fillStyle = 'rgba(110, 231, 255, 0.98)';
+                                ctx.beginPath();
+                                ctx.arc(x + ringOffset, y, size * 0.11, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(255, 255, 255, 0.96)';
+                                ctx.lineWidth = 2.2;
+                                ctx.beginPath();
+                                ctx.moveTo(x - size * 0.05, y - size * 0.18);
+                                ctx.lineTo(x + size * 0.05, y - size * 0.18);
+                                ctx.lineTo(x + size * 0.05, y - size * 0.28);
+                                ctx.lineTo(x + size * 0.2, y - size * 0.1);
+                                ctx.lineTo(x + size * 0.05, y + size * 0.08);
+                                ctx.lineTo(x + size * 0.05, y - size * 0.02);
+                                ctx.lineTo(x - size * 0.05, y - size * 0.02);
+                                ctx.stroke();
+                                ctx.beginPath();
+                                ctx.moveTo(x + size * 0.05, y + size * 0.18);
+                                ctx.lineTo(x - size * 0.05, y + size * 0.18);
+                                ctx.lineTo(x - size * 0.05, y + size * 0.28);
+                                ctx.lineTo(x - size * 0.2, y + size * 0.1);
+                                ctx.lineTo(x - size * 0.05, y - size * 0.08);
+                                ctx.lineTo(x - size * 0.05, y + size * 0.02);
+                                ctx.lineTo(x + size * 0.05, y + size * 0.02);
+                                ctx.stroke();
+                                break;
+                            case 'teleport_gate_legacy':
+                                ctx.lineWidth = 2.4;
+                                ctx.strokeStyle = 'rgba(255, 238, 179, 0.95)';
+                                ctx.beginPath();
+                                ctx.arc(x - size * 0.32, y, size * 0.44, -Math.PI * 0.2, Math.PI * 1.2);
+                                ctx.stroke();
+                                ctx.beginPath();
+                                ctx.arc(x + size * 0.32, y, size * 0.44, Math.PI * 0.8, Math.PI * 2.2);
+                                ctx.stroke();
+                                ctx.fillStyle = 'rgba(255, 209, 102, 0.95)';
+                                ctx.beginPath();
+                                ctx.arc(x - size * 0.34, y, size * 0.15, 0, Math.PI * 2);
+                                ctx.arc(x + size * 0.34, y, size * 0.15, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(255, 245, 214, 0.9)';
+                                ctx.beginPath();
+                                ctx.moveTo(x - size * 0.08, y - size * 0.23);
+                                ctx.lineTo(x + size * 0.08, y);
+                                ctx.lineTo(x - size * 0.08, y + size * 0.23);
+                                ctx.stroke();
+                                ctx.beginPath();
+                                ctx.moveTo(x + size * 0.08, y - size * 0.23);
+                                ctx.lineTo(x - size * 0.08, y);
+                                ctx.lineTo(x + size * 0.08, y + size * 0.23);
+                                ctx.stroke();
+                                ctx.fillStyle = food.type.color;
+                                break;
+                            case 'barrier_core':
+                                ctx.beginPath();
+                                for (let i = 0; i < 6; i++) {
+                                    const angle = (i * Math.PI / 3) - Math.PI / 6;
+                                    const px = x + Math.cos(angle) * size * 0.92;
+                                    const py = y + Math.sin(angle) * size * 0.92;
+                                    if (i === 0) ctx.moveTo(px, py);
+                                    else ctx.lineTo(px, py);
+                                }
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(244, 214, 179, 0.95)';
+                                ctx.lineWidth = 2;
+                                ctx.stroke();
+                                ctx.strokeStyle = 'rgba(78, 52, 46, 0.8)';
+                                ctx.lineWidth = 2.2;
+                                ctx.beginPath();
+                                ctx.moveTo(x - size * 0.42, y - size * 0.1);
+                                ctx.lineTo(x + size * 0.42, y - size * 0.1);
+                                ctx.moveTo(x - size * 0.34, y + size * 0.2);
+                                ctx.lineTo(x + size * 0.34, y + size * 0.2);
+                                ctx.stroke();
+                                break;
+                            case 'shrink_rune':
+                                ctx.beginPath();
+                                ctx.arc(x, y, size * 0.70, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(255, 214, 214, 0.85)';
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.arc(x, y, size * 0.9, 0, Math.PI * 2);
+                                ctx.stroke();
+                                ctx.strokeStyle = 'rgba(120, 10, 18, 0.9)';
+                                ctx.lineWidth = 2.2;
+                                ctx.beginPath();
+                                ctx.moveTo(x - size * 0.42, y);
+                                ctx.lineTo(x - size * 0.08, y);
+                                ctx.lineTo(x - size * 0.2, y - size * 0.14);
+                                ctx.moveTo(x - size * 0.08, y);
+                                ctx.lineTo(x - size * 0.2, y + size * 0.14);
+                                ctx.moveTo(x + size * 0.42, y);
+                                ctx.lineTo(x + size * 0.08, y);
+                                ctx.lineTo(x + size * 0.2, y - size * 0.14);
+                                ctx.moveTo(x + size * 0.08, y);
+                                ctx.lineTo(x + size * 0.2, y + size * 0.14);
+                                ctx.stroke();
+                                break;
+                            case 'circle':
+                                ctx.beginPath();
+                                ctx.arc(x, y, size, 0, Math.PI * 2);
+                                ctx.fill();
+                                break;
+                            case 'danger_square':
+                                ctx.beginPath();
+                                ctx.moveTo(x, y + size * 0.9);
+                                ctx.lineTo(x + size * 0.7, y - size * 0.2);
+                                ctx.lineTo(x + size * 0.25, y - size * 0.2);
+                                ctx.lineTo(x + size * 0.25, y - size * 0.8);
+                                ctx.lineTo(x - size * 0.25, y - size * 0.8);
+                                ctx.lineTo(x - size * 0.25, y - size * 0.2);
+                                ctx.lineTo(x - size * 0.7, y - size * 0.2);
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.strokeStyle = '#ff0000';
+                                ctx.lineWidth = 2;
+                                ctx.setLineDash([3, 3]);
+                                ctx.stroke();
+                                ctx.setLineDash([]);
+                                break;
+                            case 'triangle':
+                                ctx.beginPath();
+                                ctx.moveTo(x, y - size);
+                                ctx.lineTo(x + size, y + size);
+                                ctx.lineTo(x - size, y + size);
+                                ctx.closePath();
+                                ctx.fill();
+                                break;
+                            case 'diamond':
+                                ctx.beginPath();
+                                ctx.moveTo(x, y - size);
+                                ctx.lineTo(x + size, y);
+                                ctx.lineTo(x, y + size);
+                                ctx.lineTo(x - size, y);
+                                ctx.closePath();
+                                ctx.fill();
+                                break;
+                            case 'wind_star':
+                                ctx.beginPath();
+                                for (let i = 0; i < 6; i++) {
+                                    const angle1 = i * Math.PI / 3;
+                                    const angle2 = i * Math.PI / 3 + Math.PI / 6;
+                                    const outerRadius = size * 0.95;
+                                    const innerRadius = size * 0.48;
+                                    ctx.lineTo(Math.cos(angle1) * outerRadius, Math.sin(angle1) * outerRadius);
+                                    ctx.lineTo(Math.cos(angle2) * innerRadius, Math.sin(angle2) * innerRadius);
+                                }
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(166, 227, 255, 0.75)';
+                                ctx.lineWidth = 2;
+                                const ringSize = size * 1.18 + Math.sin(time * 5) * 3;
+                                ctx.beginPath();
+                                ctx.arc(0, 0, ringSize, 0, Math.PI * 2);
+                                ctx.stroke();
+                                break;
+                            case 'barrier_sign':
+                                ctx.beginPath();
+                                ctx.moveTo(x, y - size * 0.9);
+                                ctx.lineTo(x + size * 0.85, y + size * 0.7);
+                                ctx.lineTo(x - size * 0.85, y + size * 0.7);
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.strokeStyle = 'rgba(120, 60, 0, 0.6)';
+                                ctx.lineWidth = 1.5;
+                                ctx.beginPath();
+                                ctx.moveTo(x - size * 0.4, y + size * 0.1);
+                                ctx.lineTo(x + size * 0.4, y + size * 0.1);
+                                ctx.moveTo(x - size * 0.3, y + size * 0.35);
+                                ctx.lineTo(x + size * 0.3, y + size * 0.35);
+                                ctx.stroke();
+                                ctx.strokeStyle = 'rgba(255, 200, 50, 0.8)';
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.moveTo(x, y - size * 0.9);
+                                ctx.lineTo(x + size * 0.85, y + size * 0.7);
+                                ctx.lineTo(x - size * 0.85, y + size * 0.7);
+                                ctx.closePath();
+                                ctx.stroke();
+                                break;
+                            case 'hexagon':
+                                ctx.beginPath();
+                                for (let i = 0; i < 6; i++) {
+                                    const angle = (i * Math.PI / 3) - Math.PI / 6;
+                                    const px = x + Math.cos(angle) * size;
+                                    const py = y + Math.sin(angle) * size;
+                                    if (i === 0) ctx.moveTo(px, py);
+                                    else ctx.lineTo(px, py);
+                                }
+                                ctx.closePath();
+                                ctx.fill();
+                                break;
+                        }
+                    }
+
+                    if (windRotation) {
+                        ctx.restore();
+                    }
+
+                    ctx.shadowBlur = 0;
+                });
                 drawSnake(time);
                 if (teleportPreview) {
                     if (teleportTrailTimer <= 0) {
