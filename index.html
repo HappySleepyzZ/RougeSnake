@@ -4231,6 +4231,7 @@
         const isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
         if (isTestMode) {
             window.__snakeTestApi__ = {
+                FOOD_TYPES,
                 startGame,
                 openShop,
                 advanceWave: runtimeStateActions.advanceWave,

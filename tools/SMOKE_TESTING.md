@@ -15,6 +15,7 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
   - `showResult('death')`
   - `openShop()` and shop purchase / skip close flow
   - `advanceWave()` terrain / portal generation
+  - `gameStep()` teleport food branch in a deterministic debug scenario
 - Captures a screenshot for each target page
 
 ## Local Server

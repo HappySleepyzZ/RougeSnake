@@ -254,6 +254,46 @@
         });
       }
 
+      let afterTeleportStep = null;
+      if (api.FOOD_TYPES && api.FOOD_TYPES.TELEPORT && typeof api.gameStep === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [{
+            x: 6,
+            y: 5,
+            type: api.FOOD_TYPES.TELEPORT,
+            pulsePhase: 0,
+            dangerShakePhase: 0,
+            windSpinPhase: 0
+          }],
+          obstacles: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterTeleportStep = api.getState();
+        Object.assign(interactionChecks, {
+          teleportTriggered: afterTeleportStep.teleportInvincibleSteps === 3,
+          teleportPreviewSet: !!afterTeleportStep.teleportPreview,
+          teleportDirectionFlipped: afterTeleportStep.direction && afterTeleportStep.direction.x === -1 && afterTeleportStep.direction.y === 0
+        });
+      }
+
       const interactionFailed = Object.entries(interactionChecks).filter(([, ok]) => !ok);
       if (interactionFailed.length) {
         fail('interaction assertions failed', {
@@ -270,6 +310,7 @@
           afterShopPurchase,
           afterCloseShop,
           afterAdvanceWave,
+          afterTeleportStep,
           shopItemCount,
           smokeErrors,
           modeOverlayClass: modeOverlay.className,
@@ -306,6 +347,11 @@
           currentWave: afterAdvanceWave.currentWave,
           terrainZoneCount: Array.isArray(afterAdvanceWave.terrainZones) ? afterAdvanceWave.terrainZones.length : null,
           portalPairCount: Array.isArray(afterAdvanceWave.portalPairs) ? afterAdvanceWave.portalPairs.length : null
+        } : null,
+        teleportStateAfterStep: afterTeleportStep ? {
+          teleportInvincibleSteps: afterTeleportStep.teleportInvincibleSteps,
+          teleportPreview: afterTeleportStep.teleportPreview,
+          direction: afterTeleportStep.direction
         } : null,
         apiKeys: Object.keys(api)
       });
