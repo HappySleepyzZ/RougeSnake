@@ -979,10 +979,6 @@
 
         // V16: removed isInfiniteUnlocked / syncModeAvailability (no longer needed)
 
-        function distanceInCells(ax, ay, bx, by) {
-            return Math.hypot(ax - bx, ay - by);
-        }
-
         function canPlaceFoodAt(x, y) {
             if (isPositionOccupied(x, y)) return false;
             if (
@@ -992,11 +988,11 @@
                 y > tileCount - 1 - currentLevelConfig.foodField.wallPadding
             ) return false;
 
-            if (foods.some(food => distanceInCells(food.x, food.y, x, y) < currentLevelConfig.foodField.minFoodSpacing)) return false;
-            if (snake.some(seg => distanceInCells(seg.x, seg.y, x, y) < currentLevelConfig.foodField.minSolidSpacing)) return false;
-            if (obstacles.some(obs => distanceInCells(obs.x, obs.y, x, y) < currentLevelConfig.foodField.minSolidSpacing)) return false;
-            if (snakeSkins.some(skin => skin.cells && skin.cells.some(cell => distanceInCells(cell.x, cell.y, x, y) < currentLevelConfig.foodField.minSolidSpacing))) return false;
-            if (startIndicator && distanceInCells(startIndicator.x, startIndicator.y, x, y) < currentLevelConfig.foodField.minSolidSpacing) return false;
+            if (foods.some(food => Math.hypot(food.x - x, food.y - y) < currentLevelConfig.foodField.minFoodSpacing)) return false;
+            if (snake.some(seg => Math.hypot(seg.x - x, seg.y - y) < currentLevelConfig.foodField.minSolidSpacing)) return false;
+            if (obstacles.some(obs => Math.hypot(obs.x - x, obs.y - y) < currentLevelConfig.foodField.minSolidSpacing)) return false;
+            if (snakeSkins.some(skin => skin.cells && skin.cells.some(cell => Math.hypot(cell.x - x, cell.y - y) < currentLevelConfig.foodField.minSolidSpacing))) return false;
+            if (startIndicator && Math.hypot(startIndicator.x - x, startIndicator.y - y) < currentLevelConfig.foodField.minSolidSpacing) return false;
 
             return true;
         }
