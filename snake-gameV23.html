@@ -1005,29 +1005,6 @@
             return true;
         }
 
-        function findFoodSpawnCell(type) {
-            const padding = currentLevelConfig.foodField.wallPadding;
-            const min = padding;
-            const max = tileCount - padding - 1;
-
-            for (let attempts = 0; attempts < TUNING.generation.foodSpawnAttempts; attempts++) {
-                const x = Math.floor(Math.random() * (max - min + 1)) + min;
-                const y = Math.floor(Math.random() * (max - min + 1)) + min;
-                if (canPlaceFoodAt(x, y)) {
-                    return {
-                        x,
-                        y,
-                        type,
-                        pulsePhase: Math.random() * Math.PI * 2,
-                        dangerShakePhase: 0,
-                        windSpinPhase: 0
-                    };
-                }
-            }
-
-            return null;
-        }
-
         function findCeremonySpawnCell(minDistance = 0, fallback = null) {
             const head = snake[0];
             for (let attempts = 0; attempts < TUNING.generation.ceremonySpawnAttempts; attempts++) {
@@ -1246,7 +1223,24 @@
             if (positiveCount < 1) {
                 const positiveTypes = [FOOD_TYPES.GROW, FOOD_TYPES.TELEPORT, FOOD_TYPES.BARRIER];
                 const selectedType = positiveTypes[Math.floor(Math.random() * positiveTypes.length)];
-                const newFood = findFoodSpawnCell(selectedType);
+                const padding = currentLevelConfig.foodField.wallPadding;
+                const min = padding;
+                const max = tileCount - padding - 1;
+                let newFood = null;
+                for (let attempts = 0; attempts < TUNING.generation.foodSpawnAttempts; attempts++) {
+                    const x = Math.floor(Math.random() * (max - min + 1)) + min;
+                    const y = Math.floor(Math.random() * (max - min + 1)) + min;
+                    if (!canPlaceFoodAt(x, y)) continue;
+                    newFood = {
+                        x,
+                        y,
+                        type: selectedType,
+                        pulsePhase: Math.random() * Math.PI * 2,
+                        dangerShakePhase: 0,
+                        windSpinPhase: 0
+                    };
+                    break;
+                }
 
                 if (newFood) {
                     foods.push(newFood);
@@ -1285,7 +1279,24 @@
                 selectedType = alternativeTypes[Math.floor(Math.random() * alternativeTypes.length)];
             }
 
-            const newFood = findFoodSpawnCell(selectedType);
+            const padding = currentLevelConfig.foodField.wallPadding;
+            const min = padding;
+            const max = tileCount - padding - 1;
+            let newFood = null;
+            for (let attempts = 0; attempts < TUNING.generation.foodSpawnAttempts; attempts++) {
+                const x = Math.floor(Math.random() * (max - min + 1)) + min;
+                const y = Math.floor(Math.random() * (max - min + 1)) + min;
+                if (!canPlaceFoodAt(x, y)) continue;
+                newFood = {
+                    x,
+                    y,
+                    type: selectedType,
+                    pulsePhase: Math.random() * Math.PI * 2,
+                    dangerShakePhase: 0,
+                    windSpinPhase: 0
+                };
+                break;
+            }
             if (newFood) {
                 foods.push(newFood);
             }
