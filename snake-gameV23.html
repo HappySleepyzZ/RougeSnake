@@ -966,7 +966,7 @@
             const pauseDuration = Date.now() - pauseStartTime;
             runtimeStateModule.applyPauseTimeCompensation(pauseDuration);
             pauseOverlay.classList.remove('show');
-            restartGameLoopWithCurrentState();
+            restartGameLoopWithInterval();
         }
         
         resumeBtn.addEventListener('click', resumeGame);
@@ -1330,7 +1330,7 @@
             setTimeout(() => {
                 if (isGameRunning && !isLevelComplete && !isGameOver) {
                     teleportPauseTimer = 0;
-                    restartGameLoopWithCurrentState();
+                    restartGameLoopWithInterval();
                 }
             }, TELEPORT_PAUSE_DURATION);
             
@@ -1877,11 +1877,11 @@
                 const slowInterval = 500;
                 if (!lastSlowInterval || lastSlowInterval !== slowInterval) {
                     lastSlowInterval = slowInterval;
-                    restartGameLoopWithCurrentState();
+                    restartGameLoopWithInterval();
                 }
             } else if (lastSlowInterval) {
                 lastSlowInterval = null;
-                restartGameLoopWithCurrentState();
+                restartGameLoopWithInterval();
             }
             
             updateStatusUI();
@@ -2031,7 +2031,7 @@
                     const oldInterval = currentInterval;
                     currentInterval = newInterval;
                     if (newInterval !== oldInterval || isSpeedBoosted || Date.now() < slowDebuffEnd) {
-                        restartGameLoopWithCurrentState();
+                        restartGameLoopWithInterval();
                     }
                     backgroundHue = 240 - (Math.max(0, score) / 500) * 240;
                     if (backgroundHue < 0) backgroundHue = 0;
@@ -2084,7 +2084,7 @@
                 if (speedBoostTimer <= 0) {
                     isSpeedBoosted = false;
                     dashBurstTicks = 0;
-                    restartGameLoopWithCurrentState();
+                    restartGameLoopWithInterval();
                 }
             }
         }
@@ -3592,7 +3592,7 @@
             syncPauseButtonVisibility();
             hideResult();
             updateTouchHint();
-            restartGameLoopWithCurrentState();
+            restartGameLoopWithInterval();
         }
 
         function updateTouchHint() {
@@ -3878,7 +3878,9 @@
                 initWaitingState();
                 updateTouchHint();
             },
-            restartGameLoopWithCurrentState,
+            restartGameLoopWithCurrentState() {
+                restartGameLoopWithInterval();
+            },
             closeAllOverlays,
             syncPauseButtonVisibility,
             showPauseOverlay,
@@ -3899,7 +3901,7 @@
                 generateWaveTerrain();
                 generateWavePortals();
                 syncPauseButtonVisibility();
-                restartGameLoopWithCurrentState();
+                restartGameLoopWithInterval();
                 return {
                     advanced: true,
                     newWave: currentWave,
@@ -3942,10 +3944,6 @@
             );
             lastSlowInterval = effectiveInterval === 500 ? 500 : null;
             gameLoop = setInterval(gameStep, effectiveInterval);
-        }
-
-        function restartGameLoopWithCurrentState() {
-            restartGameLoopWithInterval();
         }
 
         const DIRECTION_INPUT_MAP = {
