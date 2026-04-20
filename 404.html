@@ -1622,9 +1622,9 @@
                 padType: 'triangle',
                 leadType: 'sine',
                 bassType: 'triangle',
-                padVolume: 0.011,
-                bassVolume: 0.017,
-                leadVolume: 0.013,
+                padVolume: 0.026,
+                bassVolume: 0.036,
+                leadVolume: 0.024,
                 pad: [261.63, 329.63, 392.0, 523.25],
                 bass: [130.81, 98.0, 130.81, 164.81],
                 lead: [523.25, 659.25, 783.99, 659.25]
@@ -1634,9 +1634,9 @@
                 padType: 'sine',
                 leadType: 'triangle',
                 bassType: 'triangle',
-                padVolume: 0.012,
-                bassVolume: 0.018,
-                leadVolume: 0.015,
+                padVolume: 0.03,
+                bassVolume: 0.04,
+                leadVolume: 0.026,
                 pad: [293.66, 369.99, 440.0, 587.33],
                 bass: [146.83, 110.0, 146.83, 174.61],
                 lead: [587.33, 739.99, 880.0, 739.99]
@@ -1646,9 +1646,9 @@
                 padType: 'triangle',
                 leadType: 'sawtooth',
                 bassType: 'triangle',
-                padVolume: 0.011,
-                bassVolume: 0.017,
-                leadVolume: 0.013,
+                padVolume: 0.024,
+                bassVolume: 0.034,
+                leadVolume: 0.023,
                 pad: [261.63, 311.13, 392.0, 466.16],
                 bass: [130.81, 103.83, 130.81, 116.54],
                 lead: [523.25, 622.25, 698.46, 622.25]
@@ -1658,9 +1658,9 @@
                 padType: 'triangle',
                 leadType: 'square',
                 bassType: 'sine',
-                padVolume: 0.01,
-                bassVolume: 0.018,
-                leadVolume: 0.014,
+                padVolume: 0.022,
+                bassVolume: 0.034,
+                leadVolume: 0.022,
                 pad: [220.0, 277.18, 329.63, 493.88],
                 bass: [110.0, 82.41, 123.47, 98.0],
                 lead: [440.0, 554.37, 659.25, 554.37]
@@ -1683,8 +1683,8 @@
             audioMasterGain = audioContext.createGain();
             audioMusicGain = audioContext.createGain();
             audioSfxGain = audioContext.createGain();
-            audioMasterGain.gain.value = 0.9;
-            audioMusicGain.gain.value = 0.28;
+            audioMasterGain.gain.value = 1;
+            audioMusicGain.gain.value = 0.52;
             audioSfxGain.gain.value = 0.64;
             audioMusicGain.connect(audioMasterGain);
             audioSfxGain.connect(audioMasterGain);
@@ -1795,32 +1795,42 @@
             scheduleAudioTone({
                 frequency: theme.pad[chordIndex],
                 startTime: now,
-                duration: theme.pulseMs / 1000 * 0.72,
+                duration: theme.pulseMs / 1000 * 0.92,
                 gain: theme.padVolume,
                 type: theme.padType,
                 destination: 'music',
                 attack: 0.04,
-                release: 0.22
+                release: 0.3
+            });
+            scheduleAudioTone({
+                frequency: theme.pad[chordIndex] * 1.5,
+                startTime: now + 0.01,
+                duration: theme.pulseMs / 1000 * 0.74,
+                gain: theme.padVolume * 0.52,
+                type: theme.padType,
+                destination: 'music',
+                attack: 0.03,
+                release: 0.24
             });
             scheduleAudioTone({
                 frequency: theme.bass[chordIndex],
                 startTime: now,
-                duration: theme.pulseMs / 1000 * 0.42,
+                duration: theme.pulseMs / 1000 * 0.58,
                 gain: theme.bassVolume,
                 type: theme.bassType,
                 destination: 'music',
                 attack: 0.02,
-                release: 0.18
+                release: 0.22
             });
             scheduleAudioTone({
                 frequency: theme.lead[leadIndex],
                 startTime: now + theme.pulseMs / 1000 * 0.32,
-                duration: theme.pulseMs / 1000 * 0.18,
+                duration: theme.pulseMs / 1000 * 0.24,
                 gain: theme.leadVolume,
                 type: theme.leadType,
                 destination: 'music',
                 attack: 0.01,
-                release: 0.09
+                release: 0.12
             });
             audioMusicStep++;
         }
@@ -1851,6 +1861,18 @@
             }
             audioUnlocked = true;
             updateMusicLoop();
+        }
+
+        function bindAudioUnlockGestures() {
+            const unlockOnce = () => {
+                unlockAudio();
+                document.removeEventListener('pointerdown', unlockOnce);
+                document.removeEventListener('keydown', unlockOnce);
+                document.removeEventListener('touchstart', unlockOnce);
+            };
+            document.addEventListener('pointerdown', unlockOnce, { passive: true });
+            document.addEventListener('keydown', unlockOnce);
+            document.addEventListener('touchstart', unlockOnce, { passive: true });
         }
 
         function getWaveBackgroundHue(wave = currentWave, scoreValue = score) {
@@ -5908,6 +5930,7 @@
         if (touchHintEl) {
             touchHintEl.textContent = getTouchHintText();
         }
+        bindAudioUnlockGestures();
         hasSelectedMode = false;
         uiOverlaysModule.showModeOverlay();
         animStep();
