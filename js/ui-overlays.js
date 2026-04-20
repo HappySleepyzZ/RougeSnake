@@ -93,6 +93,7 @@ window.SnakeUiOverlays = {
       const nextWave = getCurrentWave() + 1;
       const nextWaveProfile = typeof getWaveProfile === 'function' ? getWaveProfile(nextWave) : null;
       const nextThemeName = nextWaveProfile ? nextWaveProfile.themeName : '';
+      waveOverlay.dataset.waveTheme = nextWaveProfile ? nextWaveProfile.key : 'default';
       waveText.textContent = UI_TEXT.wave.transitionTitle(nextWave, nextThemeName);
       waveCountdown.textContent = UI_TEXT.wave.nextIn(Math.ceil(waveTransitionDuration / 1000), nextThemeName);
       showWaveOverlay();
