@@ -1931,6 +1931,9 @@
                 }
                 if (inTerrain) {
                     const zoneKey = inTerrain.type + '_' + inTerrain.centerX + '_' + inTerrain.centerY;
+                    const terrainScore = selectedModule.terrainBonus && typeof selectedModule.terrainBonus[inTerrain.type] === 'number'
+                        ? selectedModule.terrainBonus[inTerrain.type]
+                        : 0;
                     terrainDotType = inTerrain.type;
                     if (lastTerrainTrigger !== zoneKey) {
                         lastTerrainTrigger = zoneKey;
@@ -1942,18 +1945,32 @@
                     }
                     if (inTerrain.type === 'poison' && selectedModule.id === 'venom') {
                         if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
-                            score += 5;
-                            spawnFloatingText(terrainHead.x, terrainHead.y, '+5', '#a855f7', false);
-                            updateStatusUI();
+                            score += terrainScore;
+                            if (terrainScore !== 0) {
+                                const poisonText = terrainScore > 0 ? `+${terrainScore}` : `${terrainScore}`;
+                                spawnFloatingText(terrainHead.x, terrainHead.y, poisonText, '#a855f7', false);
+                                if (score > highScore) {
+                                    highScore = score;
+                                    localStorage.setItem(STORAGE_KEYS.highScore, highScore);
+                                }
+                                updateStatusUI();
+                            }
                         }
                     }
                     if (inTerrain.type === 'slow') {
                         const dur = activeBuffs.some(b => b.id === 'ice_armor') ? DEBUFF_DURATION / 2 : DEBUFF_DURATION;
                         slowDebuffEnd = terrainNow + dur;
                         if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
-                            score -= 3;
-                            spawnFloatingText(terrainHead.x, terrainHead.y, '-3', '#60a5fa', false);
-                            updateStatusUI();
+                            score += terrainScore;
+                            if (terrainScore !== 0) {
+                                const slowText = terrainScore > 0 ? `+${terrainScore}` : `${terrainScore}`;
+                                spawnFloatingText(terrainHead.x, terrainHead.y, slowText, '#60a5fa', false);
+                                if (score > highScore) {
+                                    highScore = score;
+                                    localStorage.setItem(STORAGE_KEYS.highScore, highScore);
+                                }
+                                updateStatusUI();
+                            }
                         }
                     }
                 } else {

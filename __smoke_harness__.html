@@ -144,13 +144,16 @@
         return;
       }
 
-      moduleButtons[0].click();
+      const armorModuleButton = moduleButtons.find((button) => button.textContent.includes('装甲'));
+      const selectedModuleButton = armorModuleButton || moduleButtons[0];
+      selectedModuleButton.click();
       await wait(50);
 
       const afterModuleSelect = api.getState();
       const interactionChecks = {
         hasSelectedMode: afterModuleSelect.hasSelectedMode === true,
-        modeOverlayHidden: modeOverlay.classList.contains('hidden')
+        modeOverlayHidden: modeOverlay.classList.contains('hidden'),
+        armorModuleSelected: !!(afterModuleSelect.selectedModule && afterModuleSelect.selectedModule.id === 'armor')
       };
 
       api.startGame();
@@ -254,6 +257,50 @@
         });
       }
 
+      let afterTerrainBonusSteps = null;
+      if (typeof api.gameStep === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [],
+          obstacles: [],
+          terrainZones: [{
+            type: 'slow',
+            centerX: 6,
+            centerY: 5,
+            cells: [{ x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }]
+          }],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0,
+          slowDebuffEnd: 0,
+          poisonDebuffEnd: 0,
+          portalTeleportCooldown: 0
+        });
+        api.gameStep();
+        api.gameStep();
+        api.gameStep();
+        await wait(20);
+        afterTerrainBonusSteps = api.getState();
+        Object.assign(interactionChecks, {
+          armorSlowTerrainBonusApplied: afterTerrainBonusSteps.score === 12,
+          slowDebuffApplied: typeof afterTerrainBonusSteps.slowDebuffEnd === 'number' && afterTerrainBonusSteps.slowDebuffEnd > now
+        });
+      }
+
       let afterTeleportStep = null;
       if (api.FOOD_TYPES && api.FOOD_TYPES.TELEPORT && typeof api.gameStep === 'function') {
         const now = Date.now();
@@ -343,6 +390,7 @@
           afterShopPurchase,
           afterCloseShop,
           afterAdvanceWave,
+          afterTerrainBonusSteps,
           afterTeleportStep,
           afterGameOverStep,
           shopItemCount,
@@ -381,6 +429,11 @@
           currentWave: afterAdvanceWave.currentWave,
           terrainZoneCount: Array.isArray(afterAdvanceWave.terrainZones) ? afterAdvanceWave.terrainZones.length : null,
           portalPairCount: Array.isArray(afterAdvanceWave.portalPairs) ? afterAdvanceWave.portalPairs.length : null
+        } : null,
+        terrainBonusStateAfterSteps: afterTerrainBonusSteps ? {
+          score: afterTerrainBonusSteps.score,
+          slowDebuffEnd: afterTerrainBonusSteps.slowDebuffEnd,
+          selectedModule: afterTerrainBonusSteps.selectedModule ? afterTerrainBonusSteps.selectedModule.id : null
         } : null,
         teleportStateAfterStep: afterTeleportStep ? {
           teleportInvincibleSteps: afterTeleportStep.teleportInvincibleSteps,
