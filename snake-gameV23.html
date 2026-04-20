@@ -2651,12 +2651,6 @@
             x += driftOffsetX;
             y += hoverOffsetY;
 
-            if (food.type.isDanger && !food.type.isWind) {
-                const shakeAmount = Math.sin(time * 15 + (food.dangerShakePhase || 0)) * 2;
-                x += shakeAmount;
-                y += shakeAmount * 0.5;
-            }
-
             const windRotation = food.type.isWind ? (time * 3 + (food.windSpinPhase || 0)) : 0;
             const pulse = Math.sin(time * 3 + food.pulsePhase) * 0.05 + 0.95;
             const size = cellSize * 0.45 * pulse; // V18d: 食物占满1格（直径≈90%格子）
@@ -3361,27 +3355,39 @@
                 }
             }
             
-            const saturation = backgroundHue < 60 ? 72 : 56;
-            const lightness = backgroundHue < 60 ? 18 : 12;
+            const saturation = backgroundHue < 60 ? 44 : 30;
+            const lightness = backgroundHue < 60 ? 20 : 15;
             const boardGradient = ctx.createRadialGradient(
                 canvas.width * 0.5,
-                canvas.height * 0.24,
-                cellSize * 2,
+                canvas.height * 0.2,
+                cellSize,
                 canvas.width * 0.5,
                 canvas.height * 0.5,
-                canvas.width * 0.72
+                canvas.width * 0.78
             );
-            boardGradient.addColorStop(0, `hsla(${backgroundHue}, ${Math.min(100, saturation + 12)}%, ${lightness + 16}%, 0.96)`);
-            boardGradient.addColorStop(0.5, `hsla(${backgroundHue}, ${saturation}%, ${lightness + 6}%, 0.98)`);
-            boardGradient.addColorStop(1, 'rgba(2, 5, 14, 1)');
+            boardGradient.addColorStop(0, `hsla(${backgroundHue}, ${Math.min(100, saturation + 8)}%, ${lightness + 14}%, 0.98)`);
+            boardGradient.addColorStop(0.48, `hsla(${backgroundHue}, ${saturation}%, ${lightness + 4}%, 0.99)`);
+            boardGradient.addColorStop(1, 'rgba(13, 18, 38, 1)');
             ctx.fillStyle = boardGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             const scanGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            scanGradient.addColorStop(0, 'rgba(0, 210, 255, 0.04)');
-            scanGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-            scanGradient.addColorStop(1, 'rgba(157, 80, 187, 0.05)');
+            scanGradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+            scanGradient.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
+            scanGradient.addColorStop(1, 'rgba(76, 91, 160, 0.08)');
             ctx.fillStyle = scanGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const vignetteGradient = ctx.createRadialGradient(
+                canvas.width * 0.5,
+                canvas.height * 0.45,
+                canvas.width * 0.18,
+                canvas.width * 0.5,
+                canvas.height * 0.5,
+                canvas.width * 0.7
+            );
+            vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            vignetteGradient.addColorStop(1, 'rgba(3, 5, 14, 0.34)');
+            ctx.fillStyle = vignetteGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             if (flashAlpha > 0) {
                 ctx.fillStyle = flashColor + flashAlpha + ')';
@@ -3389,7 +3395,7 @@
                 flashAlpha -= 0.03;
             }
             ctx.save();
-            ctx.strokeStyle = 'rgba(125, 226, 255, 0.12)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
             ctx.lineWidth = 0.5;
             for (let i = 0; i <= tileCount; i++) {
                 ctx.beginPath();
@@ -3404,8 +3410,8 @@
             ctx.restore();
 
             ctx.save();
-            ctx.strokeStyle = 'rgba(0, 210, 255, 0.07)';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(120, 146, 255, 0.08)';
+            ctx.lineWidth = 0.8;
             for (let i = 0; i <= tileCount; i += 4) {
                 ctx.beginPath();
                 ctx.moveTo(i * cellSize, 0);
@@ -3419,11 +3425,14 @@
             ctx.restore();
 
             ctx.save();
-            ctx.strokeStyle = 'rgba(0, 210, 255, 0.32)';
-            ctx.lineWidth = 1.5;
-            ctx.shadowColor = 'rgba(0, 210, 255, 0.18)';
-            ctx.shadowBlur = 16;
-            ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+            ctx.strokeStyle = 'rgba(214, 227, 255, 0.18)';
+            ctx.lineWidth = 1.25;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.18)';
+            ctx.shadowBlur = 10;
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
             ctx.restore();
             const center = Math.floor(tileCount / 2);
             const halfWidth = Math.floor(portalWidth / 2);
@@ -3908,12 +3917,6 @@
 
                     x += driftOffsetX;
                     y += hoverOffsetY;
-
-                    if (food.type.isDanger && !food.type.isWind) {
-                        const shakeAmount = Math.sin(time * 15 + (food.dangerShakePhase || 0)) * 2;
-                        x += shakeAmount;
-                        y += shakeAmount * 0.5;
-                    }
 
                     const windRotation = food.type.isWind ? (time * 3 + (food.windSpinPhase || 0)) : 0;
                     const pulse = Math.sin(time * 3 + food.pulsePhase) * 0.05 + 0.95;
