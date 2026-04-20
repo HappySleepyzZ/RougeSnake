@@ -18,6 +18,8 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
   - `openShop()` shield purchase plus snake-skin collision protection
   - `advanceWave()` terrain / portal generation
   - `gameStep()` armor module slow-terrain score bonus branch
+  - `gameStep()` armor module obstacle-break passive branch
+  - `startGame()` spirit module wide-portal passive on wave 1
   - `gameStep()` balanced module poison DoT half-damage branch
   - `gameStep()` teleport food branch in a deterministic debug scenario
   - `gameStep()` wall-death branch to verify real `gameOver()` overlay behavior

@@ -393,6 +393,89 @@
         });
       }
 
+      let afterArmorObstacleStep = null;
+      if (typeof api.gameStep === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [],
+          obstacles: [{ x: 6, y: 5 }],
+          snakeSkins: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          resultVisible: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterArmorObstacleStep = api.getState();
+        Object.assign(interactionChecks, {
+          armorBreaksObstacleOnContact: afterArmorObstacleStep.isGameOver === false
+            && Array.isArray(afterArmorObstacleStep.obstacles)
+            && afterArmorObstacleStep.obstacles.length === 0
+            && afterArmorObstacleStep.score === 5
+        });
+      }
+
+      let afterSpiritPortalStep = null;
+      if (typeof api.gameStep === 'function'
+        && typeof api.startGame === 'function'
+        && iframe.contentWindow.MODULE_TYPES
+        && iframe.contentWindow.MODULE_TYPES.SPIRIT) {
+        iframe.contentWindow.selectedModule = iframe.contentWindow.MODULE_TYPES.SPIRIT;
+        api.startGame();
+        await wait(20);
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 13, y: 0 }, { x: 13, y: 1 }, { x: 13, y: 2 }],
+          foods: [],
+          obstacles: [],
+          snakeSkins: [],
+          direction: { x: 0, y: -1 },
+          nextDirection: { x: 0, y: -1 },
+          score: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          resultVisible: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0,
+          portalTeleportCooldown: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterSpiritPortalStep = api.getState();
+        iframe.contentWindow.selectedModule = iframe.contentWindow.MODULE_TYPES.ARMOR;
+        Object.assign(interactionChecks, {
+          spiritWidePortalActiveOnWaveOne: afterSpiritPortalStep.isGameOver === false
+            && Array.isArray(afterSpiritPortalStep.snake)
+            && afterSpiritPortalStep.snake[0]
+            && afterSpiritPortalStep.snake[0].x === 13
+            && afterSpiritPortalStep.snake[0].y === 29
+        });
+      }
+
       let afterBalancedPoisonStep = null;
       if (typeof api.gameStep === 'function' && iframe.contentWindow.MODULE_TYPES && iframe.contentWindow.MODULE_TYPES.BALANCED) {
         const originalRandom = iframe.contentWindow.Math.random;
@@ -533,6 +616,8 @@
           afterShieldSnakeSkinStep,
           afterAdvanceWave,
           afterTerrainBonusSteps,
+          afterArmorObstacleStep,
+          afterSpiritPortalStep,
           afterBalancedPoisonStep,
           afterTeleportStep,
           afterGameOverStep,
@@ -591,6 +676,16 @@
           score: afterTerrainBonusSteps.score,
           slowDebuffEnd: afterTerrainBonusSteps.slowDebuffEnd,
           selectedModule: afterTerrainBonusSteps.selectedModule ? afterTerrainBonusSteps.selectedModule.id : null
+        } : null,
+        armorObstacleStateAfterStep: afterArmorObstacleStep ? {
+          isGameOver: afterArmorObstacleStep.isGameOver,
+          obstacleCount: Array.isArray(afterArmorObstacleStep.obstacles) ? afterArmorObstacleStep.obstacles.length : null,
+          score: afterArmorObstacleStep.score
+        } : null,
+        spiritPortalStateAfterStep: afterSpiritPortalStep ? {
+          isGameOver: afterSpiritPortalStep.isGameOver,
+          head: Array.isArray(afterSpiritPortalStep.snake) ? afterSpiritPortalStep.snake[0] : null,
+          selectedModule: afterSpiritPortalStep.selectedModule ? afterSpiritPortalStep.selectedModule.id : null
         } : null,
         balancedPoisonStateAfterStep: afterBalancedPoisonStep ? {
           score: afterBalancedPoisonStep.score,
