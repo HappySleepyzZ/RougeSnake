@@ -4711,7 +4711,7 @@
                 initialWaveIntroInterval = setInterval(() => {
                     introCountdown = Math.max(0, introCountdown - 1);
                     if (introCountdown > 0) {
-                        renderWaveTransitionOverlay(1, introCountdown);
+                        waveCountdown.textContent = String(introCountdown);
                     }
                 }, 1000);
                 initialWaveIntroTimeout = setTimeout(() => {
