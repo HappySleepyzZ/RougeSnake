@@ -971,7 +971,8 @@
             if (getPrimaryGameState() !== 'RUNNING') return;
             setPausedState(true);
             pauseStartTime = Date.now();
-            stopGameLoop();
+            clearInterval(gameLoop);
+            gameLoop = null;
             runtimeStateModule.renderPauseOverlay();
         });
 
@@ -1349,7 +1350,8 @@
                 b.remaining--;
                 return b.remaining > 0;
             });
-            stopGameLoop();
+            clearInterval(gameLoop);
+            gameLoop = null;
             syncPauseButtonVisibility();
             const shuffledShopItems = [...SHOP_POOL].sort(() => Math.random() - 0.5);
             shopItems = shuffledShopItems.slice(0, 3);
@@ -1445,7 +1447,8 @@
                         resetTeleportPreviewState();
                         closeAllOverlays();
                         if (!enterWaveTransition()) return;
-                        stopGameLoop();
+                        clearInterval(gameLoop);
+                        gameLoop = null;
                         clearInterval(waveTransitionInterval);
                         waveTransitionInterval = null;
                         renderWaveTransitionOverlay();
@@ -1462,7 +1465,8 @@
                 resetTeleportPreviewState();
                 closeAllOverlays();
                 if (!enterWaveTransition()) return;
-                stopGameLoop();
+                clearInterval(gameLoop);
+                gameLoop = null;
                 clearInterval(waveTransitionInterval);
                 waveTransitionInterval = null;
                 renderWaveTransitionOverlay();
@@ -1944,7 +1948,8 @@
                         headGlowTimer = HEAD_GLOW_DURATION;
                         flashEffect('teleport');
                         teleportPauseTimer = TELEPORT_PAUSE_DURATION;
-                        stopGameLoop();
+                        clearInterval(gameLoop);
+                        gameLoop = null;
                         setTimeout(() => {
                             if (isGameRunning && !isLevelComplete && !isGameOver) {
                                 teleportPauseTimer = 0;
@@ -3471,7 +3476,8 @@
             if (getPrimaryGameState() === 'RUNNING' || !hasSelectedMode) return;
             
             resizeCanvas();
-            stopGameLoop();
+            clearInterval(gameLoop);
+            gameLoop = null;
             const centerX = Math.floor(tileCount / 2);
             const centerY = Math.floor(tileCount / 2);
             snake = [
@@ -3788,7 +3794,8 @@
                 if (getPrimaryGameState() !== 'RUNNING') return;
                 setPausedState(true);
                 pauseStartTime = Date.now();
-                stopGameLoop();
+                clearInterval(gameLoop);
+                gameLoop = null;
                 runtimeStateModule.renderPauseOverlay();
             },
             resumeGame() {
@@ -3842,17 +3849,15 @@
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule
         } = uiOverlaysModule;
 
-        function stopGameLoop() {
-            clearInterval(gameLoop);
-            gameLoop = null;
-        }
-
         Object.assign(runtimeStateActions, {
             stopWaveTransitionCountdown() {
                 clearInterval(waveTransitionInterval);
                 waveTransitionInterval = null;
             },
-            stopGameLoop,
+            stopGameLoop() {
+                clearInterval(gameLoop);
+                gameLoop = null;
+            },
             hideResult: closeAllOverlays,
             showModeOverlay() {
                 hasSelectedMode = false;
@@ -3952,7 +3957,8 @@
         };
 
         function restartGameLoopWithInterval(intervalOverride) {
-            stopGameLoop();
+            clearInterval(gameLoop);
+            gameLoop = null;
             if (!canRunGameLoop()) {
                 lastSlowInterval = null;
                 return;
@@ -4297,7 +4303,8 @@
                     return JSON.stringify(timerTraceBuffer);
                 },
                 clearLoop() {
-                    stopGameLoop();
+                    clearInterval(gameLoop);
+                    gameLoop = null;
                 },
                 selectMode(mode) {
                     // V16: no-op, always survival
@@ -4402,7 +4409,8 @@
                     legendEl.innerHTML = `<span class="legend-symbol">${selectedModule.icon}</span> <span>${selectedModule.name}</span>`;
                 }
                 closeAllOverlays();
-                stopGameLoop();
+                clearInterval(gameLoop);
+                gameLoop = null;
                 currentMode = 'survival';
                 activeModeConfig = MODE_CONFIGS.survival;
                 currentModeRules = { timeLimit: Infinity, targetScore: null };
