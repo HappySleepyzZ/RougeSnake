@@ -2775,6 +2775,10 @@
                 for (let index = 1; index < snake.length; index++) {
                     const previous = snake[index - 1];
                     const current = snake[index];
+                    const segmentDistance = Math.abs(previous.x - current.x) + Math.abs(previous.y - current.y);
+                    if (segmentDistance !== 1) {
+                        continue;
+                    }
                     const fromX = previous.x * cellSize + cellSize / 2;
                     const fromY = previous.y * cellSize + cellSize / 2;
                     const toX = current.x * cellSize + cellSize / 2;
