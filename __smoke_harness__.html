@@ -227,6 +227,10 @@
       let afterChestPickupStep = null;
       let afterLootPickupStep = null;
       let afterLootCompletionStep = null;
+      let afterPauseState = null;
+      let afterResumeState = null;
+      let afterResetWaitingState = null;
+      let afterWaveCountdownAdvance = null;
       if (typeof api.openShop === 'function') {
         api.setState({ coins: 99 });
         api.openShop();
@@ -1135,6 +1139,99 @@
         });
       }
 
+      if (typeof api.pauseGame === 'function' && typeof api.resumeGame === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [],
+          obstacles: [],
+          snakeSkins: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          currentWave: 2,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          totalPausedTime: 0
+        });
+        api.pauseGame();
+        await wait(20);
+        afterPauseState = api.getState();
+        api.resumeGame();
+        await wait(20);
+        afterResumeState = api.getState();
+        Object.assign(interactionChecks, {
+          pauseShowsOverlayAndSetsPaused: afterPauseState.isPaused === true
+            && afterPauseState.pauseVisible === true
+            && afterPauseState.isGameRunning === true,
+          resumeClearsPausedState: afterResumeState.isPaused === false
+            && afterResumeState.pauseVisible === false
+            && afterResumeState.isGameRunning === true
+        });
+      }
+
+      if (typeof api.resetToWaitingState === 'function') {
+        api.setState({
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isGameOver: true,
+          resultVisible: true,
+          pauseVisible: false,
+          waveVisible: false,
+          shopVisible: false
+        });
+        api.resetToWaitingState();
+        await wait(20);
+        afterResetWaitingState = api.getState();
+        Object.assign(interactionChecks, {
+          resetToWaitingClearsTerminalState: afterResetWaitingState.isWaitingForStart === true
+            && afterResetWaitingState.isGameRunning === false
+            && afterResetWaitingState.isGameOver === false
+            && afterResetWaitingState.resultVisible === false
+        });
+      }
+
+      if (typeof api.enterWaveTransition === 'function' && typeof api.restartWaveTransitionCountdown === 'function') {
+        const now = Date.now();
+        api.setState({
+          currentWave: 1,
+          selectedModule: iframe.contentWindow.MODULE_TYPES ? iframe.contentWindow.MODULE_TYPES.ARMOR : null,
+          isGameRunning: false,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          waveTransitionTimer: 0,
+          waveVisible: false,
+          shopVisible: false,
+          resultVisible: false,
+          pauseVisible: false,
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [],
+          obstacles: [],
+          snakeSkins: [],
+          terrainZones: [],
+          portalPairs: [],
+          gameStartTime: now,
+          waveStartTime: now
+        });
+        api.enterWaveTransition();
+        api.setState({ waveTransitionTimer: 150 });
+        api.restartWaveTransitionCountdown();
+        await wait(300);
+        afterWaveCountdownAdvance = api.getState();
+        Object.assign(interactionChecks, {
+          waveCountdownAutoAdvancesWave: afterWaveCountdownAdvance.currentWave === 2
+            && afterWaveCountdownAdvance.isWaveTransition === false
+            && afterWaveCountdownAdvance.waveVisible === false
+        });
+      }
+
       let afterTeleportStep = null;
       if (api.FOOD_TYPES && api.FOOD_TYPES.TELEPORT && typeof api.gameStep === 'function') {
         const now = Date.now();
@@ -1243,6 +1340,10 @@
           afterChestPickupStep,
           afterLootPickupStep,
           afterLootCompletionStep,
+          afterPauseState,
+          afterResumeState,
+          afterResetWaitingState,
+          afterWaveCountdownAdvance,
           afterAdvanceWave,
           afterTerrainBonusSteps,
           afterArmorObstacleStep,
@@ -1372,6 +1473,27 @@
           waveCeremonyState: afterLootCompletionStep.waveCeremonyState,
           shopOpen: afterLootCompletionStep.shopOpen,
           shopOpening: afterLootCompletionStep.shopOpening
+        } : null,
+        pauseStateAfterPause: afterPauseState ? {
+          isPaused: afterPauseState.isPaused,
+          pauseVisible: afterPauseState.pauseVisible,
+          isGameRunning: afterPauseState.isGameRunning
+        } : null,
+        pauseStateAfterResume: afterResumeState ? {
+          isPaused: afterResumeState.isPaused,
+          pauseVisible: afterResumeState.pauseVisible,
+          isGameRunning: afterResumeState.isGameRunning
+        } : null,
+        waitingStateAfterReset: afterResetWaitingState ? {
+          isWaitingForStart: afterResetWaitingState.isWaitingForStart,
+          isGameRunning: afterResetWaitingState.isGameRunning,
+          isGameOver: afterResetWaitingState.isGameOver,
+          resultVisible: afterResetWaitingState.resultVisible
+        } : null,
+        waveTransitionStateAfterCountdown: afterWaveCountdownAdvance ? {
+          currentWave: afterWaveCountdownAdvance.currentWave,
+          isWaveTransition: afterWaveCountdownAdvance.isWaveTransition,
+          waveVisible: afterWaveCountdownAdvance.waveVisible
         } : null,
         waveStateAfterAdvance: afterAdvanceWave ? {
           currentWave: afterAdvanceWave.currentWave,
