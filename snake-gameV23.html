@@ -848,9 +848,6 @@
             { id: 'clear', name: '清障', icon: '🧹', cost: 3, desc: '清除所有蛇皮障碍', category: 'tool' },
         ];
         
-        function hasBuff(id) {
-            return activeBuffs.some(b => b.id === id);
-        }
         let waveTransitionTimer = 0;
         let waveTransitionInterval = null;
         let totalSurvivalTime = 0;
@@ -1539,9 +1536,9 @@
             let buffStr = '';
             if (shieldCharges > 0) buffStr += UI_TEXT.hud.shield(shieldCharges);
             if (dashCharges > 0) buffStr += UI_TEXT.hud.dash(dashCharges);
-            if (hasBuff('poison_resist')) buffStr += UI_TEXT.hud.poisonResist;
-            if (hasBuff('ice_armor')) buffStr += UI_TEXT.hud.iceArmor;
-            if (hasBuff('magnet')) buffStr += UI_TEXT.hud.magnet;
+            if (activeBuffs.some(b => b.id === 'poison_resist')) buffStr += UI_TEXT.hud.poisonResist;
+            if (activeBuffs.some(b => b.id === 'ice_armor')) buffStr += UI_TEXT.hud.iceArmor;
+            if (activeBuffs.some(b => b.id === 'magnet')) buffStr += UI_TEXT.hud.magnet;
             if (buffStr) {
                 timerDisplay.textContent += buffStr;
             }
@@ -1712,7 +1709,7 @@
                         }
                     }
                     if (inTerrain.type === 'slow') {
-                        const dur = hasBuff('ice_armor') ? DEBUFF_DURATION / 2 : DEBUFF_DURATION;
+                        const dur = activeBuffs.some(b => b.id === 'ice_armor') ? DEBUFF_DURATION / 2 : DEBUFF_DURATION;
                         slowDebuffEnd = terrainNow + dur;
                         if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
                             score -= 3;
@@ -1729,7 +1726,7 @@
                 if (isPoisoned) {
                     terrainDotType = 'poison';
                     if (Math.random() < 0.1) {
-                        const dmg = hasBuff('poison_resist') ? 1 : 2;
+                        const dmg = activeBuffs.some(b => b.id === 'poison_resist') ? 1 : 2;
                         score -= dmg;
                         spawnFloatingText(terrainHead.x, terrainHead.y, `-${dmg}`, '#c084fc', false);
                         updateStatusUI();
@@ -1831,7 +1828,7 @@
 
             let eatenFoodIndex = -1;
             let minDist = Infinity;
-            const pickupRadius = hasBuff('magnet') ? TUNING.pickup.magnetRadius : TUNING.pickup.defaultRadius;
+            const pickupRadius = activeBuffs.some(b => b.id === 'magnet') ? TUNING.pickup.magnetRadius : TUNING.pickup.defaultRadius;
             for (let i = 0; i < foods.length; i++) {
                 const dx = head.x - foods[i].x;
                 const dy = head.y - foods[i].y;
