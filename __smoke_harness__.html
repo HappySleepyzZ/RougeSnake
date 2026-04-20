@@ -220,6 +220,9 @@
       let afterMagnetStep = null;
       let afterDashPurchase = null;
       let afterDashTrigger = null;
+      let afterVenomPoisonSteps = null;
+      let afterBarrierFoodStep = null;
+      let afterWindFoodStep = null;
       if (typeof api.openShop === 'function') {
         api.setState({ coins: 99 });
         api.openShop();
@@ -827,6 +830,136 @@
         });
       }
 
+      if (typeof api.gameStep === 'function' && iframe.contentWindow.MODULE_TYPES && iframe.contentWindow.MODULE_TYPES.VENOM) {
+        const originalRandom = iframe.contentWindow.Math.random;
+        const now = Date.now();
+        iframe.contentWindow.selectedModule = iframe.contentWindow.MODULE_TYPES.VENOM;
+        iframe.contentWindow.Math.random = () => 0;
+        api.setState({
+          snake: [{ x: 8, y: 8 }, { x: 7, y: 8 }, { x: 6, y: 8 }],
+          foods: [],
+          obstacles: [],
+          terrainZones: [{
+            type: 'poison',
+            centerX: 8,
+            centerY: 8,
+            cells: [{ x: 8, y: 8 }, { x: 9, y: 8 }, { x: 7, y: 8 }]
+          }],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0,
+          slowDebuffEnd: 0,
+          poisonDebuffEnd: 0,
+          portalTeleportCooldown: 0
+        });
+        api.gameStep();
+        api.gameStep();
+        api.gameStep();
+        await wait(20);
+        afterVenomPoisonSteps = api.getState();
+        iframe.contentWindow.Math.random = originalRandom;
+        iframe.contentWindow.selectedModule = iframe.contentWindow.MODULE_TYPES.ARMOR;
+        Object.assign(interactionChecks, {
+          venomPoisonTerrainGrantsBonusWithoutDebuff: afterVenomPoisonSteps.score === 15
+            && afterVenomPoisonSteps.poisonDebuffEnd === 0
+        });
+      }
+
+      if (typeof api.gameStep === 'function' && api.FOOD_TYPES && api.FOOD_TYPES.BARRIER) {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [{
+            x: 6,
+            y: 5,
+            type: api.FOOD_TYPES.BARRIER,
+            pulsePhase: 0,
+            dangerShakePhase: 0,
+            windSpinPhase: 0
+          }],
+          obstacles: [],
+          snakeSkins: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterBarrierFoodStep = api.getState();
+        Object.assign(interactionChecks, {
+          barrierFoodSpawnsObstacles: Array.isArray(afterBarrierFoodStep.obstacles)
+            && afterBarrierFoodStep.obstacles.length > 0
+            && afterBarrierFoodStep.score === 20
+        });
+      }
+
+      if (typeof api.gameStep === 'function' && api.FOOD_TYPES && api.FOOD_TYPES.WIND) {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [{
+            x: 6,
+            y: 5,
+            type: api.FOOD_TYPES.WIND,
+            pulsePhase: 0,
+            dangerShakePhase: 0,
+            windSpinPhase: 0
+          }],
+          obstacles: [{ x: 10, y: 10 }, { x: 11, y: 10 }],
+          snakeSkins: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterWindFoodStep = api.getState();
+        Object.assign(interactionChecks, {
+          windFoodClearsObstacles: Array.isArray(afterWindFoodStep.obstacles)
+            && afterWindFoodStep.obstacles.length === 0
+            && afterWindFoodStep.score === -20
+        });
+      }
+
       let afterTeleportStep = null;
       if (api.FOOD_TYPES && api.FOOD_TYPES.TELEPORT && typeof api.gameStep === 'function') {
         const now = Date.now();
@@ -928,6 +1061,9 @@
           afterMagnetStep,
           afterDashPurchase,
           afterDashTrigger,
+          afterVenomPoisonSteps,
+          afterBarrierFoodStep,
+          afterWindFoodStep,
           afterAdvanceWave,
           afterTerrainBonusSteps,
           afterArmorObstacleStep,
@@ -1023,6 +1159,19 @@
           dashBurstTicks: afterDashTrigger.dashBurstTicks,
           isSpeedBoosted: afterDashTrigger.isSpeedBoosted,
           nextDirection: afterDashTrigger.nextDirection
+        } : null,
+        venomPoisonStateAfterSteps: afterVenomPoisonSteps ? {
+          score: afterVenomPoisonSteps.score,
+          poisonDebuffEnd: afterVenomPoisonSteps.poisonDebuffEnd,
+          selectedModule: afterVenomPoisonSteps.selectedModule ? afterVenomPoisonSteps.selectedModule.id : null
+        } : null,
+        barrierFoodStateAfterStep: afterBarrierFoodStep ? {
+          score: afterBarrierFoodStep.score,
+          obstacleCount: Array.isArray(afterBarrierFoodStep.obstacles) ? afterBarrierFoodStep.obstacles.length : null
+        } : null,
+        windFoodStateAfterStep: afterWindFoodStep ? {
+          score: afterWindFoodStep.score,
+          obstacleCount: Array.isArray(afterWindFoodStep.obstacles) ? afterWindFoodStep.obstacles.length : null
         } : null,
         waveStateAfterAdvance: afterAdvanceWave ? {
           currentWave: afterAdvanceWave.currentWave,

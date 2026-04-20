@@ -24,8 +24,11 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
   - `advanceWave()` terrain / portal generation
   - `gameStep()` armor module slow-terrain score bonus branch
   - `gameStep()` armor module obstacle-break passive branch
+  - `gameStep()` venom module poison-terrain immunity and score bonus branch
   - `startGame()` spirit module wide-portal passive on wave 1
   - `gameStep()` balanced module poison DoT half-damage branch
+  - `gameStep()` barrier food spawning obstacles
+  - `gameStep()` wind food clearing obstacles
   - `gameStep()` teleport food branch in a deterministic debug scenario
   - `gameStep()` wall-death branch to verify real `gameOver()` overlay behavior
 - Captures a screenshot for each target page
