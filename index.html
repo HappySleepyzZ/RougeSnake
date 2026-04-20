@@ -2307,6 +2307,26 @@
             const iconKey = SHAPE_TO_ICON[food.type.shape];
             const iconImg = iconKey ? ICON_IMAGES[iconKey] : null;
             const useIcon = iconImg && iconImg.complete && iconImg.naturalWidth > 0;
+            const itemPulse = Math.sin(time * 3 + food.pulsePhase) * 0.14 + 0.86;
+
+            ctx.save();
+            ctx.shadowColor = food.type.glow;
+            ctx.shadowBlur = (useIcon ? 10 : 16) * itemPulse;
+            const platformGradient = ctx.createRadialGradient(x, y, cellSize * 0.08, x, y, cellSize * 0.62);
+            platformGradient.addColorStop(0, 'rgba(255, 255, 255, 0.16)');
+            platformGradient.addColorStop(0.38, 'rgba(88, 196, 255, 0.08)');
+            platformGradient.addColorStop(1, 'rgba(4, 10, 24, 0)');
+            ctx.fillStyle = platformGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, cellSize * 0.56, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = `rgba(223, 248, 255, ${useIcon ? 0.16 : 0.24})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(x, y, cellSize * (useIcon ? 0.42 : 0.48), 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
 
             // V19d: 仅在 Canvas fallback 时绘制底圈和边框，图标模式下不画
             if (!useIcon) {
@@ -2628,6 +2648,63 @@
             const bColor = mod.bodyColor || '#1e8449';
             const bGlow = mod.bodyGlow || '#059669';
             const hShape = mod.headShape || 'round';
+            const headAim = direction.x !== 0 || direction.y !== 0
+                ? direction
+                : startIndicator
+                    ? {
+                        x: Math.sign(startIndicator.x - snake[0].x) || 1,
+                        y: Math.sign(startIndicator.y - snake[0].y)
+                    }
+                    : { x: 1, y: 0 };
+            const highlightDx = headAim.x || 0;
+            const highlightDy = headAim.y || 0;
+
+            const traceHeadShape = (x, y, size) => {
+                ctx.beginPath();
+                switch (hShape) {
+                    case 'triangle':
+                        ctx.moveTo(
+                            x + highlightDx * size * 1.2 - highlightDy * size * 0.1,
+                            y + highlightDy * size * 1.2 + highlightDx * size * 0.1
+                        );
+                        ctx.lineTo(x - highlightDy * size * 0.9, y + highlightDx * size * 0.9);
+                        ctx.lineTo(x + highlightDy * size * 0.9, y - highlightDx * size * 0.9);
+                        ctx.closePath();
+                        break;
+                    case 'hexagon':
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (i * Math.PI / 3) - Math.PI / 6;
+                            const px = x + Math.cos(angle) * size;
+                            const py = y + Math.sin(angle) * size;
+                            if (i === 0) ctx.moveTo(px, py);
+                            else ctx.lineTo(px, py);
+                        }
+                        ctx.closePath();
+                        break;
+                    case 'slim':
+                        ctx.ellipse(
+                            x,
+                            y,
+                            highlightDx !== 0 ? size * 1.3 : size * 0.7,
+                            highlightDy !== 0 ? size * 1.3 : size * 0.7,
+                            0,
+                            0,
+                            Math.PI * 2
+                        );
+                        break;
+                    default:
+                        ctx.arc(x, y, size, 0, Math.PI * 2);
+                        break;
+                }
+            };
+
+            const traceBodyShape = (x, y) => {
+                const bodySize = cellSize * 0.82;
+                const bodyRadius = cellSize * 0.15;
+                ctx.beginPath();
+                ctx.roundRect(x - bodySize / 2, y - bodySize / 2, bodySize, bodySize, bodyRadius);
+                return bodySize;
+            };
             
             // V17: 先画蛇身特效（在蛇下方）
             snake.forEach((seg, index) => {
@@ -2690,6 +2767,35 @@
                 debuffBodyGradientOverride = { c1: `rgba(80, 160, 255, ${tPulse})`, c2: `rgba(30, 80, 200, ${tPulse})` };
                 terrainTint = `rgba(30, 100, 220, 0.3)`;
             }
+
+            if (snake.length > 1) {
+                ctx.save();
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                for (let index = 1; index < snake.length; index++) {
+                    const previous = snake[index - 1];
+                    const current = snake[index];
+                    const fromX = previous.x * cellSize + cellSize / 2;
+                    const fromY = previous.y * cellSize + cellSize / 2;
+                    const toX = current.x * cellSize + cellSize / 2;
+                    const toY = current.y * cellSize + cellSize / 2;
+                    const depth = 1 - index / Math.max(2, snake.length);
+                    const energyAlpha = 0.22 + depth * 0.22 + breathIntensity * 0.04;
+                    ctx.strokeStyle = debuffBodyGradientOverride
+                        ? (isPoisonedDraw ? `rgba(182, 76, 255, ${energyAlpha})` : `rgba(110, 190, 255, ${energyAlpha})`)
+                        : `rgba(223, 248, 255, ${energyAlpha})`;
+                    ctx.shadowColor = debuffBodyGradientOverride
+                        ? (isPoisonedDraw ? 'rgba(182, 76, 255, 0.45)' : 'rgba(110, 190, 255, 0.4)')
+                        : bGlow;
+                    ctx.shadowBlur = 6 + depth * 8;
+                    ctx.lineWidth = Math.max(cellSize * 0.2, cellSize * (0.48 - index * 0.012));
+                    ctx.beginPath();
+                    ctx.moveTo(fromX, fromY);
+                    ctx.lineTo(toX, toY);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
             
             snake.forEach((seg, index) => {
                 const x = seg.x * cellSize + cellSize / 2;
@@ -2712,19 +2818,23 @@
                 const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
                 if (index === 0) {
                     if (headGlowTimer > 0) {
-                        gradient.addColorStop(0, '#f7dc6f');
+                        gradient.addColorStop(0, '#fff4b1');
+                        gradient.addColorStop(0.55, '#f7dc6f');
                         gradient.addColorStop(1, '#f1c40f');
                     } else {
-                        gradient.addColorStop(0, hGlow);
+                        gradient.addColorStop(0, '#f4ffff');
+                        gradient.addColorStop(0.18, hGlow);
                         gradient.addColorStop(1, hColor);
                     }
                 } else {
                     // V18c: debuff 时蛇身变色
                     if (debuffBodyGradientOverride) {
                         gradient.addColorStop(0, debuffBodyGradientOverride.c1);
+                        gradient.addColorStop(0.58, 'rgba(255, 255, 255, 0.14)');
                         gradient.addColorStop(1, debuffBodyGradientOverride.c2);
                     } else {
-                        gradient.addColorStop(0, bGlow);
+                        gradient.addColorStop(0, '#f3ffff');
+                        gradient.addColorStop(0.16, bGlow);
                         gradient.addColorStop(1, bColor);
                     }
                 }
@@ -2733,53 +2843,71 @@
                 
                 // V18b: 蛇身改为圆角方块（格子化）
                 if (index === 0) {
-                    switch (hShape) {
-                        case 'triangle':
-                            ctx.beginPath();
-                            ctx.moveTo(
-                                x + direction.x * size * 1.2 - direction.y * size * 0.1,
-                                y + direction.y * size * 1.2 + direction.x * size * 0.1
-                            );
-                            ctx.lineTo(x - direction.y * size * 0.9, y + direction.x * size * 0.9);
-                            ctx.lineTo(x + direction.y * size * 0.9, y - direction.x * size * 0.9);
-                            ctx.closePath();
-                            ctx.fill();
-                            break;
-                        case 'hexagon':
-                            ctx.beginPath();
-                            for (let i = 0; i < 6; i++) {
-                                const angle = (i * Math.PI / 3) - Math.PI / 6;
-                                const px = x + Math.cos(angle) * size;
-                                const py = y + Math.sin(angle) * size;
-                                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-                            }
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                            ctx.lineWidth = 1;
-                            ctx.beginPath();
-                            ctx.moveTo(x - size * 0.5, y);
-                            ctx.lineTo(x + size * 0.5, y);
-                            ctx.stroke();
-                            break;
-                        case 'slim':
-                            ctx.beginPath();
-                            const rx = direction.x !== 0 ? size * 1.3 : size * 0.7;
-                            const ry = direction.y !== 0 ? size * 1.3 : size * 0.7;
-                            ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-                            ctx.fill();
-                            break;
-                        default:
-                            ctx.beginPath();
-                            ctx.arc(x, y, size, 0, Math.PI * 2);
-                            ctx.fill();
+                    traceHeadShape(x, y, size);
+                    ctx.fill();
+
+                    ctx.save();
+                    traceHeadShape(x, y, size);
+                    ctx.clip();
+                    const headSheen = ctx.createLinearGradient(
+                        x - size,
+                        y - size,
+                        x + size * 0.7 - highlightDx * size * 0.2,
+                        y + size * 0.7 - highlightDy * size * 0.2
+                    );
+                    headSheen.addColorStop(0, 'rgba(255, 255, 255, 0.34)');
+                    headSheen.addColorStop(0.42, 'rgba(255, 255, 255, 0.06)');
+                    headSheen.addColorStop(1, 'rgba(0, 0, 0, 0.18)');
+                    ctx.fillStyle = headSheen;
+                    ctx.fillRect(x - size * 1.4, y - size * 1.4, size * 2.8, size * 2.8);
+                    ctx.restore();
+
+                    ctx.strokeStyle = headGlowTimer > 0 ? 'rgba(255, 248, 196, 0.92)' : 'rgba(223, 248, 255, 0.5)';
+                    ctx.lineWidth = Math.max(1.2, cellSize * 0.08);
+                    traceHeadShape(x, y, size);
+                    ctx.stroke();
+
+                    const crestX = x - highlightDx * size * 0.22 - highlightDy * size * 0.16;
+                    const crestY = y - highlightDy * size * 0.22 + highlightDx * size * 0.16;
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+                    ctx.beginPath();
+                    ctx.arc(crestX, crestY, Math.max(2, size * 0.32), 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (hShape === 'hexagon') {
+                        ctx.strokeStyle = 'rgba(255,255,255,0.24)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(x - size * 0.5, y);
+                        ctx.lineTo(x + size * 0.5, y);
+                        ctx.stroke();
                     }
                 } else {
                     const bSize = cellSize * 0.82; // 占格子80%
-                    const bRadius = cellSize * 0.15;
-                    ctx.beginPath();
-                    ctx.roundRect(x - bSize/2, y - bSize/2, bSize, bSize, bRadius);
+                    traceBodyShape(x, y);
                     ctx.fill();
+
+                    const bodySize = bSize;
+                    ctx.save();
+                    traceBodyShape(x, y);
+                    ctx.clip();
+                    const bodySheen = ctx.createLinearGradient(
+                        x - bodySize / 2,
+                        y - bodySize / 2,
+                        x + bodySize / 2,
+                        y + bodySize / 2
+                    );
+                    bodySheen.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+                    bodySheen.addColorStop(0.35, 'rgba(255, 255, 255, 0.04)');
+                    bodySheen.addColorStop(1, 'rgba(0, 0, 0, 0.18)');
+                    ctx.fillStyle = bodySheen;
+                    ctx.fillRect(x - bodySize / 2, y - bodySize / 2, bodySize, bodySize);
+                    ctx.restore();
+
+                    ctx.strokeStyle = `rgba(223, 248, 255, ${0.12 + ((snake.length - index) / Math.max(10, snake.length)) * 0.24})`;
+                    ctx.lineWidth = 1;
+                    traceBodyShape(x, y);
+                    ctx.stroke();
                 }
                 ctx.shadowBlur = 0;
                 
@@ -2796,25 +2924,43 @@
                     ctx.fillStyle = 'white';
                     const eyeSize = Math.max(2, cellSize * 0.12);
                     const eyeOffset = Math.max(2, cellSize * 0.20);
-                    
+                    const pupilSize = Math.max(1, eyeSize * 0.48);
+                    let eyes = [];
+
                     if (direction.x !== 0) {
-                        ctx.beginPath();
-                        ctx.arc(x + direction.x * eyeOffset, y - cellSize * 0.15, eyeSize, 0, Math.PI * 2);
-                        ctx.arc(x + direction.x * eyeOffset, y + cellSize * 0.15, eyeSize, 0, Math.PI * 2);
-                        ctx.fill();
+                        eyes = [
+                            { x: x + direction.x * eyeOffset, y: y - cellSize * 0.15 },
+                            { x: x + direction.x * eyeOffset, y: y + cellSize * 0.15 }
+                        ];
                     } else if (direction.y !== 0) {
+                        eyes = [
+                            { x: x - cellSize * 0.15, y: y + direction.y * eyeOffset },
+                            { x: x + cellSize * 0.15, y: y + direction.y * eyeOffset }
+                        ];
+                    } else if (startIndicator) {
+                        const dx = startIndicator.x - seg.x;
+                        eyes = [
+                            { x: x + Math.sign(dx) * eyeOffset, y: y - cellSize * 0.15 },
+                            { x: x + Math.sign(dx) * eyeOffset, y: y + cellSize * 0.15 }
+                        ];
+                    }
+
+                    if (eyes.length > 0) {
                         ctx.beginPath();
-                        ctx.arc(x - cellSize * 0.15, y + direction.y * eyeOffset, eyeSize, 0, Math.PI * 2);
-                        ctx.arc(x + cellSize * 0.15, y + direction.y * eyeOffset, eyeSize, 0, Math.PI * 2);
+                        eyes.forEach((eye) => ctx.arc(eye.x, eye.y, eyeSize, 0, Math.PI * 2));
                         ctx.fill();
-                    } else {
-                        if (startIndicator) {
-                            const dx = startIndicator.x - seg.x;
-                            ctx.beginPath();
-                            ctx.arc(x + Math.sign(dx) * eyeOffset, y - cellSize * 0.15, eyeSize, 0, Math.PI * 2);
-                            ctx.arc(x + Math.sign(dx) * eyeOffset, y + cellSize * 0.15, eyeSize, 0, Math.PI * 2);
-                            ctx.fill();
-                        }
+                        ctx.fillStyle = 'rgba(7, 18, 32, 0.88)';
+                        ctx.beginPath();
+                        eyes.forEach((eye) => {
+                            ctx.arc(
+                                eye.x + highlightDx * eyeSize * 0.22,
+                                eye.y + highlightDy * eyeSize * 0.22,
+                                pupilSize,
+                                0,
+                                Math.PI * 2
+                            );
+                        });
+                        ctx.fill();
                     }
                 }
             });
