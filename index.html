@@ -4670,6 +4670,10 @@
                     backgroundHue,
                     speedBoostTimer,
                     isSpeedBoosted,
+                    activeBuffs: activeBuffs.map(buff => ({ ...buff })),
+                    shieldCharges,
+                    dashCharges,
+                    dashBurstTicks,
                     poisonDebuffEnd,
                     slowDebuffEnd,
                     terrainSlowActive,
@@ -4680,7 +4684,8 @@
                     teleportPreview,
                     teleportTrailTimer,
                     headGlowTimer,
-                    selectedModule
+                    selectedModule,
+                    portalWidth
                 };
             },
             setStateValue(key, value) {
@@ -4763,6 +4768,18 @@
                     case 'isSpeedBoosted':
                         isSpeedBoosted = value;
                         break;
+                    case 'activeBuffs':
+                        activeBuffs = value;
+                        break;
+                    case 'shieldCharges':
+                        shieldCharges = value;
+                        break;
+                    case 'dashCharges':
+                        dashCharges = value;
+                        break;
+                    case 'dashBurstTicks':
+                        dashBurstTicks = value;
+                        break;
                     case 'poisonDebuffEnd':
                         poisonDebuffEnd = value;
                         break;
@@ -4792,6 +4809,9 @@
                         break;
                     case 'headGlowTimer':
                         headGlowTimer = value;
+                        break;
+                    case 'portalWidth':
+                        portalWidth = value;
                         break;
                     case 'ceremonyKey':
                         ceremonyKey = value;

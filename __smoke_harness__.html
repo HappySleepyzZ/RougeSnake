@@ -214,6 +214,12 @@
       let afterGrowTailPurchase = null;
       let afterPoisonResistPurchase = null;
       let afterPoisonResistStep = null;
+      let afterIceArmorPurchase = null;
+      let afterIceArmorStep = null;
+      let afterMagnetPurchase = null;
+      let afterMagnetStep = null;
+      let afterDashPurchase = null;
+      let afterDashTrigger = null;
       if (typeof api.openShop === 'function') {
         api.setState({ coins: 99 });
         api.openShop();
@@ -440,6 +446,195 @@
           });
         } else {
           interactionChecks.poisonResistHalvesPoisonDot = false;
+        }
+      }
+
+      if (typeof api.openShop === 'function' && typeof api.gameStep === 'function') {
+        api.setState({
+          coins: 99,
+          activeBuffs: [],
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          snakeSkins: [],
+          obstacles: []
+        });
+        api.openShop();
+        await wait(20);
+        const iceArmorButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('冰霜护甲'));
+        if (iceArmorButton) {
+          iceArmorButton.click();
+          await wait(20);
+          afterIceArmorPurchase = api.getState();
+          const now = Date.now();
+          api.setState({
+            snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+            foods: [],
+            obstacles: [],
+            terrainZones: [{
+              type: 'slow',
+              centerX: 6,
+              centerY: 5,
+              cells: [{ x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }]
+            }],
+            direction: { x: 1, y: 0 },
+            nextDirection: { x: 1, y: 0 },
+            score: 0,
+            currentWave: 1,
+            gameStartTime: now,
+            waveStartTime: now,
+            isGameRunning: true,
+            isWaitingForStart: false,
+            isPaused: false,
+            isWaveTransition: false,
+            isLevelComplete: false,
+            isGameOver: false,
+            resultVisible: false,
+            teleportInvincibleSteps: 0,
+            teleportPreview: null,
+            teleportTrailTimer: 0,
+            headGlowTimer: 0,
+            slowDebuffEnd: 0,
+            poisonDebuffEnd: 0,
+            portalTeleportCooldown: 0
+          });
+          api.gameStep();
+          await wait(20);
+          afterIceArmorStep = api.getState();
+          const slowDuration = afterIceArmorStep.slowDebuffEnd - now;
+          Object.assign(interactionChecks, {
+            iceArmorHalvesSlowDuration: Array.isArray(afterIceArmorPurchase.activeBuffs)
+              && afterIceArmorPurchase.activeBuffs.some((buff) => buff.id === 'ice_armor')
+              && slowDuration >= 4000
+              && slowDuration <= 6000
+          });
+        } else {
+          interactionChecks.iceArmorHalvesSlowDuration = false;
+        }
+      }
+
+      if (typeof api.openShop === 'function' && typeof api.gameStep === 'function') {
+        api.setState({
+          coins: 99,
+          activeBuffs: [],
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          snakeSkins: [],
+          obstacles: []
+        });
+        api.openShop();
+        await wait(20);
+        const magnetButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('磁铁'));
+        if (magnetButton) {
+          magnetButton.click();
+          await wait(20);
+          afterMagnetPurchase = api.getState();
+          const now = Date.now();
+          api.setState({
+            snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+            foods: [{
+              x: 8,
+              y: 5,
+              type: api.FOOD_TYPES.GROW,
+              pulsePhase: 0,
+              dangerShakePhase: 0,
+              windSpinPhase: 0
+            }],
+            obstacles: [],
+            terrainZones: [],
+            direction: { x: 1, y: 0 },
+            nextDirection: { x: 1, y: 0 },
+            score: 0,
+            currentWave: 1,
+            gameStartTime: now,
+            waveStartTime: now,
+            isGameRunning: true,
+            isWaitingForStart: false,
+            isPaused: false,
+            isWaveTransition: false,
+            isLevelComplete: false,
+            isGameOver: false,
+            resultVisible: false,
+            teleportInvincibleSteps: 0,
+            teleportPreview: null,
+            teleportTrailTimer: 0,
+            headGlowTimer: 0,
+            slowDebuffEnd: 0,
+            poisonDebuffEnd: 0,
+            portalTeleportCooldown: 0
+          });
+          api.gameStep();
+          await wait(20);
+          afterMagnetStep = api.getState();
+          Object.assign(interactionChecks, {
+            magnetExpandsPickupRadius: Array.isArray(afterMagnetPurchase.activeBuffs)
+              && afterMagnetPurchase.activeBuffs.some((buff) => buff.id === 'magnet')
+              && Array.isArray(afterMagnetStep.foods)
+              && afterMagnetStep.foods.length === 0
+              && Array.isArray(afterMagnetStep.snake)
+              && afterMagnetStep.snake.length === 4
+          });
+        } else {
+          interactionChecks.magnetExpandsPickupRadius = false;
+        }
+      }
+
+      if (typeof api.openShop === 'function' && typeof api.queueDirection === 'function') {
+        api.setState({
+          coins: 99,
+          dashCharges: 0,
+          dashBurstTicks: 0,
+          activeBuffs: []
+        });
+        api.openShop();
+        await wait(20);
+        const dashButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('冲刺'));
+        if (dashButton) {
+          dashButton.click();
+          await wait(20);
+          afterDashPurchase = api.getState();
+          const now = Date.now();
+          api.setState({
+            snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+            foods: [],
+            obstacles: [],
+            terrainZones: [],
+            direction: { x: 1, y: 0 },
+            nextDirection: { x: 1, y: 0 },
+            score: 0,
+            currentWave: 1,
+            gameStartTime: now,
+            waveStartTime: now,
+            isGameRunning: true,
+            isWaitingForStart: false,
+            hasSelectedMode: true,
+            isPaused: false,
+            isWaveTransition: false,
+            isLevelComplete: false,
+            isGameOver: false,
+            resultVisible: false,
+            teleportInvincibleSteps: 0,
+            teleportPreview: null,
+            teleportTrailTimer: 0,
+            headGlowTimer: 0,
+            speedBoostTimer: 0,
+            isSpeedBoosted: false
+          });
+          api.queueDirection({ x: 0, y: -1 });
+          await wait(20);
+          afterDashTrigger = api.getState();
+          Object.assign(interactionChecks, {
+            dashPurchaseGrantsCharge: afterDashPurchase.dashCharges === 1,
+            dashTriggersOnValidTurn: afterDashTrigger.dashCharges === 0
+              && afterDashTrigger.dashBurstTicks === 12
+              && afterDashTrigger.isSpeedBoosted === true
+              && afterDashTrigger.nextDirection
+              && afterDashTrigger.nextDirection.x === 0
+              && afterDashTrigger.nextDirection.y === -1
+          });
+        } else {
+          interactionChecks.dashPurchaseGrantsCharge = false;
+          interactionChecks.dashTriggersOnValidTurn = false;
         }
       }
 
@@ -727,6 +922,12 @@
           afterGrowTailPurchase,
           afterPoisonResistPurchase,
           afterPoisonResistStep,
+          afterIceArmorPurchase,
+          afterIceArmorStep,
+          afterMagnetPurchase,
+          afterMagnetStep,
+          afterDashPurchase,
+          afterDashTrigger,
           afterAdvanceWave,
           afterTerrainBonusSteps,
           afterArmorObstacleStep,
@@ -795,6 +996,33 @@
         poisonResistStateAfterStep: afterPoisonResistStep ? {
           score: afterPoisonResistStep.score,
           poisonDebuffEnd: afterPoisonResistStep.poisonDebuffEnd
+        } : null,
+        iceArmorPurchaseState: afterIceArmorPurchase ? {
+          activeBuffs: afterIceArmorPurchase.activeBuffs,
+          coins: afterIceArmorPurchase.coins
+        } : null,
+        iceArmorStateAfterStep: afterIceArmorStep ? {
+          slowDebuffEnd: afterIceArmorStep.slowDebuffEnd,
+          activeBuffs: afterIceArmorStep.activeBuffs
+        } : null,
+        magnetPurchaseState: afterMagnetPurchase ? {
+          activeBuffs: afterMagnetPurchase.activeBuffs,
+          coins: afterMagnetPurchase.coins
+        } : null,
+        magnetStateAfterStep: afterMagnetStep ? {
+          foodCount: Array.isArray(afterMagnetStep.foods) ? afterMagnetStep.foods.length : null,
+          snakeLength: Array.isArray(afterMagnetStep.snake) ? afterMagnetStep.snake.length : null,
+          score: afterMagnetStep.score
+        } : null,
+        dashPurchaseState: afterDashPurchase ? {
+          dashCharges: afterDashPurchase.dashCharges,
+          coins: afterDashPurchase.coins
+        } : null,
+        dashStateAfterTrigger: afterDashTrigger ? {
+          dashCharges: afterDashTrigger.dashCharges,
+          dashBurstTicks: afterDashTrigger.dashBurstTicks,
+          isSpeedBoosted: afterDashTrigger.isSpeedBoosted,
+          nextDirection: afterDashTrigger.nextDirection
         } : null,
         waveStateAfterAdvance: afterAdvanceWave ? {
           currentWave: afterAdvanceWave.currentWave,

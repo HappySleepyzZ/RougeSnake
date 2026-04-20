@@ -18,6 +18,9 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
   - `openShop()` shield purchase plus snake-skin collision protection
   - `openShop()` heal / grow-tail purchases applying the documented body-length gains
   - `openShop()` poison-resist purchase halving poison DoT for the next wave
+  - `openShop()` ice-armor purchase halving slow-terrain debuff duration
+  - `openShop()` magnet purchase expanding pickup radius beyond the default 1-tile range
+  - `openShop()` dash purchase granting a charge that is consumed on the next valid turn input
   - `advanceWave()` terrain / portal generation
   - `gameStep()` armor module slow-terrain score bonus branch
   - `gameStep()` armor module obstacle-break passive branch
