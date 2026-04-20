@@ -2842,16 +2842,35 @@
                 }
             }
             
-            const saturation = backgroundHue < 60 ? 70 : 50;
-            const lightness = backgroundHue < 60 ? 32 : 22;
-            ctx.fillStyle = `hsl(${backgroundHue}, ${saturation}%, ${lightness}%)`;
+            const saturation = backgroundHue < 60 ? 72 : 56;
+            const lightness = backgroundHue < 60 ? 18 : 12;
+            const boardGradient = ctx.createRadialGradient(
+                canvas.width * 0.5,
+                canvas.height * 0.24,
+                cellSize * 2,
+                canvas.width * 0.5,
+                canvas.height * 0.5,
+                canvas.width * 0.72
+            );
+            boardGradient.addColorStop(0, `hsla(${backgroundHue}, ${Math.min(100, saturation + 12)}%, ${lightness + 16}%, 0.96)`);
+            boardGradient.addColorStop(0.5, `hsla(${backgroundHue}, ${saturation}%, ${lightness + 6}%, 0.98)`);
+            boardGradient.addColorStop(1, 'rgba(2, 5, 14, 1)');
+            ctx.fillStyle = boardGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const scanGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            scanGradient.addColorStop(0, 'rgba(0, 210, 255, 0.04)');
+            scanGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+            scanGradient.addColorStop(1, 'rgba(157, 80, 187, 0.05)');
+            ctx.fillStyle = scanGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             if (flashAlpha > 0) {
                 ctx.fillStyle = flashColor + flashAlpha + ')';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 flashAlpha -= 0.03;
             }
-            ctx.strokeStyle = `hsla(${backgroundHue}, 25%, 40%, 0.25)`;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(125, 226, 255, 0.12)';
             ctx.lineWidth = 0.5;
             for (let i = 0; i <= tileCount; i++) {
                 ctx.beginPath();
@@ -2863,6 +2882,30 @@
                 ctx.lineTo(canvas.width, i * cellSize);
                 ctx.stroke();
             }
+            ctx.restore();
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.07)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= tileCount; i += 4) {
+                ctx.beginPath();
+                ctx.moveTo(i * cellSize, 0);
+                ctx.lineTo(i * cellSize, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * cellSize);
+                ctx.lineTo(canvas.width, i * cellSize);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.32)';
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = 'rgba(0, 210, 255, 0.18)';
+            ctx.shadowBlur = 16;
+            ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+            ctx.restore();
             const center = Math.floor(tileCount / 2);
             const halfWidth = Math.floor(portalWidth / 2);
             const portalStart = center - halfWidth;
@@ -2874,16 +2917,21 @@
                 right: { start: portalStart, end: portalEnd }
             };
             const portalPulse = Math.sin(time * 2) * 0.3 + 0.7;
-            ctx.shadowColor = '#00ff88';
-            ctx.shadowBlur = 10;
-            ctx.fillStyle = `rgba(0, 255, 136, ${0.2 * portalPulse})`;
+            ctx.shadowColor = '#00d2ff';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = `rgba(0, 210, 255, ${0.18 * portalPulse})`;
             ctx.fillRect(portals.top.start * cellSize, 0, (portals.top.end - portals.top.start + 1) * cellSize, cellSize);
             ctx.fillRect(portals.bottom.start * cellSize, canvas.height - cellSize, (portals.bottom.end - portals.bottom.start + 1) * cellSize, cellSize);
             ctx.fillRect(0, portals.left.start * cellSize, cellSize, (portals.left.end - portals.left.start + 1) * cellSize);
             ctx.fillRect(canvas.width - cellSize, portals.right.start * cellSize, cellSize, (portals.right.end - portals.right.start + 1) * cellSize);
+            ctx.fillStyle = `rgba(157, 80, 187, ${0.11 * portalPulse})`;
+            ctx.fillRect(portals.top.start * cellSize, 0, (portals.top.end - portals.top.start + 1) * cellSize, cellSize * 0.3);
+            ctx.fillRect(portals.bottom.start * cellSize, canvas.height - cellSize * 0.3, (portals.bottom.end - portals.bottom.start + 1) * cellSize, cellSize * 0.3);
+            ctx.fillRect(0, portals.left.start * cellSize, cellSize * 0.3, (portals.left.end - portals.left.start + 1) * cellSize);
+            ctx.fillRect(canvas.width - cellSize * 0.3, portals.right.start * cellSize, cellSize * 0.3, (portals.right.end - portals.right.start + 1) * cellSize);
             ctx.shadowBlur = 0;
-            ctx.fillStyle = '#fff';
-            ctx.font = `bold ${cellSize * 0.6}px Arial`;
+            ctx.fillStyle = '#dff8ff';
+            ctx.font = `bold ${cellSize * 0.58}px ${getComputedStyle(document.body).fontFamily}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const topCenterX = (portals.top.start + (portals.top.end - portals.top.start) / 2 + 0.5) * cellSize;
@@ -2902,13 +2950,13 @@
             ctx.rotate(Math.PI / 2);
             ctx.fillText('↔', 0, 0);
             ctx.restore();
-            const wallColor = '#ff4444';
+            const wallColor = '#ff4b2b';
             const wallWidth = Math.max(3, cellSize * 0.25);
             ctx.strokeStyle = wallColor;
             ctx.lineWidth = wallWidth;
             ctx.lineCap = 'round';
             ctx.shadowColor = wallColor;
-            ctx.shadowBlur = 3;
+            ctx.shadowBlur = 8;
             ctx.beginPath();
             ctx.moveTo(0, wallWidth / 2);
             ctx.lineTo(portals.top.start * cellSize, wallWidth / 2);
@@ -2942,6 +2990,18 @@
             ctx.lineTo(canvas.width - wallWidth / 2, canvas.height);
             ctx.stroke();
             ctx.shadowBlur = 0;
+            const vignette = ctx.createRadialGradient(
+                canvas.width * 0.5,
+                canvas.height * 0.5,
+                canvas.width * 0.15,
+                canvas.width * 0.5,
+                canvas.height * 0.5,
+                canvas.width * 0.75
+            );
+            vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            vignette.addColorStop(1, 'rgba(0, 0, 0, 0.34)');
+            ctx.fillStyle = vignette;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             const obstacleScale = getScaleFactors();
             const rockTexture = TEXTURE_IMAGES.obstacle_rock;
             const useRockTexture = !!(rockTexture && rockTexture.complete && rockTexture.naturalWidth > 0);
