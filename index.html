@@ -2644,6 +2644,12 @@
             const scale = getScaleFactors();
             let x = food.x * cellSize + cellSize / 2;
             let y = food.y * cellSize + cellSize / 2;
+            const motionPhase = time * 3 + food.pulsePhase;
+            const hoverOffsetY = Math.sin(motionPhase) * cellSize * 0.05;
+            const driftOffsetX = Math.cos(motionPhase * 0.7 + (food.dangerShakePhase || 0)) * cellSize * 0.02;
+
+            x += driftOffsetX;
+            y += hoverOffsetY;
 
             if (food.type.isDanger && !food.type.isWind) {
                 const shakeAmount = Math.sin(time * 15 + (food.dangerShakePhase || 0)) * 2;
@@ -3896,6 +3902,12 @@
                     const scale = getScaleFactors();
                     let x = food.x * cellSize + cellSize / 2;
                     let y = food.y * cellSize + cellSize / 2;
+                    const motionPhase = time * 3 + food.pulsePhase;
+                    const hoverOffsetY = Math.sin(motionPhase) * cellSize * 0.05;
+                    const driftOffsetX = Math.cos(motionPhase * 0.7 + (food.dangerShakePhase || 0)) * cellSize * 0.02;
+
+                    x += driftOffsetX;
+                    y += hoverOffsetY;
 
                     if (food.type.isDanger && !food.type.isWind) {
                         const shakeAmount = Math.sin(time * 15 + (food.dangerShakePhase || 0)) * 2;
