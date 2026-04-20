@@ -20,7 +20,7 @@ window.SnakeWaveGeneration = {
         key: 'frost',
         themeName: '寒潮来袭',
         durationMs: 18000,
-        backgroundHue: 196,
+        backgroundHue: 208,
         terrainCounts: { poison: 0, slow: 1 },
         portalPairCount: 0
       },
