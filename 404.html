@@ -3321,28 +3321,22 @@
                 }
             }
             
-            const saturation = backgroundHue < 60 ? 44 : 30;
-            const lightness = backgroundHue < 60 ? 20 : 15;
+            const saturation = backgroundHue < 60 ? 58 : 38;
+            const lightness = backgroundHue < 60 ? 27 : 19;
             const boardGradient = ctx.createRadialGradient(
                 canvas.width * 0.5,
-                canvas.height * 0.2,
+                canvas.height * 0.28,
                 cellSize,
                 canvas.width * 0.5,
                 canvas.height * 0.5,
-                canvas.width * 0.78
+                canvas.width * 0.82
             );
-            boardGradient.addColorStop(0, `hsla(${backgroundHue}, ${Math.min(100, saturation + 8)}%, ${lightness + 14}%, 0.98)`);
-            boardGradient.addColorStop(0.48, `hsla(${backgroundHue}, ${saturation}%, ${lightness + 4}%, 0.99)`);
-            boardGradient.addColorStop(1, 'rgba(13, 18, 38, 1)');
+            boardGradient.addColorStop(0, `hsla(${backgroundHue}, ${Math.min(100, saturation + 10)}%, ${lightness + 10}%, 0.99)`);
+            boardGradient.addColorStop(0.52, `hsla(${backgroundHue}, ${saturation}%, ${lightness + 2}%, 0.99)`);
+            boardGradient.addColorStop(1, `hsla(${backgroundHue}, ${Math.max(18, saturation - 8)}%, ${Math.max(7, lightness - 10)}%, 1)`);
             ctx.fillStyle = boardGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const scanGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            scanGradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
-            scanGradient.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
-            scanGradient.addColorStop(1, 'rgba(76, 91, 160, 0.08)');
-            ctx.fillStyle = scanGradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
             const vignetteGradient = ctx.createRadialGradient(
                 canvas.width * 0.5,
                 canvas.height * 0.45,
@@ -3352,7 +3346,7 @@
                 canvas.width * 0.7
             );
             vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            vignetteGradient.addColorStop(1, 'rgba(3, 5, 14, 0.34)');
+            vignetteGradient.addColorStop(1, 'rgba(8, 10, 16, 0.26)');
             ctx.fillStyle = vignetteGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             if (flashAlpha > 0) {
@@ -3361,7 +3355,7 @@
                 flashAlpha -= 0.03;
             }
             ctx.save();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+            ctx.strokeStyle = `hsla(${backgroundHue}, 22%, 62%, 0.14)`;
             ctx.lineWidth = 0.5;
             for (let i = 0; i <= tileCount; i++) {
                 ctx.beginPath();
@@ -3376,28 +3370,13 @@
             ctx.restore();
 
             ctx.save();
-            ctx.strokeStyle = 'rgba(120, 146, 255, 0.08)';
-            ctx.lineWidth = 0.8;
-            for (let i = 0; i <= tileCount; i += 4) {
-                ctx.beginPath();
-                ctx.moveTo(i * cellSize, 0);
-                ctx.lineTo(i * cellSize, canvas.height);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(0, i * cellSize);
-                ctx.lineTo(canvas.width, i * cellSize);
-                ctx.stroke();
-            }
-            ctx.restore();
-
-            ctx.save();
-            ctx.strokeStyle = 'rgba(214, 227, 255, 0.18)';
-            ctx.lineWidth = 1.25;
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.18)';
-            ctx.shadowBlur = 10;
-            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+            ctx.strokeStyle = 'rgba(241, 232, 212, 0.16)';
             ctx.lineWidth = 1;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.18)';
+            ctx.shadowBlur = 6;
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 0.8;
             ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
             ctx.restore();
             const center = Math.floor(tileCount / 2);
@@ -3411,20 +3390,15 @@
                 right: { start: portalStart, end: portalEnd }
             };
             const portalPulse = Math.sin(time * 2) * 0.3 + 0.7;
-            ctx.shadowColor = '#00d2ff';
-            ctx.shadowBlur = 18;
-            ctx.fillStyle = `rgba(0, 210, 255, ${0.18 * portalPulse})`;
+            ctx.shadowColor = '#36d07c';
+            ctx.shadowBlur = 9;
+            ctx.fillStyle = `rgba(54, 208, 124, ${0.14 * portalPulse})`;
             ctx.fillRect(portals.top.start * cellSize, 0, (portals.top.end - portals.top.start + 1) * cellSize, cellSize);
             ctx.fillRect(portals.bottom.start * cellSize, canvas.height - cellSize, (portals.bottom.end - portals.bottom.start + 1) * cellSize, cellSize);
             ctx.fillRect(0, portals.left.start * cellSize, cellSize, (portals.left.end - portals.left.start + 1) * cellSize);
             ctx.fillRect(canvas.width - cellSize, portals.right.start * cellSize, cellSize, (portals.right.end - portals.right.start + 1) * cellSize);
-            ctx.fillStyle = `rgba(157, 80, 187, ${0.11 * portalPulse})`;
-            ctx.fillRect(portals.top.start * cellSize, 0, (portals.top.end - portals.top.start + 1) * cellSize, cellSize * 0.3);
-            ctx.fillRect(portals.bottom.start * cellSize, canvas.height - cellSize * 0.3, (portals.bottom.end - portals.bottom.start + 1) * cellSize, cellSize * 0.3);
-            ctx.fillRect(0, portals.left.start * cellSize, cellSize * 0.3, (portals.left.end - portals.left.start + 1) * cellSize);
-            ctx.fillRect(canvas.width - cellSize * 0.3, portals.right.start * cellSize, cellSize * 0.3, (portals.right.end - portals.right.start + 1) * cellSize);
             ctx.shadowBlur = 0;
-            ctx.fillStyle = '#dff8ff';
+            ctx.fillStyle = '#eef7ea';
             ctx.font = `bold ${cellSize * 0.58}px ${getComputedStyle(document.body).fontFamily}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -3444,13 +3418,13 @@
             ctx.rotate(Math.PI / 2);
             ctx.fillText('↔', 0, 0);
             ctx.restore();
-            const wallColor = '#ff4b2b';
+            const wallColor = '#ff4444';
             const wallWidth = Math.max(3, cellSize * 0.25);
             ctx.strokeStyle = wallColor;
             ctx.lineWidth = wallWidth;
             ctx.lineCap = 'round';
             ctx.shadowColor = wallColor;
-            ctx.shadowBlur = 8;
+            ctx.shadowBlur = 3;
             ctx.beginPath();
             ctx.moveTo(0, wallWidth / 2);
             ctx.lineTo(portals.top.start * cellSize, wallWidth / 2);
@@ -3493,7 +3467,7 @@
                 canvas.width * 0.75
             );
             vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            vignette.addColorStop(1, 'rgba(0, 0, 0, 0.34)');
+            vignette.addColorStop(1, 'rgba(0, 0, 0, 0.24)');
             ctx.fillStyle = vignette;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             const obstacleScale = getScaleFactors();
