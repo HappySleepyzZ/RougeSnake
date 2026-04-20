@@ -1272,48 +1272,6 @@
         const MAX_OBSTACLES = TUNING.generation.maxObstacles;
         
         // ========== V16: 波次系统函数 ==========
-        function generateWaveTerrain() {
-            terrainZones = [];
-            const counts = currentWave <= 1
-                ? { ...TUNING.terrain.baseCounts.wave1 }
-                : currentWave === 2
-                    ? { ...TUNING.terrain.baseCounts.wave2 }
-                    : currentWave === 3
-                        ? { ...TUNING.terrain.baseCounts.wave3 }
-                        : {
-                            poison: 2 + Math.floor((currentWave - 3) / 2),
-                            slow: 2 + Math.ceil((currentWave - 3) / 2)
-                        };
-            const spawnTerrainZone = (type) => {
-                const padding = TUNING.terrain.spawnPadding;
-                const head = snake[0];
-                for (let attempts = 0; attempts < TUNING.generation.terrainZoneSpawnAttempts; attempts++) {
-                    const cx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                    const cy = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                    if (Math.abs(cx - head.x) + Math.abs(cy - head.y) < TUNING.terrain.minHeadDistance) continue;
-                    const cells = [];
-                    for (let dx = -1; dx <= 1; dx++) {
-                        for (let dy = -1; dy <= 1; dy++) {
-                            const x = cx + dx;
-                            const y = cy + dy;
-                            if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
-                            cells.push({ x, y });
-                        }
-                    }
-                    return { type, centerX: cx, centerY: cy, cells };
-                }
-                return null;
-            };
-            for (let i = 0; i < counts.poison; i++) {
-                const zone = spawnTerrainZone('poison');
-                if (zone) terrainZones.push(zone);
-            }
-            for (let i = 0; i < counts.slow; i++) {
-                const zone = spawnTerrainZone('slow');
-                if (zone) terrainZones.push(zone);
-            }
-        }
-
         // V17fix: DoT 计步器
         let terrainDotStepCounter = 0;
         const TERRAIN_DOT_INTERVAL = TUNING.terrain.dotInterval; // 每3步触发一次
@@ -3520,7 +3478,47 @@
             } else {
                 portalWidth = currentLevelConfig.portalWidth;
             }
-            generateWaveTerrain();
+            terrainZones = [];
+            {
+                const counts = currentWave <= 1
+                    ? { ...TUNING.terrain.baseCounts.wave1 }
+                    : currentWave === 2
+                        ? { ...TUNING.terrain.baseCounts.wave2 }
+                        : currentWave === 3
+                            ? { ...TUNING.terrain.baseCounts.wave3 }
+                            : {
+                                poison: 2 + Math.floor((currentWave - 3) / 2),
+                                slow: 2 + Math.ceil((currentWave - 3) / 2)
+                            };
+                const spawnTerrainZone = (type) => {
+                    const padding = TUNING.terrain.spawnPadding;
+                    const head = snake[0];
+                    for (let attempts = 0; attempts < TUNING.generation.terrainZoneSpawnAttempts; attempts++) {
+                        const cx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
+                        const cy = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
+                        if (Math.abs(cx - head.x) + Math.abs(cy - head.y) < TUNING.terrain.minHeadDistance) continue;
+                        const cells = [];
+                        for (let dx = -1; dx <= 1; dx++) {
+                            for (let dy = -1; dy <= 1; dy++) {
+                                const x = cx + dx;
+                                const y = cy + dy;
+                                if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
+                                cells.push({ x, y });
+                            }
+                        }
+                        return { type, centerX: cx, centerY: cy, cells };
+                    }
+                    return null;
+                };
+                for (let i = 0; i < counts.poison; i++) {
+                    const zone = spawnTerrainZone('poison');
+                    if (zone) terrainZones.push(zone);
+                }
+                for (let i = 0; i < counts.slow; i++) {
+                    const zone = spawnTerrainZone('slow');
+                    if (zone) terrainZones.push(zone);
+                }
+            }
             portalPairs = [];
             {
                 let count = 0;
@@ -3893,7 +3891,47 @@
                 resetWaveProgressState();
                 resetCeremonyState();
                 resetWaveDebuffState();
-                generateWaveTerrain();
+                terrainZones = [];
+                {
+                    const counts = currentWave <= 1
+                        ? { ...TUNING.terrain.baseCounts.wave1 }
+                        : currentWave === 2
+                            ? { ...TUNING.terrain.baseCounts.wave2 }
+                            : currentWave === 3
+                                ? { ...TUNING.terrain.baseCounts.wave3 }
+                                : {
+                                    poison: 2 + Math.floor((currentWave - 3) / 2),
+                                    slow: 2 + Math.ceil((currentWave - 3) / 2)
+                                };
+                    const spawnTerrainZone = (type) => {
+                        const padding = TUNING.terrain.spawnPadding;
+                        const head = snake[0];
+                        for (let attempts = 0; attempts < TUNING.generation.terrainZoneSpawnAttempts; attempts++) {
+                            const cx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
+                            const cy = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
+                            if (Math.abs(cx - head.x) + Math.abs(cy - head.y) < TUNING.terrain.minHeadDistance) continue;
+                            const cells = [];
+                            for (let dx = -1; dx <= 1; dx++) {
+                                for (let dy = -1; dy <= 1; dy++) {
+                                    const x = cx + dx;
+                                    const y = cy + dy;
+                                    if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
+                                    cells.push({ x, y });
+                                }
+                            }
+                            return { type, centerX: cx, centerY: cy, cells };
+                        }
+                        return null;
+                    };
+                    for (let i = 0; i < counts.poison; i++) {
+                        const zone = spawnTerrainZone('poison');
+                        if (zone) terrainZones.push(zone);
+                    }
+                    for (let i = 0; i < counts.slow; i++) {
+                        const zone = spawnTerrainZone('slow');
+                        if (zone) terrainZones.push(zone);
+                    }
+                }
                 portalPairs = [];
                 {
                     let count = 0;
