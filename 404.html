@@ -1666,6 +1666,7 @@
                 lead: [440.0, 554.37, 659.25, 554.37]
             }
         };
+        const AUDIO_BGM_TRACK = 'assets/audio/ai_cyber_song.wav';
 
         let audioContext = null;
         let audioMasterGain = null;
@@ -1674,6 +1675,7 @@
         let audioMusicTimer = null;
         let audioMusicStep = 0;
         let audioUnlocked = false;
+        let bgmAudio = null;
 
         function ensureAudioContext() {
             if (audioContext) return audioContext;
@@ -1690,6 +1692,16 @@
             audioSfxGain.connect(audioMasterGain);
             audioMasterGain.connect(audioContext.destination);
             return audioContext;
+        }
+
+        function ensureBgmAudio() {
+            if (bgmAudio) return bgmAudio;
+            if (!AUDIO_BGM_TRACK) return null;
+            bgmAudio = new Audio(AUDIO_BGM_TRACK);
+            bgmAudio.loop = true;
+            bgmAudio.preload = 'auto';
+            bgmAudio.volume = 0.42;
+            return bgmAudio;
         }
 
         function getAudioThemeKey() {
@@ -1837,15 +1849,29 @@
 
         function updateMusicLoop() {
             const ctx = ensureAudioContext();
-            if (!ctx) return;
-            if (audioUnlocked && ctx.state === 'suspended') {
+            if (ctx && audioUnlocked && ctx.state === 'suspended') {
                 ctx.resume().catch(() => {});
             }
             if (audioMusicTimer) {
                 clearInterval(audioMusicTimer);
                 audioMusicTimer = null;
             }
-            if (!shouldRunMusic()) return;
+            const musicShouldRun = shouldRunMusic();
+            const realBgm = ensureBgmAudio();
+            if (realBgm) {
+                if (!musicShouldRun) {
+                    realBgm.pause();
+                    realBgm.currentTime = Math.max(0, realBgm.currentTime);
+                    return;
+                }
+                const playPromise = realBgm.play();
+                if (playPromise && typeof playPromise.catch === 'function') {
+                    playPromise.catch(() => {});
+                }
+                return;
+            }
+            if (!ctx) return;
+            if (!musicShouldRun) return;
             const theme = AUDIO_THEMES[getAudioThemeKey()] || AUDIO_THEMES.onboarding;
             tickMusicLoop();
             audioMusicTimer = setInterval(() => {
@@ -1855,8 +1881,7 @@
 
         function unlockAudio() {
             const ctx = ensureAudioContext();
-            if (!ctx) return;
-            if (ctx.state === 'suspended') {
+            if (ctx && ctx.state === 'suspended') {
                 ctx.resume().catch(() => {});
             }
             audioUnlocked = true;
