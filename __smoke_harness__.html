@@ -210,6 +210,10 @@
       let afterClearPurchase = null;
       let afterShieldPurchase = null;
       let afterShieldSnakeSkinStep = null;
+      let afterHealPurchase = null;
+      let afterGrowTailPurchase = null;
+      let afterPoisonResistPurchase = null;
+      let afterPoisonResistStep = null;
       if (typeof api.openShop === 'function') {
         api.setState({ coins: 99 });
         api.openShop();
@@ -331,6 +335,111 @@
         } else {
           interactionChecks.shieldPurchaseGrantedCharge = false;
           interactionChecks.shieldBlocksSnakeSkinCollision = false;
+        }
+      }
+
+      if (typeof api.openShop === 'function') {
+        api.setState({
+          coins: 99,
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }]
+        });
+        api.openShop();
+        await wait(20);
+        const healButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('回复'));
+        if (healButton) {
+          healButton.click();
+          await wait(20);
+          afterHealPurchase = api.getState();
+          Object.assign(interactionChecks, {
+            healPurchaseAddsTwoSegments: Array.isArray(afterHealPurchase.snake) && afterHealPurchase.snake.length === 5
+          });
+        } else {
+          interactionChecks.healPurchaseAddsTwoSegments = false;
+        }
+      }
+
+      if (typeof api.openShop === 'function') {
+        api.setState({
+          coins: 99,
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }]
+        });
+        api.openShop();
+        await wait(20);
+        const growTailButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('加长'));
+        if (growTailButton) {
+          growTailButton.click();
+          await wait(20);
+          afterGrowTailPurchase = api.getState();
+          Object.assign(interactionChecks, {
+            growTailPurchaseAddsFourSegments: Array.isArray(afterGrowTailPurchase.snake) && afterGrowTailPurchase.snake.length === 7
+          });
+        } else {
+          interactionChecks.growTailPurchaseAddsFourSegments = false;
+        }
+      }
+
+      if (typeof api.openShop === 'function' && typeof api.gameStep === 'function') {
+        api.setState({
+          coins: 99,
+          snake: [{ x: 8, y: 8 }, { x: 7, y: 8 }, { x: 6, y: 8 }],
+          snakeSkins: [],
+          obstacles: []
+        });
+        api.openShop();
+        await wait(20);
+        const poisonResistButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('毒雾抗性'));
+        if (poisonResistButton) {
+          poisonResistButton.click();
+          await wait(20);
+          afterPoisonResistPurchase = api.getState();
+          const originalRandom = iframe.contentWindow.Math.random;
+          const now = Date.now();
+          iframe.contentWindow.Math.random = () => 0;
+          api.setState({
+            snake: [{ x: 8, y: 8 }, { x: 7, y: 8 }, { x: 6, y: 8 }],
+            foods: [],
+            obstacles: [],
+            terrainZones: [{
+              type: 'poison',
+              centerX: 8,
+              centerY: 8,
+              cells: [{ x: 8, y: 8 }, { x: 9, y: 8 }, { x: 7, y: 8 }]
+            }],
+            direction: { x: 1, y: 0 },
+            nextDirection: { x: 1, y: 0 },
+            score: 0,
+            currentWave: 1,
+            gameStartTime: now,
+            waveStartTime: now,
+            isGameRunning: true,
+            isWaitingForStart: false,
+            isPaused: false,
+            isWaveTransition: false,
+            isLevelComplete: false,
+            isGameOver: false,
+            resultVisible: false,
+            teleportInvincibleSteps: 0,
+            teleportPreview: null,
+            teleportTrailTimer: 0,
+            headGlowTimer: 0,
+            poisonDebuffEnd: 0,
+            slowDebuffEnd: 0,
+            portalTeleportCooldown: 0
+          });
+          api.gameStep();
+          await wait(20);
+          afterPoisonResistStep = api.getState();
+          iframe.contentWindow.Math.random = originalRandom;
+          Object.assign(interactionChecks, {
+            poisonResistHalvesPoisonDot: afterPoisonResistStep.score === -1
+              && typeof afterPoisonResistStep.poisonDebuffEnd === 'number'
+              && afterPoisonResistStep.poisonDebuffEnd > now
+          });
+        } else {
+          interactionChecks.poisonResistHalvesPoisonDot = false;
         }
       }
 
@@ -614,6 +723,10 @@
           afterClearPurchase,
           afterShieldPurchase,
           afterShieldSnakeSkinStep,
+          afterHealPurchase,
+          afterGrowTailPurchase,
+          afterPoisonResistPurchase,
+          afterPoisonResistStep,
           afterAdvanceWave,
           afterTerrainBonusSteps,
           afterArmorObstacleStep,
@@ -666,6 +779,22 @@
           isGameOver: afterShieldSnakeSkinStep.isGameOver,
           shieldCharges: afterShieldSnakeSkinStep.shieldCharges,
           snakeSkinCount: Array.isArray(afterShieldSnakeSkinStep.snakeSkins) ? afterShieldSnakeSkinStep.snakeSkins.length : null
+        } : null,
+        healPurchaseState: afterHealPurchase ? {
+          snakeLength: Array.isArray(afterHealPurchase.snake) ? afterHealPurchase.snake.length : null,
+          coins: afterHealPurchase.coins
+        } : null,
+        growTailPurchaseState: afterGrowTailPurchase ? {
+          snakeLength: Array.isArray(afterGrowTailPurchase.snake) ? afterGrowTailPurchase.snake.length : null,
+          coins: afterGrowTailPurchase.coins
+        } : null,
+        poisonResistPurchaseState: afterPoisonResistPurchase ? {
+          coins: afterPoisonResistPurchase.coins,
+          isWaveTransition: afterPoisonResistPurchase.isWaveTransition
+        } : null,
+        poisonResistStateAfterStep: afterPoisonResistStep ? {
+          score: afterPoisonResistStep.score,
+          poisonDebuffEnd: afterPoisonResistStep.poisonDebuffEnd
         } : null,
         waveStateAfterAdvance: afterAdvanceWave ? {
           currentWave: afterAdvanceWave.currentWave,
