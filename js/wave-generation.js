@@ -7,14 +7,95 @@ window.SnakeWaveGeneration = {
       isPositionOccupied
     } = api;
 
-    function getTerrainCounts(currentWave) {
-      if (currentWave <= 1) return { ...TUNING.terrain.baseCounts.wave1 };
-      if (currentWave === 2) return { ...TUNING.terrain.baseCounts.wave2 };
-      if (currentWave === 3) return { ...TUNING.terrain.baseCounts.wave3 };
+    const WAVE_PROFILES = {
+      1: {
+        key: 'onboarding',
+        themeName: '试炼开场',
+        durationMs: 15000,
+        backgroundHue: 224,
+        terrainCounts: { poison: 0, slow: 0 },
+        portalPairCount: 0
+      },
+      2: {
+        key: 'frost',
+        themeName: '寒潮来袭',
+        durationMs: 18000,
+        backgroundHue: 198,
+        terrainCounts: { poison: 0, slow: 1 },
+        portalPairCount: 0
+      },
+      3: {
+        key: 'poison',
+        themeName: '毒雾蔓延',
+        durationMs: 20000,
+        backgroundHue: 286,
+        terrainCounts: { poison: 1, slow: 1 },
+        portalPairCount: 0
+      },
+      4: {
+        key: 'rift',
+        themeName: '裂隙开启',
+        durationMs: 22000,
+        backgroundHue: 156,
+        terrainCounts: { poison: 1, slow: 1 },
+        portalPairCount: 1
+      }
+    };
+
+    function cloneProfile(wave, profile) {
       return {
-        poison: 2 + Math.floor((currentWave - 3) / 2),
-        slow: 2 + Math.ceil((currentWave - 3) / 2)
+        wave,
+        key: profile.key,
+        themeName: profile.themeName,
+        durationMs: profile.durationMs,
+        backgroundHue: profile.backgroundHue,
+        terrainCounts: { ...profile.terrainCounts },
+        portalPairCount: profile.portalPairCount
       };
+    }
+
+    function getInfiniteWaveProfile(currentWave) {
+      const extraWaveIndex = currentWave - 5;
+      const tier = Math.floor(extraWaveIndex / 3);
+      const phase = extraWaveIndex % 3;
+
+      if (phase === 0) {
+        return {
+          key: 'frost-surge',
+          themeName: '寒潮加剧',
+          durationMs: Math.min(30000, 24000 + tier * 1000),
+          backgroundHue: 194,
+          terrainCounts: { poison: 1 + tier, slow: 2 + tier },
+          portalPairCount: 1 + Math.floor(tier / 2)
+        };
+      }
+
+      if (phase === 1) {
+        return {
+          key: 'venom-tide',
+          themeName: '毒潮翻涌',
+          durationMs: Math.min(30000, 25000 + tier * 1000),
+          backgroundHue: 292,
+          terrainCounts: { poison: 2 + tier, slow: 1 + tier },
+          portalPairCount: 1 + Math.floor(tier / 2)
+        };
+      }
+
+      return {
+        key: 'rift-storm',
+        themeName: '裂隙共振',
+        durationMs: Math.min(30000, 26000 + tier * 1000),
+        backgroundHue: 164,
+        terrainCounts: { poison: 2 + tier, slow: 2 + tier },
+        portalPairCount: 2 + Math.floor(tier / 2)
+      };
+    }
+
+    function getWaveProfile(currentWave) {
+      if (WAVE_PROFILES[currentWave]) {
+        return cloneProfile(currentWave, WAVE_PROFILES[currentWave]);
+      }
+      return cloneProfile(currentWave, getInfiniteWaveProfile(currentWave));
     }
 
     function spawnTerrainZone(type) {
@@ -40,7 +121,8 @@ window.SnakeWaveGeneration = {
     }
 
     function generateTerrainZones(currentWave) {
-      const counts = getTerrainCounts(currentWave);
+      const profile = getWaveProfile(currentWave);
+      const counts = profile.terrainCounts;
       const terrainZones = [];
       for (let i = 0; i < counts.poison; i++) {
         const zone = spawnTerrainZone('poison');
@@ -58,9 +140,7 @@ window.SnakeWaveGeneration = {
       const padding = TUNING.terrain.spawnPadding;
       const head = getSnake()[0];
       const portalPairs = [];
-      let count = 0;
-      if (currentWave >= 1) count = 1;
-      if (currentWave >= 3) count = 2;
+      const count = getWaveProfile(currentWave).portalPairCount;
       for (let i = 0; i < count; i++) {
         let pair = null;
         for (let attempts = 0; attempts < TUNING.generation.portalSpawnAttempts; attempts++) {
@@ -89,13 +169,16 @@ window.SnakeWaveGeneration = {
     }
 
     function generateWaveEnvironment(currentWave) {
+      const profile = getWaveProfile(currentWave);
       return {
+        profile,
         terrainZones: generateTerrainZones(currentWave),
         portalPairs: generatePortalPairs(currentWave)
       };
     }
 
     return {
+      getWaveProfile,
       generateWaveEnvironment
     };
   }

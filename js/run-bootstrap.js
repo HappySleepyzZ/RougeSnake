@@ -36,6 +36,7 @@ window.SnakeRunBootstrap = {
       const selectedModule = getSelectedModule();
       const now = getNow();
       const currentWave = 1;
+      const waveEnvironment = generateWaveEnvironment(currentWave);
 
       return {
         state: {
@@ -49,7 +50,7 @@ window.SnakeRunBootstrap = {
           foodEatenCount: 0,
           score: 0,
           currentInterval: BASE_SPEED,
-          backgroundHue: 240,
+          backgroundHue: waveEnvironment.profile.backgroundHue,
           speedBoostTimer: 0,
           isSpeedBoosted: false,
           dashBurstTicks: 0,
@@ -66,7 +67,7 @@ window.SnakeRunBootstrap = {
           currentWave,
           portalWidth: getPortalWidth(selectedModule, currentLevelConfig)
         },
-        waveEnvironment: generateWaveEnvironment(currentWave),
+        waveEnvironment,
         initialFoodCount: getInitialFoodCount(currentLevelConfig.initialFood)
       };
     }

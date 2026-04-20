@@ -11,6 +11,7 @@ window.SnakeUiOverlays = {
       waveTransitionDuration,
       UI_TEXT,
       getCurrentWave,
+      getWaveProfile,
       getShopOverlayElement,
       actions,
       canRunGameLoop
@@ -89,8 +90,11 @@ window.SnakeUiOverlays = {
     const showOnlyResultOverlay = createExclusiveOverlayAction(() => resultOverlay);
 
     function renderWaveTransitionOverlay() {
-      waveText.textContent = UI_TEXT.wave.complete(getCurrentWave());
-      waveCountdown.textContent = UI_TEXT.wave.nextIn(Math.ceil(waveTransitionDuration / 1000));
+      const nextWave = getCurrentWave() + 1;
+      const nextWaveProfile = typeof getWaveProfile === 'function' ? getWaveProfile(nextWave) : null;
+      const nextThemeName = nextWaveProfile ? nextWaveProfile.themeName : '';
+      waveText.textContent = UI_TEXT.wave.transitionTitle(nextWave, nextThemeName);
+      waveCountdown.textContent = UI_TEXT.wave.nextIn(Math.ceil(waveTransitionDuration / 1000), nextThemeName);
       showWaveOverlay();
     }
 
