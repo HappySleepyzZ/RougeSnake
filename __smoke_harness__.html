@@ -301,6 +301,53 @@
         });
       }
 
+      let afterBalancedPoisonStep = null;
+      if (typeof api.gameStep === 'function' && iframe.contentWindow.MODULE_TYPES && iframe.contentWindow.MODULE_TYPES.BALANCED) {
+        const originalRandom = iframe.contentWindow.Math.random;
+        const now = Date.now();
+        iframe.contentWindow.selectedModule = iframe.contentWindow.MODULE_TYPES.BALANCED;
+        iframe.contentWindow.Math.random = () => 0;
+        api.setState({
+          snake: [{ x: 8, y: 8 }, { x: 7, y: 8 }, { x: 6, y: 8 }],
+          foods: [],
+          obstacles: [],
+          terrainZones: [{
+            type: 'poison',
+            centerX: 8,
+            centerY: 8,
+            cells: [{ x: 8, y: 8 }, { x: 9, y: 8 }, { x: 7, y: 8 }]
+          }],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0,
+          slowDebuffEnd: 0,
+          poisonDebuffEnd: 0,
+          portalTeleportCooldown: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterBalancedPoisonStep = api.getState();
+        iframe.contentWindow.Math.random = originalRandom;
+        iframe.contentWindow.selectedModule = iframe.contentWindow.MODULE_TYPES.ARMOR;
+        Object.assign(interactionChecks, {
+          balancedPoisonHalfDotApplied: afterBalancedPoisonStep.score === -1,
+          poisonDebuffApplied: typeof afterBalancedPoisonStep.poisonDebuffEnd === 'number' && afterBalancedPoisonStep.poisonDebuffEnd > now
+        });
+      }
+
       let afterTeleportStep = null;
       if (api.FOOD_TYPES && api.FOOD_TYPES.TELEPORT && typeof api.gameStep === 'function') {
         const now = Date.now();
@@ -391,6 +438,7 @@
           afterCloseShop,
           afterAdvanceWave,
           afterTerrainBonusSteps,
+          afterBalancedPoisonStep,
           afterTeleportStep,
           afterGameOverStep,
           shopItemCount,
@@ -434,6 +482,11 @@
           score: afterTerrainBonusSteps.score,
           slowDebuffEnd: afterTerrainBonusSteps.slowDebuffEnd,
           selectedModule: afterTerrainBonusSteps.selectedModule ? afterTerrainBonusSteps.selectedModule.id : null
+        } : null,
+        balancedPoisonStateAfterStep: afterBalancedPoisonStep ? {
+          score: afterBalancedPoisonStep.score,
+          poisonDebuffEnd: afterBalancedPoisonStep.poisonDebuffEnd,
+          selectedModule: afterBalancedPoisonStep.selectedModule ? afterBalancedPoisonStep.selectedModule.id : null
         } : null,
         teleportStateAfterStep: afterTeleportStep ? {
           teleportInvincibleSteps: afterTeleportStep.teleportInvincibleSteps,

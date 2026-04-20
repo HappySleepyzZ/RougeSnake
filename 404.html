@@ -1142,7 +1142,7 @@
                 id: 'venom', name: '毒尾', icon: '🟢',
                 desc: '擅长处理毒雾，碰毒加分',
                 strength: '碰毒 +15', weakness: '碰减速 -8',
-                passive: '毒雾区内移速不减',
+                passive: '毒雾区内免疫中毒',
                 scoreModifiers: { grow: 10, shrink: -8, teleport: 20, barrier: 20, wind: -20 },
                 terrainBonus: { poison: 15, slow: -8 },
                 special: null,
@@ -1982,7 +1982,12 @@
                 if (isPoisoned) {
                     terrainDotType = 'poison';
                     if (Math.random() < 0.1) {
-                        const dmg = activeBuffs.some(b => b.id === 'poison_resist') ? 1 : 2;
+                        const poisonResistActive = activeBuffs.some(b => b.id === 'poison_resist');
+                        const halfDotActive = selectedModule && selectedModule.special === 'halfDot';
+                        let dmg = poisonResistActive ? 1 : 2;
+                        if (halfDotActive) {
+                            dmg = Math.max(1, Math.ceil(dmg / 2));
+                        }
                         score -= dmg;
                         spawnFloatingText(terrainHead.x, terrainHead.y, `-${dmg}`, '#c084fc', false);
                         updateStatusUI();

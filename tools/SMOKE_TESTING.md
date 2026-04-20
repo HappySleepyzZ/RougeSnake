@@ -16,6 +16,7 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
   - `openShop()` and shop purchase / skip close flow
   - `advanceWave()` terrain / portal generation
   - `gameStep()` armor module slow-terrain score bonus branch
+  - `gameStep()` balanced module poison DoT half-damage branch
   - `gameStep()` teleport food branch in a deterministic debug scenario
   - `gameStep()` wall-death branch to verify real `gameOver()` overlay behavior
 - Captures a screenshot for each target page
