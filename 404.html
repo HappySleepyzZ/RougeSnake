@@ -1887,7 +1887,7 @@
                 }
             }
             if (hitWall) {
-                gameOver('wall');
+                gameOver();
                 return;
             }
 
@@ -1936,7 +1936,7 @@
             if (teleportInvincibleSteps > 0) {
                 teleportInvincibleSteps--;
             } else if (isCeremonyPlayingState() && collisionSegments.some(seg => seg.x === head.x && seg.y === head.y)) {
-                gameOver('self');
+                gameOver();
                 return;
             }
 
@@ -1955,14 +1955,14 @@
                         flashEffect('teleport');
                         flashAlpha = 0.3;
                     } else {
-                        gameOver('obstacle');
+                        gameOver();
                         return;
                     }
                 }
             }
 
             if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
-                gameOver('skin');
+                gameOver();
                 return;
             }
 
@@ -3541,7 +3541,7 @@
             requestAnimationFrame(animStep);
         }
 
-        function gameOver(reason) {
+        function gameOver() {
             resetRunState();
             isGameOver = true;
             syncPauseButtonVisibility();
