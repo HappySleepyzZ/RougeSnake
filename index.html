@@ -597,6 +597,337 @@
             flex-wrap: wrap;
         }
 
+        /* Legacy UI skin pass: align outer HUD and overlays with the older snake-game-pages look */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        body::before {
+            opacity: 0;
+        }
+
+        #gameCanvas {
+            border-radius: 20px;
+            border: none;
+            background: transparent;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        .status-panel {
+            top: 10px;
+            left: 10px;
+            min-width: 0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            line-height: 1.6;
+            letter-spacing: 0;
+            backdrop-filter: blur(8px);
+            box-shadow: none;
+        }
+
+        .status-panel::before {
+            content: none;
+        }
+
+        .status-panel .timer {
+            font-size: 20px;
+            color: #2ecc71;
+            text-shadow: none;
+        }
+
+        .status-grid {
+            display: block;
+            margin-top: 8px;
+        }
+
+        .status-chip {
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .status-chip + .status-chip {
+            margin-top: 6px;
+        }
+
+        .status-chip-wave::after {
+            content: none;
+        }
+
+        .status-label {
+            display: none;
+        }
+
+        .status-value,
+        .status-panel .score-line {
+            font-size: 13px;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .status-panel .target {
+            color: #f1c40f;
+        }
+
+        .legend {
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            border-radius: 10px;
+            backdrop-filter: blur(8px);
+            box-shadow: none;
+        }
+
+        .legend.collapsed {
+            padding: 6px 10px;
+        }
+
+        .legend.expanded {
+            min-width: 0;
+            padding: 10px 15px;
+        }
+
+        .legend-toggle {
+            gap: 4px;
+            margin-bottom: 2px;
+            font-size: 12px;
+            letter-spacing: 0;
+            text-transform: none;
+            color: #aaa;
+        }
+
+        .legend-toggle-label {
+            font-size: 11px;
+        }
+
+        .legend-item {
+            font-size: 12px;
+            color: #fff;
+        }
+
+        .result-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: none;
+        }
+
+        .result-overlay .result-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            filter: none;
+        }
+
+        .overlay-card,
+        .overlay-card-shop,
+        .overlay-card-pause,
+        .overlay-card-wave {
+            width: min(90vw, 560px);
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            text-align: center;
+        }
+
+        .overlay-eyebrow {
+            display: none;
+        }
+
+        .result-overlay .result-text {
+            font-size: 36px;
+            color: #fff;
+            margin-bottom: 10px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .result-overlay .result-score {
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 30px;
+            max-width: none;
+            letter-spacing: 0;
+        }
+
+        .result-overlay .restart-btn {
+            padding: 15px 40px;
+            font-size: 18px;
+            letter-spacing: 0;
+            text-transform: none;
+            background: #2ecc71;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            box-shadow: none;
+        }
+
+        .result-overlay .restart-btn:hover {
+            transform: scale(1.05);
+            background: #27ae60;
+            border: none;
+            box-shadow: none;
+        }
+
+        .mode-overlay {
+            background: rgba(7, 10, 18, 0.88);
+            backdrop-filter: blur(12px);
+        }
+
+        .mode-card {
+            width: min(92vw, 420px);
+            padding: 28px 22px;
+            border-radius: 24px;
+            border: none;
+            background:
+                radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 42%),
+                linear-gradient(180deg, rgba(25, 34, 56, 0.96), rgba(9, 13, 24, 0.98));
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
+            color: #f7f9ff;
+        }
+
+        .mode-title {
+            font-size: 28px;
+            letter-spacing: 0.04em;
+            text-transform: none;
+            background: none;
+            -webkit-background-clip: border-box;
+            -webkit-text-fill-color: currentColor;
+            color: #fff;
+        }
+
+        .mode-subtitle {
+            color: rgba(233, 240, 255, 0.76);
+        }
+
+        .mode-actions {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .mode-btn {
+            padding: 16px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .mode-btn:not([disabled]):hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.13);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+        }
+
+        .mode-btn-title {
+            font-size: 18px;
+            letter-spacing: 0;
+        }
+
+        .mode-btn-desc {
+            color: rgba(233, 240, 255, 0.72);
+        }
+
+        .mode-lock {
+            color: #ffd166;
+        }
+
+        .mode-note {
+            color: rgba(233, 240, 255, 0.58);
+            letter-spacing: 0;
+        }
+
+        .breath-indicator {
+            top: 10px;
+            right: 200px;
+            background: #2ecc71;
+            box-shadow: none;
+        }
+
+        .touch-hint {
+            background: rgba(0, 0, 0, 0.72);
+            border: none;
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 0;
+            text-transform: none;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+        }
+
+        .control-btn {
+            border: none;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.16);
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+            backdrop-filter: blur(8px);
+        }
+
+        .control-btn:active {
+            background: rgba(255, 255, 255, 0.24);
+        }
+
+        #pauseBtn {
+            border: 0 !important;
+            border-radius: 12px !important;
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: #fff !important;
+            box-shadow: none !important;
+            backdrop-filter: blur(8px) !important;
+        }
+
+        #shopItems {
+            display: flex !important;
+            flex-direction: column;
+            gap: 10px !important;
+            width: 100% !important;
+            max-width: 320px !important;
+            margin-top: 16px;
+        }
+
+        #shopItems button {
+            width: 100%;
+            min-height: 0;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            box-shadow: none;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        #shopItems button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            border: none;
+            box-shadow: none;
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        #shopItems button span:last-child {
+            align-self: auto;
+            font-weight: 700;
+        }
+
+        #shopItems button:disabled {
+            opacity: 0.5;
+        }
+
         @media (max-width: 720px) {
             .status-panel {
                 min-width: 0;
