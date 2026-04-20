@@ -399,14 +399,9 @@ window.SnakeRuntimeState = {
       return Math.max(0, Math.ceil(getState().waveTransitionTimer / 1000));
     }
 
-    function getNextWaveThemeName() {
-      return actions && typeof actions.getNextWaveThemeName === 'function'
-        ? actions.getNextWaveThemeName()
-        : '';
-    }
-
     function updateWaveCountdownText() {
-      waveCountdown.textContent = UI_TEXT.wave.nextIn(getWaveTransitionCountdownSeconds(), getNextWaveThemeName());
+      const seconds = getWaveTransitionCountdownSeconds();
+      waveCountdown.textContent = seconds > 0 ? String(seconds) : '';
     }
 
     function tickWaveTransitionTimer() {

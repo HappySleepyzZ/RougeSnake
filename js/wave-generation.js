@@ -11,8 +11,8 @@ window.SnakeWaveGeneration = {
       1: {
         key: 'onboarding',
         themeName: '试炼开场',
-        durationMs: 15000,
-        backgroundHue: 224,
+        durationMs: 12000,
+        backgroundHue: 32,
         terrainCounts: { poison: 0, slow: 0 },
         portalPairCount: 0
       },
@@ -20,7 +20,7 @@ window.SnakeWaveGeneration = {
         key: 'frost',
         themeName: '寒潮来袭',
         durationMs: 18000,
-        backgroundHue: 198,
+        backgroundHue: 196,
         terrainCounts: { poison: 0, slow: 1 },
         portalPairCount: 0
       },

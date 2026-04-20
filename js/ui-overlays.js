@@ -90,10 +90,7 @@ window.SnakeUiOverlays = {
     const showOnlyResultOverlay = createExclusiveOverlayAction(() => resultOverlay);
 
     function formatWaveTheme(themeName) {
-      if (!themeName) return '';
-      return themeName.length <= 2
-        ? themeName
-        : `${themeName.slice(0, 2)}\n${themeName.slice(2)}`;
+      return themeName || '';
     }
 
     function renderWaveTransitionOverlay(targetWave = null, countdownSeconds = null) {
@@ -101,12 +98,10 @@ window.SnakeUiOverlays = {
       const profile = typeof getWaveProfile === 'function' ? getWaveProfile(waveNumber) : null;
       const themeName = profile ? profile.themeName : '';
       waveOverlay.dataset.waveTheme = profile ? profile.key : 'default';
-      waveText.innerHTML = `<span class="wave-kicker">Wave ${waveNumber}</span><span class="wave-theme">${formatWaveTheme(themeName)}</span>`;
-      if (countdownSeconds === 0) {
-        waveCountdown.textContent = '';
-      } else {
-        waveCountdown.textContent = UI_TEXT.wave.nextIn(countdownSeconds ?? Math.ceil(waveTransitionDuration / 1000));
-      }
+      waveText.innerHTML = `<span class="wave-kicker">Wave${waveNumber}</span><span class="wave-theme">${formatWaveTheme(themeName)}</span>`;
+      waveCountdown.textContent = countdownSeconds === 0
+        ? ''
+        : String(countdownSeconds ?? Math.ceil(waveTransitionDuration / 1000));
       showWaveOverlay();
     }
 
