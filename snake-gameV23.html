@@ -3568,15 +3568,12 @@
             totalPausedTime = 0;
             syncPauseButtonVisibility();
             closeAllOverlays();
-            updateTouchHint();
+            if (touchHintEl) {
+                touchHintEl.textContent = isWaitingForStart
+                    ? '滑动或点击方向键开始游戏'
+                    : activeModeConfig.touchHint(currentLevelConfig);
+            }
             restartGameLoopWithInterval();
-        }
-
-        function updateTouchHint() {
-            if (!touchHintEl) return;
-            touchHintEl.textContent = isWaitingForStart
-                ? '滑动或点击方向键开始游戏'
-                : activeModeConfig.touchHint(currentLevelConfig);
         }
 
         const runtimeStateActions = {};
@@ -3869,7 +3866,11 @@
             },
             initializeWaitingUI() {
                 initWaitingState();
-                updateTouchHint();
+                if (touchHintEl) {
+                    touchHintEl.textContent = isWaitingForStart
+                        ? '滑动或点击方向键开始游戏'
+                        : activeModeConfig.touchHint(currentLevelConfig);
+                }
             },
             restartGameLoopWithCurrentState() {
                 restartGameLoopWithInterval();
@@ -3949,7 +3950,12 @@
             restoreOverlayVisibility: restoreOverlayVisibilityFromModule,
             restoreRuntimeByPrimaryState,
             syncPauseButtonVisibility,
-            updateTouchHint,
+            updateTouchHint() {
+                if (!touchHintEl) return;
+                touchHintEl.textContent = isWaitingForStart
+                    ? '滑动或点击方向键开始游戏'
+                    : activeModeConfig.touchHint(currentLevelConfig);
+            },
             updateStatusUI,
             getShopOverlayElement,
             getPrimaryGameState,
@@ -4422,7 +4428,11 @@
             moduleButtonsContainer.appendChild(btn);
         });
         initWaitingState();
-        updateTouchHint();
+        if (touchHintEl) {
+            touchHintEl.textContent = isWaitingForStart
+                ? '滑动或点击方向键开始游戏'
+                : activeModeConfig.touchHint(currentLevelConfig);
+        }
         hasSelectedMode = false;
         uiOverlaysModule.showModeOverlay();
         animStep();
