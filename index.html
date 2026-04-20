@@ -1662,7 +1662,6 @@
                                 break;
                             case 'clear':
                                 snakeSkins = [];
-                                obstacles = [];
                                 break;
                             case 'heal':
                                 for (let i = 0; i < 2; i++) {
@@ -2128,11 +2127,20 @@
                         return;
                     }
                 }
-            }
 
-            if (isCeremonyPlayingState() && snakeSkins.some(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y))) {
-                gameOver();
-                return;
+                const hitSnakeSkinIdx = snakeSkins.findIndex(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y));
+                if (hitSnakeSkinIdx !== -1) {
+                    if (shieldCharges > 0) {
+                        shieldCharges--;
+                        snakeSkins.splice(hitSnakeSkinIdx, 1);
+                        spawnFloatingText(head.x, head.y, UI_TEXT.floating.shield, '#2ecc71', true);
+                        flashEffect('teleport');
+                        flashAlpha = 0.3;
+                    } else {
+                        gameOver();
+                        return;
+                    }
+                }
             }
 
             const eatenFood = eatenFoodIndex === -1 ? null : foods.splice(eatenFoodIndex, 1)[0];

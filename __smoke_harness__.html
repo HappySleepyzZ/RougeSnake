@@ -207,6 +207,9 @@
       let afterShopPurchase = null;
       let afterCloseShop = null;
       let shopItemCount = null;
+      let afterClearPurchase = null;
+      let afterShieldPurchase = null;
+      let afterShieldSnakeSkinStep = null;
       if (typeof api.openShop === 'function') {
         api.setState({ coins: 99 });
         api.openShop();
@@ -239,6 +242,95 @@
               enteredWaveTransition: afterCloseShop.isWaveTransition === true
             });
           }
+        }
+      }
+
+      if (typeof api.openShop === 'function') {
+        api.setState({
+          coins: 99,
+          snakeSkins: [{
+            centerX: 8,
+            centerY: 8,
+            cells: [{ x: 8, y: 8 }],
+            spawnTime: Date.now()
+          }],
+          obstacles: [{ x: 12, y: 12 }]
+        });
+        api.openShop();
+        await wait(20);
+        const clearButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('清障'));
+        if (clearButton) {
+          clearButton.click();
+          await wait(20);
+          afterClearPurchase = api.getState();
+          Object.assign(interactionChecks, {
+            clearItemOnlyRemovesSnakeSkins: Array.isArray(afterClearPurchase.snakeSkins)
+              && afterClearPurchase.snakeSkins.length === 0
+              && Array.isArray(afterClearPurchase.obstacles)
+              && afterClearPurchase.obstacles.length === 1
+          });
+        } else {
+          interactionChecks.clearItemOnlyRemovesSnakeSkins = false;
+        }
+      }
+
+      if (typeof api.openShop === 'function' && typeof api.gameStep === 'function') {
+        api.setState({
+          coins: 99,
+          shieldCharges: 0,
+          snakeSkins: [],
+          obstacles: []
+        });
+        api.openShop();
+        await wait(20);
+        const shieldButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('护盾'));
+        if (shieldButton) {
+          shieldButton.click();
+          await wait(20);
+          afterShieldPurchase = api.getState();
+          const now = Date.now();
+          api.setState({
+            snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+            snakeSkins: [{
+              centerX: 6,
+              centerY: 5,
+              cells: [{ x: 6, y: 5 }],
+              spawnTime: now
+            }],
+            obstacles: [],
+            foods: [],
+            direction: { x: 1, y: 0 },
+            nextDirection: { x: 1, y: 0 },
+            currentWave: 1,
+            gameStartTime: now,
+            waveStartTime: now,
+            isGameRunning: true,
+            isWaitingForStart: false,
+            isPaused: false,
+            isWaveTransition: false,
+            isLevelComplete: false,
+            isGameOver: false,
+            resultVisible: false,
+            teleportInvincibleSteps: 0,
+            teleportPreview: null,
+            teleportTrailTimer: 0,
+            headGlowTimer: 0
+          });
+          api.gameStep();
+          await wait(20);
+          afterShieldSnakeSkinStep = api.getState();
+          Object.assign(interactionChecks, {
+            shieldPurchaseGrantedCharge: afterShieldPurchase.shieldCharges === 1,
+            shieldBlocksSnakeSkinCollision: afterShieldSnakeSkinStep.isGameOver === false
+              && afterShieldSnakeSkinStep.shieldCharges === 0
+              && Array.isArray(afterShieldSnakeSkinStep.snakeSkins)
+              && afterShieldSnakeSkinStep.snakeSkins.length === 0
+          });
+        } else {
+          interactionChecks.shieldPurchaseGrantedCharge = false;
+          interactionChecks.shieldBlocksSnakeSkinCollision = false;
         }
       }
 
@@ -436,6 +528,9 @@
           afterOpenShop,
           afterShopPurchase,
           afterCloseShop,
+          afterClearPurchase,
+          afterShieldPurchase,
+          afterShieldSnakeSkinStep,
           afterAdvanceWave,
           afterTerrainBonusSteps,
           afterBalancedPoisonStep,
@@ -473,6 +568,20 @@
           coins: afterShopPurchase.coins
         } : null,
         shopStateAfterClose: afterCloseShop ? { shopOpen: afterCloseShop.shopOpen, shopOpening: afterCloseShop.shopOpening, isWaveTransition: afterCloseShop.isWaveTransition } : null,
+        clearPurchaseState: afterClearPurchase ? {
+          snakeSkinCount: Array.isArray(afterClearPurchase.snakeSkins) ? afterClearPurchase.snakeSkins.length : null,
+          obstacleCount: Array.isArray(afterClearPurchase.obstacles) ? afterClearPurchase.obstacles.length : null
+        } : null,
+        shieldPurchaseState: afterShieldPurchase ? {
+          shieldCharges: afterShieldPurchase.shieldCharges,
+          shopOpen: afterShieldPurchase.shopOpen,
+          isWaveTransition: afterShieldPurchase.isWaveTransition
+        } : null,
+        shieldSnakeSkinState: afterShieldSnakeSkinStep ? {
+          isGameOver: afterShieldSnakeSkinStep.isGameOver,
+          shieldCharges: afterShieldSnakeSkinStep.shieldCharges,
+          snakeSkinCount: Array.isArray(afterShieldSnakeSkinStep.snakeSkins) ? afterShieldSnakeSkinStep.snakeSkins.length : null
+        } : null,
         waveStateAfterAdvance: afterAdvanceWave ? {
           currentWave: afterAdvanceWave.currentWave,
           terrainZoneCount: Array.isArray(afterAdvanceWave.terrainZones) ? afterAdvanceWave.terrainZones.length : null,

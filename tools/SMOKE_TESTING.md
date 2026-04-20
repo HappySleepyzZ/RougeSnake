@@ -14,6 +14,8 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
   - `captureTimerTrace()`
   - `showResult('death')`
   - `openShop()` and shop purchase / skip close flow
+  - `openShop()` clear-item behavior only removing snake skin obstacles
+  - `openShop()` shield purchase plus snake-skin collision protection
   - `advanceWave()` terrain / portal generation
   - `gameStep()` armor module slow-terrain score bonus branch
   - `gameStep()` balanced module poison DoT half-damage branch
