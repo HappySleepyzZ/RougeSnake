@@ -30,6 +30,8 @@ This repo includes a lightweight browser smoke harness at `__smoke_harness__.htm
   - `gameStep()` barrier food spawning obstacles
   - `gameStep()` wind food clearing obstacles
   - `gameStep()` teleport food branch in a deterministic debug scenario
+  - Ceremony state transitions: key pickup -> chest spawn -> loot burst -> shop
+  - Loot burst rewards: coin gain, score gain, and shop opening when loot is exhausted
   - `gameStep()` wall-death branch to verify real `gameOver()` overlay behavior
 - Captures a screenshot for each target page
 

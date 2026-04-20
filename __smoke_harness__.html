@@ -223,6 +223,10 @@
       let afterVenomPoisonSteps = null;
       let afterBarrierFoodStep = null;
       let afterWindFoodStep = null;
+      let afterKeyPickupStep = null;
+      let afterChestPickupStep = null;
+      let afterLootPickupStep = null;
+      let afterLootCompletionStep = null;
       if (typeof api.openShop === 'function') {
         api.setState({ coins: 99 });
         api.openShop();
@@ -960,6 +964,177 @@
         });
       }
 
+      if (typeof api.gameStep === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [],
+          obstacles: [],
+          snakeSkins: [],
+          terrainZones: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          coins: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          waveCeremonyState: 'KEY_SPAWN',
+          ceremonyKey: { x: 6, y: 5 },
+          ceremonyChest: null,
+          lootFoods: [],
+          lootEatenCount: 0,
+          lootTotalCount: 0,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterKeyPickupStep = api.getState();
+        Object.assign(interactionChecks, {
+          keyPickupTransitionsToChestState: afterKeyPickupStep.waveCeremonyState === 'CHEST_SPAWN'
+            && !afterKeyPickupStep.ceremonyKey
+            && !!afterKeyPickupStep.ceremonyChest
+        });
+      }
+
+      if (typeof api.gameStep === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [],
+          obstacles: [],
+          snakeSkins: [],
+          terrainZones: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          coins: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          waveCeremonyState: 'CHEST_SPAWN',
+          ceremonyKey: null,
+          ceremonyChest: { x: 6, y: 5 },
+          lootFoods: [],
+          lootEatenCount: 0,
+          lootTotalCount: 0,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterChestPickupStep = api.getState();
+        Object.assign(interactionChecks, {
+          chestPickupStartsLootBurst: afterChestPickupStep.waveCeremonyState === 'LOOT_BURST'
+            && !afterChestPickupStep.ceremonyChest
+            && Array.isArray(afterChestPickupStep.lootFoods)
+            && afterChestPickupStep.lootFoods.length > 0
+            && afterChestPickupStep.lootTotalCount === afterChestPickupStep.lootFoods.length
+        });
+      }
+
+      if (typeof api.gameStep === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [],
+          obstacles: [],
+          snakeSkins: [],
+          terrainZones: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          coins: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          waveCeremonyState: 'LOOT_BURST',
+          ceremonyKey: null,
+          ceremonyChest: null,
+          lootFoods: [{ x: 6, y: 5, eaten: false }],
+          lootEatenCount: 0,
+          lootTotalCount: 1,
+          lootBurstEndTime: now + 5000,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterLootPickupStep = api.getState();
+        Object.assign(interactionChecks, {
+          lootPickupAwardsCoinAndScore: afterLootPickupStep.lootEatenCount === 1
+            && afterLootPickupStep.coins === 1
+            && afterLootPickupStep.score === 5
+        });
+      }
+
+      if (typeof api.gameStep === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }],
+          foods: [],
+          obstacles: [],
+          snakeSkins: [],
+          terrainZones: [],
+          direction: { x: 1, y: 0 },
+          nextDirection: { x: 1, y: 0 },
+          score: 0,
+          coins: 0,
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          waveCeremonyState: 'LOOT_BURST',
+          ceremonyKey: null,
+          ceremonyChest: null,
+          lootFoods: [{ x: 10, y: 10, eaten: true }],
+          lootEatenCount: 1,
+          lootTotalCount: 1,
+          lootBurstEndTime: now + 5000,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterLootCompletionStep = api.getState();
+        Object.assign(interactionChecks, {
+          lootCompletionOpensShop: afterLootCompletionStep.waveCeremonyState === 'SHOP'
+            && (afterLootCompletionStep.shopOpen === true || afterLootCompletionStep.shopOpening === true)
+        });
+      }
+
       let afterTeleportStep = null;
       if (api.FOOD_TYPES && api.FOOD_TYPES.TELEPORT && typeof api.gameStep === 'function') {
         const now = Date.now();
@@ -1064,6 +1239,10 @@
           afterVenomPoisonSteps,
           afterBarrierFoodStep,
           afterWindFoodStep,
+          afterKeyPickupStep,
+          afterChestPickupStep,
+          afterLootPickupStep,
+          afterLootCompletionStep,
           afterAdvanceWave,
           afterTerrainBonusSteps,
           afterArmorObstacleStep,
@@ -1172,6 +1351,27 @@
         windFoodStateAfterStep: afterWindFoodStep ? {
           score: afterWindFoodStep.score,
           obstacleCount: Array.isArray(afterWindFoodStep.obstacles) ? afterWindFoodStep.obstacles.length : null
+        } : null,
+        keyPickupStateAfterStep: afterKeyPickupStep ? {
+          waveCeremonyState: afterKeyPickupStep.waveCeremonyState,
+          hasKey: !!afterKeyPickupStep.ceremonyKey,
+          hasChest: !!afterKeyPickupStep.ceremonyChest
+        } : null,
+        chestPickupStateAfterStep: afterChestPickupStep ? {
+          waveCeremonyState: afterChestPickupStep.waveCeremonyState,
+          hasChest: !!afterChestPickupStep.ceremonyChest,
+          lootCount: Array.isArray(afterChestPickupStep.lootFoods) ? afterChestPickupStep.lootFoods.length : null,
+          lootTotalCount: afterChestPickupStep.lootTotalCount
+        } : null,
+        lootPickupStateAfterStep: afterLootPickupStep ? {
+          lootEatenCount: afterLootPickupStep.lootEatenCount,
+          coins: afterLootPickupStep.coins,
+          score: afterLootPickupStep.score
+        } : null,
+        lootCompletionStateAfterStep: afterLootCompletionStep ? {
+          waveCeremonyState: afterLootCompletionStep.waveCeremonyState,
+          shopOpen: afterLootCompletionStep.shopOpen,
+          shopOpening: afterLootCompletionStep.shopOpening
         } : null,
         waveStateAfterAdvance: afterAdvanceWave ? {
           currentWave: afterAdvanceWave.currentWave,
