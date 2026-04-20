@@ -750,6 +750,7 @@
     <script src="./visuals/style-map.js"></script>
 <script src="./js/runtime-state.js"></script>
 <script src="./js/wave-generation.js"></script>
+<script src="./js/run-bootstrap.js"></script>
 <script src="./js/input-helpers.js"></script>
     <script src="./js/ui-overlays.js"></script>
     <script src="./js/debug-api.js"></script>
@@ -3975,55 +3976,40 @@
             resizeCanvas();
             clearInterval(gameLoop);
             gameLoop = null;
-            const centerX = Math.floor(tileCount / 2);
-            const centerY = Math.floor(tileCount / 2);
-            snake = [
-                { x: centerX, y: centerY },
-                { x: centerX - 1, y: centerY },
-                { x: centerX - 2, y: centerY }
-            ];
-            direction = { x: 1, y: 0 };
-            nextDirection = { x: 1, y: 0 };
-
-            startIndicator = null;
-            foods = [];
-            obstacles = [];
-            snakeSkins = [];
-            foodEatenCount = 0;
-            score = 0;
-            currentInterval = BASE_SPEED;
-            backgroundHue = 240;
-            speedBoostTimer = 0;
-            isSpeedBoosted = false;
-            dashBurstTicks = 0;
-            isLevelComplete = false;
-            isGameOver = false;
-
-            teleportInvincibleSteps = 0;
-            portalTeleportCooldown = 0;
-
-            teleportPreview = null;
-            teleportTrailTimer = 0;
-            headGlowTimer = 0;
-
-            remainingTime = Infinity;
-            gameStartTime = Date.now();
-            waveStartTime = Date.now();
-            currentWave = 1;
+            const runStart = runBootstrapModule.createStartState();
+            ({
+                snake,
+                direction,
+                nextDirection,
+                startIndicator,
+                foods,
+                obstacles,
+                snakeSkins,
+                foodEatenCount,
+                score,
+                currentInterval,
+                backgroundHue,
+                speedBoostTimer,
+                isSpeedBoosted,
+                dashBurstTicks,
+                isLevelComplete,
+                isGameOver,
+                teleportInvincibleSteps,
+                portalTeleportCooldown,
+                teleportPreview,
+                teleportTrailTimer,
+                headGlowTimer,
+                remainingTime,
+                gameStartTime,
+                waveStartTime,
+                currentWave,
+                portalWidth
+            } = runStart.state);
             clearWaveTransitionState();
-            terrainZones = [];
-            if (selectedModule && selectedModule.special === 'widePortal') {
-                portalWidth = 5;
-            } else {
-                portalWidth = currentLevelConfig.portalWidth;
-            }
-            const waveEnvironment = waveGenerationModule.generateWaveEnvironment(currentWave);
-            terrainZones = waveEnvironment.terrainZones;
-            portalPairs = waveEnvironment.portalPairs;
+            terrainZones = runStart.waveEnvironment.terrainZones;
+            portalPairs = runStart.waveEnvironment.portalPairs;
 
-            const { min: initialFoodMin, max: initialFoodMax } = currentLevelConfig.initialFood;
-            const initialFoodCount = Math.floor(Math.random() * (initialFoodMax - initialFoodMin + 1)) + initialFoodMin;
-            for (let i = 0; i < initialFoodCount; i++) {
+            for (let i = 0; i < runStart.initialFoodCount; i++) {
                 spawnFood();
             }
 
@@ -4263,6 +4249,25 @@
                 return tileCount;
             },
             isPositionOccupied
+        });
+
+        const runBootstrapModule = installRequiredSnakeModule(window.SnakeRunBootstrap, 'SnakeRunBootstrap', {
+            BASE_SPEED,
+            getTileCount() {
+                return tileCount;
+            },
+            getCurrentLevelConfig() {
+                return currentLevelConfig;
+            },
+            getSelectedModule() {
+                return selectedModule;
+            },
+            getNow() {
+                return Date.now();
+            },
+            generateWaveEnvironment(currentWave) {
+                return waveGenerationModule.generateWaveEnvironment(currentWave);
+            }
         });
 
         const inputHelperActions = {
