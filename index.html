@@ -807,21 +807,36 @@
         #waveText {
             position: relative;
             margin: 0;
-            font-size: clamp(68px, 14vw, 168px) !important;
-            font-weight: 1000;
-            line-height: 0.9;
-            letter-spacing: -0.04em !important;
             color: #fff !important;
             text-shadow:
                 0 2px 0 rgba(255, 255, 255, 0.12),
                 0 18px 42px rgba(0, 0, 0, 0.4);
         }
 
+        #waveText .wave-kicker {
+            display: block;
+            margin-bottom: 10px;
+            font-size: clamp(22px, 3vw, 42px);
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        #waveText .wave-theme {
+            display: block;
+            font-size: clamp(68px, 14vw, 168px);
+            font-weight: 1000;
+            line-height: 0.9;
+            letter-spacing: -0.06em;
+            white-space: pre-line;
+        }
+
         #waveText::after {
             content: "";
             position: absolute;
             left: 50%;
-            top: 54%;
+            top: 62%;
             width: min(36vw, 320px);
             height: min(18vw, 160px);
             transform: translate(-50%, -50%);
@@ -1182,7 +1197,7 @@
     </div>
 
     <div class="breath-indicator" id="breathIndicator"></div>
-    <div class="touch-hint" id="touchHint">滑动或点击方向键开始游戏</div>
+    <div class="touch-hint" id="touchHint">click right / →</div>
     <div class="touch-controls" aria-label="屏幕方向键">
         <button class="control-btn control-up" type="button" data-direction="up" aria-label="向上">&#8593;</button>
         <button class="control-btn control-left" type="button" data-direction="left" aria-label="向左">&#8592;</button>
@@ -1337,8 +1352,7 @@
             },
             wave: {
                 complete: (wave) => `Wave ${wave} Complete!`,
-                transitionTitle: (nextWave, themeName) => themeName ? `Wave ${nextWave} · ${themeName}` : `Wave ${nextWave}`,
-                nextIn: (secs, themeName = '') => themeName ? `下一波 ${secs}... · ${themeName}` : `下一波 ${secs}...`,
+                nextIn: (secs) => `开始于 ${secs}s`,
                 modeNote: '波次生存：前几波逐步引入新机制，之后持续递增强化。',
                 canvasTip: '波次推进时会逐步解锁新环境机制'
             },
@@ -1476,6 +1490,7 @@
         // V16: 波次系统
         let currentWave = 1;
         let waveStartTime = 0;
+        let initialWaveIntroTimeout = null;
         const DEFAULT_WAVE_DURATION = 30000; // 默认 30 秒，具体按波次 profile 覆盖
         const WAVE_TRANSITION_DURATION = 3000; // 3 秒过渡
         const TUNING = {
@@ -1855,6 +1870,8 @@
             teleportPreview = null;
             teleportTrailTimer = 0;
             headGlowTimer = 0;
+            clearTimeout(initialWaveIntroTimeout);
+            initialWaveIntroTimeout = null;
             
             updateStatusUI();
         }
@@ -4551,8 +4568,23 @@
             closeAllOverlays();
             if (touchHintEl) {
                 touchHintEl.textContent = isWaitingForStart
-                    ? '滑动或点击方向键开始游戏'
+                    ? 'click right / →'
                     : activeModeConfig.touchHint(currentLevelConfig);
+            }
+            clearTimeout(initialWaveIntroTimeout);
+            initialWaveIntroTimeout = null;
+            if (currentWave === 1) {
+                setWaveTransitionState(true);
+                renderWaveTransitionOverlay(1, 0);
+                syncPauseButtonVisibility();
+                initialWaveIntroTimeout = setTimeout(() => {
+                    clearWaveTransitionState();
+                    closeAllOverlays();
+                    restartGameLoopWithInterval();
+                    syncPauseButtonVisibility();
+                    initialWaveIntroTimeout = null;
+                }, 1400);
+                return;
             }
             restartGameLoopWithInterval();
         }
@@ -4892,7 +4924,7 @@
                 initWaitingState();
                 if (touchHintEl) {
                     touchHintEl.textContent = isWaitingForStart
-                        ? '滑动或点击方向键开始游戏'
+                        ? 'click right / →'
                         : activeModeConfig.touchHint(currentLevelConfig);
                 }
             },
@@ -4952,7 +4984,7 @@
             updateTouchHint() {
                 if (!touchHintEl) return;
                 touchHintEl.textContent = isWaitingForStart
-                    ? '滑动或点击方向键开始游戏'
+                    ? 'click right / →'
                     : activeModeConfig.touchHint(currentLevelConfig);
             },
             updateStatusUI,
@@ -5454,7 +5486,7 @@
         initWaitingState();
         if (touchHintEl) {
             touchHintEl.textContent = isWaitingForStart
-                ? '滑动或点击方向键开始游戏'
+                ? 'click right / →'
                 : activeModeConfig.touchHint(currentLevelConfig);
         }
         hasSelectedMode = false;

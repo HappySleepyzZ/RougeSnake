@@ -89,13 +89,24 @@ window.SnakeUiOverlays = {
     const showWaveOverlay = createExclusiveOverlayAction(() => waveOverlay);
     const showOnlyResultOverlay = createExclusiveOverlayAction(() => resultOverlay);
 
-    function renderWaveTransitionOverlay() {
-      const nextWave = getCurrentWave() + 1;
-      const nextWaveProfile = typeof getWaveProfile === 'function' ? getWaveProfile(nextWave) : null;
-      const nextThemeName = nextWaveProfile ? nextWaveProfile.themeName : '';
-      waveOverlay.dataset.waveTheme = nextWaveProfile ? nextWaveProfile.key : 'default';
-      waveText.textContent = UI_TEXT.wave.transitionTitle(nextWave, nextThemeName);
-      waveCountdown.textContent = UI_TEXT.wave.nextIn(Math.ceil(waveTransitionDuration / 1000), nextThemeName);
+    function formatWaveTheme(themeName) {
+      if (!themeName) return '';
+      return themeName.length <= 2
+        ? themeName
+        : `${themeName.slice(0, 2)}\n${themeName.slice(2)}`;
+    }
+
+    function renderWaveTransitionOverlay(targetWave = null, countdownSeconds = null) {
+      const waveNumber = targetWave ?? (getCurrentWave() + 1);
+      const profile = typeof getWaveProfile === 'function' ? getWaveProfile(waveNumber) : null;
+      const themeName = profile ? profile.themeName : '';
+      waveOverlay.dataset.waveTheme = profile ? profile.key : 'default';
+      waveText.innerHTML = `<span class="wave-kicker">Wave ${waveNumber}</span><span class="wave-theme">${formatWaveTheme(themeName)}</span>`;
+      if (countdownSeconds === 0) {
+        waveCountdown.textContent = '';
+      } else {
+        waveCountdown.textContent = UI_TEXT.wave.nextIn(countdownSeconds ?? Math.ceil(waveTransitionDuration / 1000));
+      }
       showWaveOverlay();
     }
 
