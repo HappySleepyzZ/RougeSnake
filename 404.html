@@ -3183,8 +3183,10 @@
             ctx.fillStyle = vignette;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             const obstacleScale = getScaleFactors();
+            const obstacleIcon = ICON_IMAGES.obstacle_rock;
+            const useObstacleIcon = !!(obstacleIcon && obstacleIcon.complete && obstacleIcon.naturalWidth > 0);
             const rockTexture = TEXTURE_IMAGES.obstacle_rock;
-            const useRockTexture = !!(rockTexture && rockTexture.complete && rockTexture.naturalWidth > 0);
+            const useRockTexture = !useObstacleIcon && !!(rockTexture && rockTexture.complete && rockTexture.naturalWidth > 0);
             const obstacleStyle = VISUAL_STYLE_CONFIG.obstacleRock || {};
             obstacles.forEach(obs => {
                 const x = obs.x * cellSize + cellSize / 2;
@@ -3192,7 +3194,15 @@
                 const size = obstacleScale.obstacle;
                 const pulse = Math.sin(time * 2 + obs.x * 0.7 + obs.y * 0.5) * 0.08 + 0.92;
 
-                if (useRockTexture) {
+                if (useObstacleIcon) {
+                    const drawSize = cellSize * 0.96;
+                    ctx.save();
+                    ctx.globalAlpha = 0.96;
+                    ctx.shadowColor = obstacleStyle.shadow || 'rgba(40, 48, 56, 0.45)';
+                    ctx.shadowBlur = 5;
+                    ctx.drawImage(obstacleIcon, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
+                    ctx.restore();
+                } else if (useRockTexture) {
                     const drawSize = cellSize * 0.96;
                     ctx.save();
                     ctx.globalAlpha = 0.95;
@@ -3224,11 +3234,13 @@
                     ctx.stroke();
                 }
 
-                ctx.fillStyle = obstacleStyle.symbolColor || '#c0392b';
-                ctx.font = `bold ${obstacleScale.symbol * 0.72}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(obstacleStyle.symbol || '!', x, y + 1);
+                if (!useObstacleIcon) {
+                    ctx.fillStyle = obstacleStyle.symbolColor || '#c0392b';
+                    ctx.font = `bold ${obstacleScale.symbol * 0.72}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(obstacleStyle.symbol || '!', x, y + 1);
+                }
             });
             terrainZones.forEach(zone => {
                 const pulse = Math.sin(time * 2) * 0.1 + 0.25;
@@ -3408,8 +3420,10 @@
             }
             const skinInset = 0;
             const skinTileRadius = Math.max(3, currentLevelConfig.skin.tileRadius);
+            const skinIcon = ICON_IMAGES.snake_skin;
+            const useSkinIcon = !!(skinIcon && skinIcon.complete && skinIcon.naturalWidth > 0);
             const skinTexture = TEXTURE_IMAGES.snake_skin;
-            const useSkinTexture = !!(skinTexture && skinTexture.complete && skinTexture.naturalWidth > 0);
+            const useSkinTexture = !useSkinIcon && !!(skinTexture && skinTexture.complete && skinTexture.naturalWidth > 0);
             const skinStyle = VISUAL_STYLE_CONFIG.snakeSkin || {};
             snakeSkins.forEach(skin => {
                 if (!skin.cells || skin.cells.length === 0) return;
@@ -3418,7 +3432,14 @@
                     const px = cell.x * cellSize + skinInset;
                     const py = cell.y * cellSize + skinInset;
                     const tileSize = cellSize - skinInset * 2;
-                    if (useSkinTexture) {
+                    if (useSkinIcon) {
+                        ctx.save();
+                        ctx.globalAlpha = 0.95;
+                        ctx.shadowColor = skinStyle.shadow || 'rgba(200, 140, 60, 0.6)';
+                        ctx.shadowBlur = 10;
+                        ctx.drawImage(skinIcon, px, py, tileSize, tileSize);
+                        ctx.restore();
+                    } else if (useSkinTexture) {
                         ctx.save();
                         ctx.globalAlpha = 0.94;
                         ctx.shadowColor = skinStyle.shadow || 'rgba(200, 140, 60, 0.6)';

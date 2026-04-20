@@ -7,8 +7,10 @@ window.SNAKE_ICON_MAP = {
     food_teleport: { src: './icons/food_teleport.png' },
     food_wind: { src: './icons/food_wind.png' },
     loot_coin: { src: './icons/loot_coin.png' },
+    obstacle_rock: { src: './icons/obstacle_rock.png' },
     portal_a: { src: './icons/portal_a.png' },
     portal_b: { src: './icons/portal_b.png' },
+    snake_skin: { src: './icons/snake_skin.png' },
     terrain_ice: { src: './icons/terrain_ice.png' },
     terrain_poison: { src: './icons/terrain_poison.png' }
 };
