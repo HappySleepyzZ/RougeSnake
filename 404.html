@@ -893,7 +893,7 @@
             gap: 10px !important;
             width: 100% !important;
             max-width: 320px !important;
-            margin-top: 16px;
+            margin: 16px auto 0 !important;
         }
 
         #shopItems button {
@@ -1912,6 +1912,50 @@
         // V19: 商店系统
         // ========== shop-wave-flow 包装层 (Patch 1) ==========
         // ========== 原始函数（保持不变） ==========
+        function getShopPaymentBreakdown(item) {
+            if (!item || item.cost <= 0) {
+                return { canAfford: true, bodyPay: 0, coinPay: 0, priceText: '免费' };
+            }
+
+            if (item.payType === 'coins') {
+                return {
+                    canAfford: coins >= item.cost,
+                    bodyPay: 0,
+                    coinPay: item.cost,
+                    priceText: `${item.cost} 金币`
+                };
+            }
+
+            const bodyPay = Math.min(item.cost, Math.max(0, snake.length - 2));
+            const coinPay = Math.max(0, item.cost - bodyPay);
+
+            return {
+                canAfford: coins >= coinPay,
+                bodyPay,
+                coinPay,
+                priceText: coinPay > 0 && bodyPay > 0
+                    ? `-${bodyPay}节 + ${coinPay}金币`
+                    : coinPay > 0
+                        ? `${coinPay} 金币`
+                        : `-${item.cost} 节`
+            };
+        }
+
+        function applyShopCost(item) {
+            const payment = getShopPaymentBreakdown(item);
+            if (!payment.canAfford) return false;
+
+            if (payment.bodyPay > 0) {
+                snake.splice(Math.max(2, snake.length - payment.bodyPay));
+            }
+
+            if (payment.coinPay > 0) {
+                coins = Math.max(0, coins - payment.coinPay);
+            }
+
+            return true;
+        }
+
         function openShop() {
             if (!enterShopState()) return;
             activeBuffs = activeBuffs.filter(b => {
@@ -1923,18 +1967,15 @@
             syncPauseButtonVisibility();
             const shuffledShopItems = [...SHOP_POOL].sort(() => Math.random() - 0.5);
             shopItems = shuffledShopItems.slice(0, 3);
-            shopItems.push({ id: 'heal', name: '回复', icon: '❤️', cost: 3, payType: 'coins', desc: '+2节蛇身', category: 'heal' });
-            shopItems.push({ id: 'grow_tail', name: '加长', icon: '🐍', cost: 5, payType: 'coins', desc: '+4节蛇身', category: 'heal' });
+            shopItems.push({ id: 'heal', name: '修剪', icon: '✂️', cost: 3, payType: 'coins', desc: '-2节蛇身', category: 'utility' });
+            shopItems.push({ id: 'grow_tail', name: '蜕皮', icon: '🪶', cost: 5, payType: 'coins', desc: '-4节蛇身', category: 'utility' });
             const shopInfo = document.getElementById('shopInfo');
             const shopItemsDiv = document.getElementById('shopItems');
             shopInfo.textContent = UI_TEXT.shop.info(coins, snake.length, currentWave);
             shopItemsDiv.innerHTML = '';
             shopItems.forEach(item => {
-                const canAfford = !item || item.cost <= 0
-                    ? true
-                    : item.payType === 'coins'
-                        ? coins >= item.cost
-                        : coins >= Math.max(0, item.cost - Math.max(0, snake.length - 2));
+                const payment = getShopPaymentBreakdown(item);
+                const canAfford = payment.canAfford;
                 const btn = document.createElement('button');
                 btn.className = 'restart-btn';
                 btn.style.cssText = `
@@ -1945,37 +1986,13 @@
                     display: flex; justify-content: space-between; align-items: center;
                     width: 100%; border-radius: 8px;
                 `;
-                const priceText = !item || item.cost <= 0
-                    ? '免费'
-                    : item.payType === 'coins'
-                        ? `${item.cost} 金币`
-                        : (() => {
-                            const bodyPay = Math.min(item.cost, Math.max(0, snake.length - 2));
-                            const coinPay = Math.max(0, item.cost - bodyPay);
-                            if (coinPay > 0 && bodyPay > 0) return `-${bodyPay}节 + ${coinPay}金币`;
-                            if (coinPay > 0) return `${coinPay} 金币`;
-                            return `-${item.cost} 节`;
-                        })();
                 btn.innerHTML = `
                     <span>${item.icon} ${item.name} <small style="color:#aaa">${item.desc}</small></span>
-                    <span style="color:${item.cost > 0 ? '#ffd166' : '#2ecc71'}">${priceText}</span>
+                    <span style="color:${item.cost > 0 ? '#ffd166' : '#2ecc71'}">${payment.priceText}</span>
                 `;
                 if (canAfford) {
                     btn.onclick = () => {
-                        if (item.cost > 0) {
-                            if (item.payType === 'coins') {
-                                coins = Math.max(0, coins - item.cost);
-                            } else {
-                                const removeCount = Math.min(item.cost, Math.max(0, snake.length - 2));
-                                for (let i = 0; i < removeCount; i++) {
-                                    snake.pop();
-                                }
-                                const shortfall = Math.max(0, item.cost - removeCount);
-                                if (shortfall > 0) {
-                                    coins = Math.max(0, coins - shortfall);
-                                }
-                            }
-                        }
+                        if (!applyShopCost(item)) return;
 
                         switch (item.id) {
                             case 'poison_resist':
@@ -1997,16 +2014,10 @@
                                 snakeSkins = [];
                                 break;
                             case 'heal':
-                                for (let i = 0; i < 2; i++) {
-                                    const tail = snake[snake.length - 1];
-                                    snake.push({ x: tail.x, y: tail.y });
-                                }
+                                snake.splice(Math.max(2, snake.length - 2));
                                 break;
                             case 'grow_tail':
-                                for (let i = 0; i < 4; i++) {
-                                    const tail = snake[snake.length - 1];
-                                    snake.push({ x: tail.x, y: tail.y });
-                                }
+                                snake.splice(Math.max(2, snake.length - 4));
                                 break;
                         }
                         if (!isShopState() && !isShopOpeningState()) return;
