@@ -117,6 +117,51 @@
             text-shadow: 0 0 14px rgba(0, 210, 255, 0.5);
         }
 
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .status-chip {
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: inset 0 0 16px rgba(0, 210, 255, 0.04);
+        }
+
+        .status-chip-wave {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-chip-wave::after {
+            content: "";
+            position: absolute;
+            inset: auto 0 0 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            opacity: 0.8;
+        }
+
+        .status-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(173, 228, 255, 0.5);
+        }
+
+        .status-value {
+            display: block;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #eef9ff;
+        }
+
         .status-panel .timer.warning {
             color: var(--neon-yellow);
             text-shadow: 0 0 14px rgba(241, 196, 15, 0.45);
@@ -128,7 +173,7 @@
         }
 
         .status-panel .score-line {
-            margin-top: 10px;
+            margin-top: 0;
             font-size: 13px;
             color: rgba(233, 247, 255, 0.82);
         }
@@ -235,6 +280,38 @@
             filter: drop-shadow(0 0 18px rgba(0, 210, 255, 0.32));
         }
 
+        .overlay-card {
+            width: min(90vw, 560px);
+            padding: 28px 26px;
+            border-radius: 28px;
+            border: 1px solid var(--border-neon);
+            background:
+                radial-gradient(circle at top, rgba(0, 210, 255, 0.12), transparent 38%),
+                linear-gradient(180deg, rgba(11, 16, 31, 0.96), rgba(5, 8, 18, 0.97));
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55), inset 0 0 24px rgba(0, 210, 255, 0.04);
+            text-align: center;
+        }
+
+        .overlay-card-shop {
+            width: min(92vw, 760px);
+        }
+
+        .overlay-card-pause {
+            width: min(90vw, 520px);
+        }
+
+        .overlay-card-wave {
+            width: min(84vw, 460px);
+        }
+
+        .overlay-eyebrow {
+            margin-bottom: 12px;
+            font-size: 10px;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: rgba(173, 228, 255, 0.54);
+        }
+
         .result-overlay .result-text {
             font-size: 34px;
             color: #fff;
@@ -321,6 +398,7 @@
         .mode-actions {
             display: grid;
             gap: 12px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             margin-top: 22px;
         }
 
@@ -463,7 +541,11 @@
         }
 
         #shopItems {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 14px !important;
+            width: 100% !important;
+            max-width: none !important;
         }
 
         #shopItems button {
@@ -476,12 +558,24 @@
             backdrop-filter: blur(16px);
             box-shadow: inset 0 0 20px rgba(0, 210, 255, 0.04);
             transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            min-height: 132px;
+            text-align: left;
         }
 
         #shopItems button:hover:not(:disabled) {
             transform: translateY(-2px);
             border-color: rgba(0, 210, 255, 0.48);
             box-shadow: 0 0 22px rgba(0, 210, 255, 0.12);
+        }
+
+        #shopItems button span:last-child {
+            align-self: flex-end;
+            font-weight: 700;
         }
 
         #shopItems button:disabled {
@@ -493,6 +587,38 @@
         #waveCountdown,
         #resultScore {
             letter-spacing: 0.05em;
+        }
+
+        .overlay-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 720px) {
+            .status-panel {
+                min-width: 0;
+                width: calc(100vw - 36px);
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mode-actions,
+            #shopItems {
+                grid-template-columns: 1fr;
+            }
+
+            .overlay-card,
+            .overlay-card-shop,
+            .overlay-card-pause,
+            .overlay-card-wave {
+                width: min(92vw, 560px);
+                padding: 24px 20px;
+            }
         }
 
         .control-up { grid-column: 2; grid-row: 1; }
@@ -510,10 +636,19 @@
     
     <!-- 状态面板 - 左上角 -->
     <div class="status-panel" id="statusPanel">
-        <div class="timer" id="timerDisplay">02:30</div>
-        <div class="score-line">
-            <span id="scoreDisplay">分数: 0</span>
-            <span class="target" id="targetDisplay">/ 目标: 240</span>
+        <div class="status-chip status-chip-wave">
+            <span class="status-label">System Wave</span>
+            <div class="timer" id="timerDisplay">02:30</div>
+        </div>
+        <div class="status-grid">
+            <div class="status-chip score-line">
+                <span class="status-label">Logic Bits</span>
+                <span class="status-value" id="scoreDisplay">分数: 0</span>
+            </div>
+            <div class="status-chip score-line">
+                <span class="status-label">Objective</span>
+                <span class="status-value target" id="targetDisplay">/ 目标: 240</span>
+            </div>
         </div>
     </div>
     
@@ -536,17 +671,23 @@
     
     <!-- 过关/失败动画 -->
     <div class="result-overlay" id="resultOverlay">
-        <div class="result-icon" id="resultIcon"></div>
-        <div class="result-text" id="resultText"></div>
-        <div class="result-score" id="resultScore"></div>
-        <button class="restart-btn" id="restartBtn">重新开始</button>
+        <div class="overlay-card">
+            <div class="overlay-eyebrow">Run Summary</div>
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-text" id="resultText"></div>
+            <div class="result-score" id="resultScore"></div>
+            <button class="restart-btn" id="restartBtn">重新开始</button>
+        </div>
     </div>
 
     <!-- V16: 波次过渡画面 -->
     <div class="result-overlay" id="waveOverlay">
-        <div class="result-icon">🌊</div>
-        <div class="result-text" id="waveText" style="color:#2ecc71">Wave 1 Complete!</div>
-        <div class="result-score" id="waveCountdown">下一波 3...</div>
+        <div class="overlay-card overlay-card-wave">
+            <div class="overlay-eyebrow">Cycle Shift</div>
+            <div class="result-icon">🌊</div>
+            <div class="result-text" id="waveText" style="color:#2ecc71">Wave 1 Complete!</div>
+            <div class="result-score" id="waveCountdown">下一波 3...</div>
+        </div>
     </div>
 
     <div class="mode-overlay" id="modeOverlay">
@@ -562,11 +703,14 @@
     
     <!-- V19: 波间商店 -->
     <div class="result-overlay" id="shopOverlay">
-        <div class="result-icon">🏪</div>
-        <div class="result-text" style="color:#ffd700">波间商店</div>
-        <div class="result-score" id="shopInfo"></div>
-        <div id="shopItems" style="display:flex; flex-direction:column; gap:10px; margin-top:16px; width:100%; max-width:320px;"></div>
-        <button class="restart-btn" id="shopSkipBtn" style="background:#555; margin-top:12px;">⏩ 跳过</button>
+        <div class="overlay-card overlay-card-shop">
+            <div class="overlay-eyebrow">Interwave Market</div>
+            <div class="result-icon">🏪</div>
+            <div class="result-text" style="color:#ffd700">波间商店</div>
+            <div class="result-score" id="shopInfo"></div>
+            <div id="shopItems" style="display:flex; flex-direction:column; gap:10px; margin-top:16px; width:100%; max-width:320px;"></div>
+            <button class="restart-btn" id="shopSkipBtn" style="background:#555; margin-top:18px;">⏩ 跳过</button>
+        </div>
     </div>
 
     <!-- V18: 暂停按钮 -->
@@ -580,12 +724,15 @@
 
     <!-- V18: 暂停菜单 -->
     <div class="result-overlay" id="pauseOverlay">
-        <div class="result-icon">⏸</div>
-        <div class="result-text" id="pauseTitle" style="color:#fff">已暂停</div>
-        <div class="result-score" id="pauseInfo"></div>
-        <div style="display:flex; gap:12px; margin-top:20px;">
-            <button class="restart-btn" id="resumeBtn" style="background:#2ecc71">继续</button>
-            <button class="restart-btn" id="pauseRestartBtn" style="background:#e74c3c">重新开始</button>
+        <div class="overlay-card overlay-card-pause">
+            <div class="overlay-eyebrow">Suspend Process</div>
+            <div class="result-icon">⏸</div>
+            <div class="result-text" id="pauseTitle" style="color:#fff">已暂停</div>
+            <div class="result-score" id="pauseInfo"></div>
+            <div class="overlay-actions">
+                <button class="restart-btn" id="resumeBtn" style="background:#2ecc71">继续</button>
+                <button class="restart-btn" id="pauseRestartBtn" style="background:#e74c3c">重新开始</button>
+            </div>
         </div>
     </div>
 
