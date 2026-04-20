@@ -294,6 +294,39 @@
         });
       }
 
+      let afterGameOverStep = null;
+      if (typeof api.gameStep === 'function') {
+        const now = Date.now();
+        api.setState({
+          snake: [{ x: -1, y: 5 }, { x: -2, y: 5 }, { x: -3, y: 5 }],
+          foods: [],
+          obstacles: [],
+          direction: { x: -1, y: 0 },
+          nextDirection: { x: -1, y: 0 },
+          currentWave: 1,
+          gameStartTime: now,
+          waveStartTime: now,
+          isGameRunning: true,
+          isWaitingForStart: false,
+          isPaused: false,
+          isWaveTransition: false,
+          isLevelComplete: false,
+          isGameOver: false,
+          teleportInvincibleSteps: 0,
+          teleportPreview: null,
+          teleportTrailTimer: 0,
+          headGlowTimer: 0
+        });
+        api.gameStep();
+        await wait(20);
+        afterGameOverStep = api.getState();
+        Object.assign(interactionChecks, {
+          wallDeathTriggered: afterGameOverStep.isGameOver === true,
+          resultVisibleAfterGameOver: afterGameOverStep.resultVisible === true,
+          stoppedRunningAfterGameOver: afterGameOverStep.isGameRunning === false
+        });
+      }
+
       const interactionFailed = Object.entries(interactionChecks).filter(([, ok]) => !ok);
       if (interactionFailed.length) {
         fail('interaction assertions failed', {
@@ -311,6 +344,7 @@
           afterCloseShop,
           afterAdvanceWave,
           afterTeleportStep,
+          afterGameOverStep,
           shopItemCount,
           smokeErrors,
           modeOverlayClass: modeOverlay.className,
@@ -352,6 +386,11 @@
           teleportInvincibleSteps: afterTeleportStep.teleportInvincibleSteps,
           teleportPreview: afterTeleportStep.teleportPreview,
           direction: afterTeleportStep.direction
+        } : null,
+        gameOverStateAfterStep: afterGameOverStep ? {
+          isGameOver: afterGameOverStep.isGameOver,
+          isGameRunning: afterGameOverStep.isGameRunning,
+          resultVisible: afterGameOverStep.resultVisible
         } : null,
         apiKeys: Object.keys(api)
       });
