@@ -967,7 +967,8 @@
             resetRunState();
             pauseBtn.style.display = 'none';
             resetToWaitingState();
-            showModeOverlay();
+            hasSelectedMode = false;
+            uiOverlaysModule.showModeOverlay();
         });
         pauseBtn.addEventListener('click', () => {
             if (getPrimaryGameState() !== 'RUNNING') return;
@@ -995,11 +996,6 @@
             if (startIndicator && Math.hypot(startIndicator.x - x, startIndicator.y - y) < currentLevelConfig.foodField.minSolidSpacing) return false;
 
             return true;
-        }
-
-        function showModeOverlay() {
-            hasSelectedMode = false;
-            return uiOverlaysModule.showModeOverlay();
         }
 
         // ========== 瞬移视觉引导状态变量 ==========
@@ -1552,10 +1548,6 @@
         }
 
         // 显示过关/失败结果
-        function hideResult() {
-            closeAllOverlays();
-        }
-
         // 游戏主循环
         // ========== 原始函数（保持不变） ==========
         function gameStep() {
@@ -3572,7 +3564,7 @@
             isLevelComplete = false;
             totalPausedTime = 0;
             syncPauseButtonVisibility();
-            hideResult();
+            closeAllOverlays();
             updateTouchHint();
             restartGameLoopWithInterval();
         }
@@ -3864,8 +3856,11 @@
                 waveTransitionInterval = null;
             },
             stopGameLoop,
-            hideResult,
-            showModeOverlay,
+            hideResult: closeAllOverlays,
+            showModeOverlay() {
+                hasSelectedMode = false;
+                return uiOverlaysModule.showModeOverlay();
+            },
             hideModeOverlay() {
                 hasSelectedMode = true;
                 return uiOverlaysModule.hideModeOverlay();
@@ -4042,7 +4037,8 @@
 
         restartBtn.addEventListener('click', () => {
             resetToWaitingState();
-            showModeOverlay(); // V16: 重新选模块
+            hasSelectedMode = false;
+            uiOverlaysModule.showModeOverlay(); // V16: 重新选模块
         });
 
         if (legendPanel) {
@@ -4257,7 +4253,7 @@
                 initWaitingState,
                 queueDirection,
                 gameStep,
-                hideResult,
+                hideResult: closeAllOverlays,
                 showResult(type) {
                     showOnlyResultOverlay();
                     if (type === 'death') {
@@ -4408,7 +4404,7 @@
                 if (legendEl) {
                     legendEl.innerHTML = `<span class="legend-symbol">${selectedModule.icon}</span> <span>${selectedModule.name}</span>`;
                 }
-                hideResult();
+                closeAllOverlays();
                 stopGameLoop();
                 currentMode = 'survival';
                 activeModeConfig = MODE_CONFIGS.survival;
@@ -4422,7 +4418,8 @@
         });
         initWaitingState();
         updateTouchHint();
-        showModeOverlay();
+        hasSelectedMode = false;
+        uiOverlaysModule.showModeOverlay();
         animStep();
     </script>
 </body>
