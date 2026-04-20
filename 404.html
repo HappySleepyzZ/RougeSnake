@@ -748,8 +748,9 @@
     <script src="./icons/icon-map.js"></script>
     <script src="./visuals/texture-map.js"></script>
     <script src="./visuals/style-map.js"></script>
-    <script src="./js/runtime-state.js"></script>
-    <script src="./js/input-helpers.js"></script>
+<script src="./js/runtime-state.js"></script>
+<script src="./js/wave-generation.js"></script>
+<script src="./js/input-helpers.js"></script>
     <script src="./js/ui-overlays.js"></script>
     <script src="./js/debug-api.js"></script>
     <script>
@@ -4016,76 +4017,9 @@
             } else {
                 portalWidth = currentLevelConfig.portalWidth;
             }
-            terrainZones = [];
-            {
-                const counts = currentWave <= 1
-                    ? { ...TUNING.terrain.baseCounts.wave1 }
-                    : currentWave === 2
-                        ? { ...TUNING.terrain.baseCounts.wave2 }
-                        : currentWave === 3
-                            ? { ...TUNING.terrain.baseCounts.wave3 }
-                            : {
-                                poison: 2 + Math.floor((currentWave - 3) / 2),
-                                slow: 2 + Math.ceil((currentWave - 3) / 2)
-                            };
-                const spawnTerrainZone = (type) => {
-                    const padding = TUNING.terrain.spawnPadding;
-                    const head = snake[0];
-                    for (let attempts = 0; attempts < TUNING.generation.terrainZoneSpawnAttempts; attempts++) {
-                        const cx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                        const cy = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                        if (Math.abs(cx - head.x) + Math.abs(cy - head.y) < TUNING.terrain.minHeadDistance) continue;
-                        const cells = [];
-                        for (let dx = -1; dx <= 1; dx++) {
-                            for (let dy = -1; dy <= 1; dy++) {
-                                const x = cx + dx;
-                                const y = cy + dy;
-                                if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
-                                cells.push({ x, y });
-                            }
-                        }
-                        return { type, centerX: cx, centerY: cy, cells };
-                    }
-                    return null;
-                };
-                for (let i = 0; i < counts.poison; i++) {
-                    const zone = spawnTerrainZone('poison');
-                    if (zone) terrainZones.push(zone);
-                }
-                for (let i = 0; i < counts.slow; i++) {
-                    const zone = spawnTerrainZone('slow');
-                    if (zone) terrainZones.push(zone);
-                }
-            }
-            portalPairs = [];
-            {
-                let count = 0;
-                if (currentWave >= 1) count = 1;
-                if (currentWave >= 3) count = 2;
-                for (let i = 0; i < count; i++) {
-                    const padding = TUNING.terrain.spawnPadding;
-                    const head = snake[0];
-                    let pair = null;
-                    for (let attempts = 0; attempts < TUNING.generation.portalSpawnAttempts; attempts++) {
-                        const ax = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                        const ay = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                        if (Math.abs(ax - head.x) + Math.abs(ay - head.y) < TUNING.terrain.minHeadDistance) continue;
-                        if (isPositionOccupied(ax, ay)) continue;
-                        for (let att2 = 0; att2 < 50; att2++) {
-                            const bx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                            const by = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                            if (Math.abs(bx - ax) + Math.abs(by - ay) < 6) continue;
-                            if (Math.abs(bx - head.x) + Math.abs(by - head.y) < 5) continue;
-                            if (isPositionOccupied(bx, by)) continue;
-                            const hue = Math.floor(Math.random() * 360);
-                            pair = { a: { x: ax, y: ay }, b: { x: bx, y: by }, hue };
-                            break;
-                        }
-                        if (pair) break;
-                    }
-                    if (pair) portalPairs.push(pair);
-                }
-            }
+            const waveEnvironment = waveGenerationModule.generateWaveEnvironment(currentWave);
+            terrainZones = waveEnvironment.terrainZones;
+            portalPairs = waveEnvironment.portalPairs;
 
             const { min: initialFoodMin, max: initialFoodMax } = currentLevelConfig.initialFood;
             const initialFoodCount = Math.floor(Math.random() * (initialFoodMax - initialFoodMin + 1)) + initialFoodMin;
@@ -4320,6 +4254,17 @@
             return moduleFactory.install(config);
         }
 
+        const waveGenerationModule = installRequiredSnakeModule(window.SnakeWaveGeneration, 'SnakeWaveGeneration', {
+            TUNING,
+            getSnake() {
+                return snake;
+            },
+            getTileCount() {
+                return tileCount;
+            },
+            isPositionOccupied
+        });
+
         const inputHelperActions = {
             ...moduleActionBase,
             startGame,
@@ -4429,76 +4374,9 @@
                 resetWaveProgressState();
                 resetCeremonyState();
                 resetWaveDebuffState();
-                terrainZones = [];
-                {
-                    const counts = currentWave <= 1
-                        ? { ...TUNING.terrain.baseCounts.wave1 }
-                        : currentWave === 2
-                            ? { ...TUNING.terrain.baseCounts.wave2 }
-                            : currentWave === 3
-                                ? { ...TUNING.terrain.baseCounts.wave3 }
-                                : {
-                                    poison: 2 + Math.floor((currentWave - 3) / 2),
-                                    slow: 2 + Math.ceil((currentWave - 3) / 2)
-                                };
-                    const spawnTerrainZone = (type) => {
-                        const padding = TUNING.terrain.spawnPadding;
-                        const head = snake[0];
-                        for (let attempts = 0; attempts < TUNING.generation.terrainZoneSpawnAttempts; attempts++) {
-                            const cx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                            const cy = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                            if (Math.abs(cx - head.x) + Math.abs(cy - head.y) < TUNING.terrain.minHeadDistance) continue;
-                            const cells = [];
-                            for (let dx = -1; dx <= 1; dx++) {
-                                for (let dy = -1; dy <= 1; dy++) {
-                                    const x = cx + dx;
-                                    const y = cy + dy;
-                                    if (x < 0 || x >= tileCount || y < 0 || y >= tileCount) continue;
-                                    cells.push({ x, y });
-                                }
-                            }
-                            return { type, centerX: cx, centerY: cy, cells };
-                        }
-                        return null;
-                    };
-                    for (let i = 0; i < counts.poison; i++) {
-                        const zone = spawnTerrainZone('poison');
-                        if (zone) terrainZones.push(zone);
-                    }
-                    for (let i = 0; i < counts.slow; i++) {
-                        const zone = spawnTerrainZone('slow');
-                        if (zone) terrainZones.push(zone);
-                    }
-                }
-                portalPairs = [];
-                {
-                    let count = 0;
-                    if (currentWave >= 1) count = 1;
-                    if (currentWave >= 3) count = 2;
-                    for (let i = 0; i < count; i++) {
-                        const padding = TUNING.terrain.spawnPadding;
-                        const head = snake[0];
-                        let pair = null;
-                        for (let attempts = 0; attempts < TUNING.generation.portalSpawnAttempts; attempts++) {
-                            const ax = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                            const ay = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                            if (Math.abs(ax - head.x) + Math.abs(ay - head.y) < TUNING.terrain.minHeadDistance) continue;
-                            if (isPositionOccupied(ax, ay)) continue;
-                            for (let att2 = 0; att2 < 50; att2++) {
-                                const bx = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                                const by = Math.floor(Math.random() * (tileCount - padding * 2)) + padding;
-                                if (Math.abs(bx - ax) + Math.abs(by - ay) < 6) continue;
-                                if (Math.abs(bx - head.x) + Math.abs(by - head.y) < 5) continue;
-                                if (isPositionOccupied(bx, by)) continue;
-                                const hue = Math.floor(Math.random() * 360);
-                                pair = { a: { x: ax, y: ay }, b: { x: bx, y: by }, hue };
-                                break;
-                            }
-                            if (pair) break;
-                        }
-                        if (pair) portalPairs.push(pair);
-                    }
-                }
+                const waveEnvironment = waveGenerationModule.generateWaveEnvironment(currentWave);
+                terrainZones = waveEnvironment.terrainZones;
+                portalPairs = waveEnvironment.portalPairs;
                 syncPauseButtonVisibility();
                 restartGameLoopWithInterval();
                 return {
