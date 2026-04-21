@@ -1729,8 +1729,8 @@
             audioMusicGain = audioContext.createGain();
             audioSfxGain = audioContext.createGain();
             audioMasterGain.gain.value = 1;
-            audioMusicGain.gain.value = 0.34;
-            audioSfxGain.gain.value = 0.64;
+            audioMusicGain.gain.value = 0.5;
+            audioSfxGain.gain.value = 0.9;
             audioMusicGain.connect(audioMasterGain);
             audioSfxGain.connect(audioMasterGain);
             audioMasterGain.connect(audioContext.destination);
@@ -2183,6 +2183,7 @@
                 turretState.warningUntil = 0;
                 turretState.impactAt = 0;
                 turretState.nextShotAt = now + TURRET_CONFIG.cooldownMs;
+                shedTailSegmentToSkin();
                 playSfx('turretFire');
                 return snake[0] && snake[0].x === turretState.beamTarget.x && snake[0].y === turretState.beamTarget.y;
             }
@@ -2195,7 +2196,7 @@
                 turretState.warningUntil = now + TURRET_CONFIG.warningMs;
                 turretState.impactAt = turretState.warningUntil;
                 playSfx('turretLock');
-                spawnFloatingText(aimX, aimY, '锁定', '#ff7b72', false);
+                spawnFloatingText(aimX, aimY, '\u9501\u5b9a', '#ff7b72', false);
             }
 
             return false;
@@ -2557,18 +2558,32 @@
             });
         }
 
+        function shedTailSegmentToSkin() {
+            if (snake.length <= 3) return null;
+            const dropped = snake.pop();
+            if (dropped && !isPositionOccupied(dropped.x, dropped.y)) {
+                snakeSkins.push({
+                    centerX: dropped.x,
+                    centerY: dropped.y,
+                    cells: [{ x: dropped.x, y: dropped.y }],
+                    spawnTime: Date.now()
+                });
+            }
+            return dropped;
+        }
+
         function getFoodFeedbackConfig(effect) {
             switch (effect) {
                 case 'grow':
-                    return { label: '补给', color: '#9be15d', flash: 'grow', sfx: 'eatPositive' };
+                    return { label: '\u8865\u7ed9', color: '#9be15d', flash: 'grow', sfx: 'eatPositive' };
                 case 'teleport':
-                    return { label: '跃迁', color: '#5eead4', flash: 'teleport', sfx: 'teleport' };
+                    return { label: '\u8dc3\u8fc1', color: '#5eead4', flash: 'teleport', sfx: 'teleport' };
                 case 'barrier':
-                    return { label: '筑墙', color: '#ffd166', flash: 'barrier', sfx: 'eatBarrier' };
+                    return { label: '\u7b51\u5899', color: '#ffd166', flash: 'barrier', sfx: 'eatBarrier' };
                 case 'wind':
-                    return { label: '清场', color: '#7dd3fc', flash: 'wind', sfx: 'eatWind' };
+                    return { label: '\u6e05\u573a', color: '#7dd3fc', flash: 'wind', sfx: 'eatWind' };
                 case 'shrink':
-                    return { label: '代价', color: '#ff7b72', flash: 'death', sfx: 'eatNegative' };
+                    return { label: '\u4ee3\u4ef7', color: '#ff7b72', flash: 'death', sfx: 'eatNegative' };
                 default:
                     return { label: '', color: '#ffffff', flash: 'white', sfx: 'eatPositive' };
             }
@@ -3221,12 +3236,11 @@
                     : FOOD_TYPES[effect.toUpperCase()] ? FOOD_TYPES[effect.toUpperCase()].score : 0;
                 const foodHead = snake[0];
                 const scoreText = modScore >= 0 ? `+${modScore}` : `${modScore}`;
-                const scoreColor = modScore >= 0 ? '#4ade80' : '#f87171';
                 const foodFeedback = getFoodFeedbackConfig(effect);
-                spawnFloatingText(foodHead.x, foodHead.y, scoreText, scoreColor, Math.abs(modScore) >= 20);
-                if (foodFeedback.label) {
-                    spawnFloatingText(foodHead.x, foodHead.y - 0.18, foodFeedback.label, foodFeedback.color, false);
-                }
+                const pickupText = foodFeedback.label
+                    ? `${foodFeedback.label}\uff01${scoreText}\u5206`
+                    : `${scoreText}\u5206`;
+                spawnFloatingText(foodHead.x, foodHead.y, pickupText, foodFeedback.color, Math.abs(modScore) >= 20);
                 flashEffect(foodFeedback.flash);
                 playSfx(foodFeedback.sfx);
 
@@ -3241,17 +3255,7 @@
                     }
                 backgroundHue = getWaveBackgroundHue(currentWave, score);
                 } else if (effect === 'shrink') {
-                    if (snake.length > 3) {
-                        const dropped = snake.pop();
-                        if (dropped && !isPositionOccupied(dropped.x, dropped.y)) {
-                            snakeSkins.push({
-                                centerX: dropped.x,
-                                centerY: dropped.y,
-                                cells: [{ x: dropped.x, y: dropped.y }],
-                                spawnTime: Date.now()
-                            });
-                        }
-                    }
+                    shedTailSegmentToSkin();
                     score += modScore;
                     isSpeedBoosted = true;
                     speedBoostTimer = speedBoostDuration;
@@ -4373,7 +4377,7 @@
             ctx.rotate(Math.PI / 2);
             ctx.fillText('↔', 0, 0);
             ctx.restore();
-            if (!isCeremonyLootBurstState()) {
+            if (!isCeremonyLootBurstState() && !isCeremonyKeyState() && !isCeremonyChestState()) {
                 const wallColor = '#ff4444';
                 const wallWidth = Math.max(3, cellSize * 0.25);
                 ctx.strokeStyle = wallColor;
