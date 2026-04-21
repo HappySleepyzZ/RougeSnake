@@ -279,20 +279,21 @@
         });
         api.openShop();
         await wait(20);
-        const clearButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
-          .find((button) => button.textContent.includes('清障'));
-        if (clearButton) {
-          clearButton.click();
+        const turretGuardButton = Array.from(doc.querySelectorAll('#shopItems .restart-btn'))
+          .find((button) => button.textContent.includes('干扰器'));
+        if (turretGuardButton) {
+          turretGuardButton.click();
           await wait(20);
           afterClearPurchase = api.getState();
           Object.assign(interactionChecks, {
-            clearItemOnlyRemovesSnakeSkins: Array.isArray(afterClearPurchase.snakeSkins)
-              && afterClearPurchase.snakeSkins.length === 0
+            turretGuardPurchaseGrantsCharge: afterClearPurchase.turretGuardCharges === 1
+              && Array.isArray(afterClearPurchase.snakeSkins)
+              && afterClearPurchase.snakeSkins.length === 1
               && Array.isArray(afterClearPurchase.obstacles)
               && afterClearPurchase.obstacles.length === 1
           });
         } else {
-          interactionChecks.clearItemOnlyRemovesSnakeSkins = false;
+          interactionChecks.turretGuardPurchaseGrantsCharge = false;
         }
       }
 
@@ -1384,6 +1385,7 @@
         } : null,
         shopStateAfterClose: afterCloseShop ? { shopOpen: afterCloseShop.shopOpen, shopOpening: afterCloseShop.shopOpening, isWaveTransition: afterCloseShop.isWaveTransition } : null,
         clearPurchaseState: afterClearPurchase ? {
+          turretGuardCharges: afterClearPurchase.turretGuardCharges,
           snakeSkinCount: Array.isArray(afterClearPurchase.snakeSkins) ? afterClearPurchase.snakeSkins.length : null,
           obstacleCount: Array.isArray(afterClearPurchase.obstacles) ? afterClearPurchase.obstacles.length : null
         } : null,

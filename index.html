@@ -1418,6 +1418,7 @@
                 debuffPoison: (secs) => ` ☠${secs}s`,
                 debuffSlow: (secs) => ` ❄${secs}s`,
                 shield: (count) => ` 🛡${count}`,
+                turretGuard: (count) => ` 📡${count}`,
                 dash: (count) => ` ⚡${count}`,
                 poisonResist: ' 🟢毒抗',
                 iceArmor: ' 🔵冰甲',
@@ -1434,6 +1435,7 @@
             floating: {
                 dash: '⚡ 冲刺!',
                 shield: '🛡 护盾!',
+                turretGuard: '📡 反炮!',
                 keyFound: '🔑 找到钥匙!',
                 keyGet: '✨ 钥匙get!',
                 coinFrenzy: '💰 金币狂欢!',
@@ -1729,8 +1731,8 @@
             audioMusicGain = audioContext.createGain();
             audioSfxGain = audioContext.createGain();
             audioMasterGain.gain.value = 1;
-            audioMusicGain.gain.value = 0.62;
-            audioSfxGain.gain.value = 1.08;
+            audioMusicGain.gain.value = 0.8;
+            audioSfxGain.gain.value = 0.8;
             audioMusicGain.connect(audioMasterGain);
             audioSfxGain.connect(audioMasterGain);
             audioMasterGain.connect(audioContext.destination);
@@ -1743,7 +1745,7 @@
             bgmAudio = new Audio(AUDIO_BGM_TRACK);
             bgmAudio.loop = true;
             bgmAudio.preload = 'auto';
-            bgmAudio.volume = 0.56;
+            bgmAudio.volume = 0.8;
             return bgmAudio;
         }
 
@@ -1997,6 +1999,7 @@
         let dashBurstTicks = 0;
         let activeBuffs = [];      // 当前生效的 buff [{id, remaining}]
         let shieldCharges = 0;     // 护盾次数
+        let turretGuardCharges = 0; // 免疫炮击次数
         let dashCharges = 0;       // 冲刺次数
         
         // 商品池
@@ -2006,7 +2009,7 @@
             { id: 'shield', name: '护盾', icon: '🛡', cost: 4, desc: '撞障碍免死1次', category: 'defense' },
             { id: 'dash', name: '冲刺', icon: '⚡', cost: 5, desc: '获得1次冲刺加速', category: 'offense' },
             { id: 'magnet', name: '磁铁', icon: '🧲', cost: 4, desc: '食物吸引+2格 1波', category: 'offense' },
-            { id: 'clear', name: '清障', icon: '🧹', cost: 3, desc: '清除所有蛇皮障碍', category: 'tool' },
+            { id: 'turret_guard', name: '干扰器', icon: '📡', cost: 3, desc: '免疫1次炮击', category: 'tool' },
         ];
         
         let waveTransitionTimer = 0;
@@ -2185,7 +2188,17 @@
                 turretState.nextShotAt = now + TURRET_CONFIG.cooldownMs;
                 shedTailSegmentToSkin();
                 playSfx('turretFire');
-                return snake[0] && snake[0].x === turretState.beamTarget.x && snake[0].y === turretState.beamTarget.y;
+                if (snake[0] && snake[0].x === turretState.beamTarget.x && snake[0].y === turretState.beamTarget.y) {
+                    if (turretGuardCharges > 0) {
+                        turretGuardCharges--;
+                        spawnFloatingText(snake[0].x, snake[0].y, UI_TEXT.floating.turretGuard, '#7dd3fc', true);
+                        flashEffect('teleport');
+                        flashAlpha = 0.35;
+                        return false;
+                    }
+                    return true;
+                }
+                return false;
             }
 
             if (!turretState.target && now >= turretState.nextShotAt) {
@@ -2368,6 +2381,7 @@
             resetTransientState();
             activeBuffs = [];
             shieldCharges = 0;
+            turretGuardCharges = 0;
             dashCharges = 0;
             dashBurstTicks = 0;
             portalPairs = [];
@@ -2710,14 +2724,14 @@
                             case 'shield':
                                 shieldCharges++;
                                 break;
+                            case 'turret_guard':
+                                turretGuardCharges++;
+                                break;
                             case 'dash':
                                 dashCharges++;
                                 break;
                             case 'magnet':
                                 activeBuffs.push({ id: 'magnet', remaining: 1 });
-                                break;
-                            case 'clear':
-                                snakeSkins = [];
                                 break;
                             case 'heal':
                                 snake.splice(Math.max(2, snake.length - 2));
@@ -2832,6 +2846,7 @@
             // V19: buff 显示
             let buffStr = '';
             if (shieldCharges > 0) buffStr += UI_TEXT.hud.shield(shieldCharges);
+            if (turretGuardCharges > 0) buffStr += UI_TEXT.hud.turretGuard(turretGuardCharges);
             if (dashCharges > 0) buffStr += UI_TEXT.hud.dash(dashCharges);
             if (activeBuffs.some(b => b.id === 'poison_resist')) buffStr += UI_TEXT.hud.poisonResist;
             if (activeBuffs.some(b => b.id === 'ice_armor')) buffStr += UI_TEXT.hud.iceArmor;
@@ -3882,6 +3897,7 @@
             const hasBuff = buffId => activeBuffs.some(buff => buff.id === buffId);
             const bodyStatusMarkers = [];
             if (shieldCharges > 0) bodyStatusMarkers.push({ kind: 'shield', count: shieldCharges });
+            if (turretGuardCharges > 0) bodyStatusMarkers.push({ kind: 'turret_guard', count: turretGuardCharges });
             if (hasBuff('poison_resist')) bodyStatusMarkers.push({ kind: 'poison_resist' });
             if (hasBuff('ice_armor')) bodyStatusMarkers.push({ kind: 'ice_armor' });
             if (hasBuff('magnet')) bodyStatusMarkers.push({ kind: 'magnet' });
@@ -3942,6 +3958,24 @@
                         ctx.moveTo(x - badgeRadius * 0.72, y);
                         ctx.lineTo(x + badgeRadius * 0.72, y);
                         ctx.stroke();
+                        break;
+                    case 'turret_guard':
+                        ctx.strokeStyle = `rgba(125, 225, 255, ${0.76 + depth * 0.12})`;
+                        ctx.lineWidth = Math.max(2, cellSize * 0.07);
+                        ctx.beginPath();
+                        ctx.arc(x, y, badgeRadius * 0.98, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(x - badgeRadius * 0.7, y);
+                        ctx.lineTo(x + badgeRadius * 0.7, y);
+                        ctx.moveTo(x, y - badgeRadius * 0.7);
+                        ctx.lineTo(x, y + badgeRadius * 0.7);
+                        ctx.stroke();
+                        ctx.fillStyle = 'rgba(210, 247, 255, 0.9)';
+                        ctx.beginPath();
+                        ctx.arc(x, y, Math.max(1.8, cellSize * 0.08), 0, Math.PI * 2);
+                        ctx.fill();
+                        drawMarkerPips(marker.count, x, y, 'rgba(125, 225, 255, 0.95)', badgeRadius + cellSize * 0.03);
                         break;
                     case 'ice_armor':
                         ctx.strokeStyle = `rgba(170, 235, 255, ${0.75 + depth * 0.12})`;
@@ -6024,6 +6058,7 @@
                     isSpeedBoosted,
                     activeBuffs: activeBuffs.map(buff => ({ ...buff })),
                     shieldCharges,
+                    turretGuardCharges,
                     dashCharges,
                     dashBurstTicks,
                     poisonDebuffEnd,
@@ -6125,6 +6160,9 @@
                         break;
                     case 'shieldCharges':
                         shieldCharges = value;
+                        break;
+                    case 'turretGuardCharges':
+                        turretGuardCharges = value;
                         break;
                     case 'dashCharges':
                         dashCharges = value;
