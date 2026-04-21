@@ -1736,8 +1736,8 @@
             audioMusicGain = audioContext.createGain();
             audioSfxGain = audioContext.createGain();
             audioMasterGain.gain.value = 1;
-            audioMusicGain.gain.value = 0.8;
-            audioSfxGain.gain.value = 0.8;
+            audioMusicGain.gain.value = 1.1;
+            audioSfxGain.gain.value = 1.1;
             audioMusicGain.connect(audioMasterGain);
             audioSfxGain.connect(audioMasterGain);
             audioMasterGain.connect(audioContext.destination);
@@ -1750,7 +1750,7 @@
             bgmAudio = new Audio(AUDIO_BGM_TRACK);
             bgmAudio.loop = true;
             bgmAudio.preload = 'auto';
-            bgmAudio.volume = 0.8;
+            bgmAudio.volume = 1;
             return bgmAudio;
         }
 
@@ -2134,23 +2134,29 @@
         let portalTeleportCooldown = 0;
         const TURRET_CONFIG = {
             startWave: 2,
+            wavesPerExtraTurret: 4,
+            maxTurrets: 4,
+            staggerMs: 420,
             firstShotDelayMs: 2200,
             cooldownMs: 3000,
             warningMs: 850,
             beamMs: 220
         };
-        let turretState = {
-            enabled: false,
-            x: 0,
-            y: 0,
-            nextShotAt: 0,
-            warningUntil: 0,
-            impactAt: 0,
-            target: null,
-            beamTarget: null,
-            beamUntil: 0,
-            jammedUntil: 0
-        };
+        function createTurretState(nextShotAt = 0) {
+            return {
+                enabled: false,
+                x: 0,
+                y: 0,
+                nextShotAt,
+                warningUntil: 0,
+                impactAt: 0,
+                target: null,
+                beamTarget: null,
+                beamUntil: 0,
+                jammedUntil: 0
+            };
+        }
+        let turretStates = [createTurretState()];
 
         // 改动1：速度曲线平滑化 - 指数衰减
         const BASE_SPEED = TUNING.speed.base;
@@ -2176,84 +2182,103 @@
         let timerTraceBuffer = [];
         const TIMER_TRACE_LIMIT = 180;
 
+        function getTurretCountForWave(wave = currentWave) {
+            if (wave < TURRET_CONFIG.startWave) return 0;
+            return Math.min(
+                TURRET_CONFIG.maxTurrets,
+                1 + Math.floor((wave - TURRET_CONFIG.startWave) / TURRET_CONFIG.wavesPerExtraTurret)
+            );
+        }
+
+        function getTurretAnchors(count = getTurretCountForWave()) {
+            const center = Math.floor(tileCount / 2);
+            const margin = Math.max(1, Math.floor(tileCount * 0.16));
+            return [
+                { x: center, y: margin },
+                { x: tileCount - 1 - margin, y: center },
+                { x: center, y: tileCount - 1 - margin },
+                { x: margin, y: center }
+            ].slice(0, count);
+        }
+
         function resetTurretState(nextShotAt = 0) {
-            turretState = {
-                enabled: false,
-                x: Math.floor(tileCount / 2),
-                y: Math.floor(tileCount / 2),
-                nextShotAt,
-                warningUntil: 0,
-                impactAt: 0,
-                target: null,
-                beamTarget: null,
-                beamUntil: 0,
-                jammedUntil: 0
-            };
+            turretStates = [createTurretState(nextShotAt)];
         }
 
         function scheduleTurretForWave(delayMs = TURRET_CONFIG.firstShotDelayMs) {
             const now = Date.now();
-            resetTurretState(now + delayMs);
-            turretState.enabled = currentWave >= TURRET_CONFIG.startWave;
+            const turretCount = getTurretCountForWave();
+            turretStates = Array.from({ length: Math.max(1, turretCount) }, (_, index) =>
+                createTurretState(now + delayMs + index * TURRET_CONFIG.staggerMs)
+            );
+            turretStates.forEach(state => {
+                state.enabled = currentWave >= TURRET_CONFIG.startWave;
+            });
         }
 
         function updateTurretHazard(now, impactSegments = snake) {
             if (!snake.length || currentWave < TURRET_CONFIG.startWave || !isCeremonyPlayingState() || isPausedState() || isWaveTransitionState()) {
-                if (turretState.warningUntil || turretState.beamUntil || turretState.target || turretState.beamTarget) {
+                if (turretStates.some(state => state.warningUntil || state.beamUntil || state.target || state.beamTarget)) {
                     resetTurretState(0);
                 }
                 return false;
             }
 
-            turretState.enabled = true;
-            turretState.x = Math.floor(tileCount / 2);
-            turretState.y = Math.floor(tileCount / 2);
+            const anchors = getTurretAnchors();
+            let didHitAnySnake = false;
+            turretStates.forEach((turretState, index) => {
+                const anchor = anchors[index] || anchors[anchors.length - 1] || { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) };
+                turretState.enabled = true;
+                turretState.x = anchor.x;
+                turretState.y = anchor.y;
 
-            if (turretState.beamTarget && now >= turretState.beamUntil) {
-                turretState.beamTarget = null;
-                turretState.beamUntil = 0;
-            }
-
-            if (turretState.target && now >= turretState.impactAt) {
-                const impactTarget = { ...turretState.target };
-                turretState.target = null;
-                turretState.warningUntil = 0;
-                turretState.impactAt = 0;
-                turretState.nextShotAt = now + TURRET_CONFIG.cooldownMs;
-                if (turretGuardCharges > 0) {
-                    turretGuardCharges--;
+                if (turretState.beamTarget && now >= turretState.beamUntil) {
                     turretState.beamTarget = null;
                     turretState.beamUntil = 0;
-                    turretState.jammedUntil = now + 700;
-                    spawnFloatingText(snake[0].x, snake[0].y, UI_TEXT.floating.turretGuard, '#7dd3fc', true);
-                    flashEffect('teleport');
-                    flashAlpha = 0.35;
+                }
+
+                if (turretState.target && now >= turretState.impactAt) {
+                    const impactTarget = { ...turretState.target };
+                    turretState.target = null;
+                    turretState.warningUntil = 0;
+                    turretState.impactAt = 0;
+                    turretState.nextShotAt = now + TURRET_CONFIG.cooldownMs;
+                    if (turretGuardCharges > 0) {
+                        turretGuardCharges--;
+                        turretState.beamTarget = null;
+                        turretState.beamUntil = 0;
+                        turretState.jammedUntil = now + 700;
+                        spawnFloatingText(snake[0].x, snake[0].y, UI_TEXT.floating.turretGuard, '#7dd3fc', true);
+                        flashEffect('teleport');
+                        flashAlpha = 0.35;
+                        playSfx('turretFire');
+                        updateStatusUI();
+                        return;
+                    }
+                    turretState.beamTarget = impactTarget;
+                    turretState.beamUntil = now + TURRET_CONFIG.beamMs;
                     playSfx('turretFire');
-                    updateStatusUI();
-                    return false;
+                    const didHitSnake = Array.isArray(impactSegments) && impactSegments.some(segment => segment.x === impactTarget.x && segment.y === impactTarget.y);
+                    if (didHitSnake) {
+                        shedTailSegmentToSkin();
+                        didHitAnySnake = true;
+                    }
+                    return;
                 }
-                turretState.beamTarget = impactTarget;
-                turretState.beamUntil = now + TURRET_CONFIG.beamMs;
-                playSfx('turretFire');
-                const didHitSnake = Array.isArray(impactSegments) && impactSegments.some(segment => segment.x === impactTarget.x && segment.y === impactTarget.y);
-                if (didHitSnake) {
-                    shedTailSegmentToSkin();
+
+                if (!turretState.target && now >= turretState.nextShotAt) {
+                    const head = snake[0];
+                    const aimX = Math.max(0, Math.min(tileCount - 1, head.x + (direction.x || 0)));
+                    const aimY = Math.max(0, Math.min(tileCount - 1, head.y + (direction.y || 0)));
+                    turretState.target = { x: aimX, y: aimY };
+                    turretState.warningUntil = now + TURRET_CONFIG.warningMs;
+                    turretState.impactAt = turretState.warningUntil;
+                    playSfx('turretLock');
+                    spawnFloatingText(aimX, aimY, '\u9501\u5b9a', '#ff7b72', false);
                 }
-                return didHitSnake;
-            }
+            });
 
-            if (!turretState.target && now >= turretState.nextShotAt) {
-                const head = snake[0];
-                const aimX = Math.max(0, Math.min(tileCount - 1, head.x + (direction.x || 0)));
-                const aimY = Math.max(0, Math.min(tileCount - 1, head.y + (direction.y || 0)));
-                turretState.target = { x: aimX, y: aimY };
-                turretState.warningUntil = now + TURRET_CONFIG.warningMs;
-                turretState.impactAt = turretState.warningUntil;
-                playSfx('turretLock');
-                spawnFloatingText(aimX, aimY, '\u9501\u5b9a', '#ff7b72', false);
-            }
-
-            return false;
+            return didHitAnySnake;
         }
         const pauseBtn = document.getElementById('pauseBtn');
         const pauseOverlay = document.getElementById('pauseOverlay');
@@ -3912,8 +3937,8 @@
             ctx.shadowBlur = 0;
         }
 
-        function drawTurretHazard(time) {
-            if (!turretState.enabled || currentWave < TURRET_CONFIG.startWave || !isCeremonyPlayingState() || isPausedState() || isWaveTransitionState()) return;
+        function drawSingleTurretHazard(time, turretState) {
+            if (!turretState.enabled) return;
 
             const turretX = turretState.x * cellSize + cellSize / 2;
             const turretY = turretState.y * cellSize + cellSize / 2;
@@ -4003,6 +4028,11 @@
                 ctx.setLineDash([]);
                 ctx.restore();
             }
+        }
+
+        function drawTurretHazard(time) {
+            if (currentWave < TURRET_CONFIG.startWave || !isCeremonyPlayingState() || isPausedState() || isWaveTransitionState()) return;
+            turretStates.forEach(turretState => drawSingleTurretHazard(time, turretState));
         }
 
         function drawSnake(time) {
