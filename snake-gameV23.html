@@ -3788,7 +3788,7 @@
         }
 
         function drawTurretHazard(time) {
-            if (!turretState.enabled || currentWave < TURRET_CONFIG.startWave) return;
+            if (!turretState.enabled || currentWave < TURRET_CONFIG.startWave || !isCeremonyPlayingState() || isPausedState() || isWaveTransitionState()) return;
 
             const turretX = turretState.x * cellSize + cellSize / 2;
             const turretY = turretState.y * cellSize + cellSize / 2;
