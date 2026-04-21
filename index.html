@@ -1729,8 +1729,8 @@
             audioMusicGain = audioContext.createGain();
             audioSfxGain = audioContext.createGain();
             audioMasterGain.gain.value = 1;
-            audioMusicGain.gain.value = 0.5;
-            audioSfxGain.gain.value = 0.9;
+            audioMusicGain.gain.value = 0.62;
+            audioSfxGain.gain.value = 1.08;
             audioMusicGain.connect(audioMasterGain);
             audioSfxGain.connect(audioMasterGain);
             audioMasterGain.connect(audioContext.destination);
@@ -1743,7 +1743,7 @@
             bgmAudio = new Audio(AUDIO_BGM_TRACK);
             bgmAudio.loop = true;
             bgmAudio.preload = 'auto';
-            bgmAudio.volume = 0.42;
+            bgmAudio.volume = 0.56;
             return bgmAudio;
         }
 
@@ -3879,6 +3879,135 @@
                 ctx.roundRect(x - bodySize / 2, y - bodySize / 2, bodySize, bodySize, bodyRadius);
                 return bodySize;
             };
+            const hasBuff = buffId => activeBuffs.some(buff => buff.id === buffId);
+            const bodyStatusMarkers = [];
+            if (shieldCharges > 0) bodyStatusMarkers.push({ kind: 'shield', count: shieldCharges });
+            if (hasBuff('poison_resist')) bodyStatusMarkers.push({ kind: 'poison_resist' });
+            if (hasBuff('ice_armor')) bodyStatusMarkers.push({ kind: 'ice_armor' });
+            if (hasBuff('magnet')) bodyStatusMarkers.push({ kind: 'magnet' });
+            if (dashBurstTicks > 0) bodyStatusMarkers.push({ kind: 'dash_active' });
+            if (dashCharges > 0) bodyStatusMarkers.push({ kind: 'dash', count: dashCharges });
+
+            const drawMarkerPips = (count, x, y, color, radius) => {
+                const capped = Math.min(4, Math.max(0, count || 0));
+                if (capped <= 0) return;
+                for (let i = 0; i < capped; i++) {
+                    const angle = (-Math.PI / 2) + (i - (capped - 1) / 2) * 0.52;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(
+                        x + Math.cos(angle) * radius,
+                        y + Math.sin(angle) * radius,
+                        Math.max(1.4, cellSize * 0.07),
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+            };
+
+            const drawBodyStatusMarker = (marker, x, y, bodySize, depth) => {
+                const badgeRadius = Math.max(cellSize * 0.22, bodySize * 0.28);
+                ctx.save();
+                ctx.shadowBlur = 0;
+
+                switch (marker.kind) {
+                    case 'shield':
+                        ctx.strokeStyle = `rgba(72, 255, 170, ${0.65 + depth * 0.18})`;
+                        ctx.lineWidth = Math.max(2, cellSize * 0.08);
+                        ctx.beginPath();
+                        ctx.arc(x, y, badgeRadius, Math.PI * 0.18, Math.PI * 1.82);
+                        ctx.stroke();
+                        ctx.fillStyle = 'rgba(210, 255, 232, 0.9)';
+                        ctx.beginPath();
+                        ctx.arc(x, y - badgeRadius * 0.15, Math.max(1.8, cellSize * 0.09), 0, Math.PI * 2);
+                        ctx.fill();
+                        drawMarkerPips(marker.count, x, y, 'rgba(72, 255, 170, 0.92)', badgeRadius + cellSize * 0.04);
+                        break;
+                    case 'poison_resist':
+                        ctx.strokeStyle = `rgba(173, 255, 92, ${0.7 + depth * 0.16})`;
+                        ctx.lineWidth = Math.max(2, cellSize * 0.075);
+                        ctx.beginPath();
+                        ctx.arc(x, y, badgeRadius * 0.92, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.fillStyle = 'rgba(145, 255, 102, 0.9)';
+                        ctx.beginPath();
+                        ctx.arc(x, y, Math.max(2, cellSize * 0.11), 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(47, 79, 32, 0.9)';
+                        ctx.lineWidth = Math.max(1.4, cellSize * 0.05);
+                        ctx.beginPath();
+                        ctx.moveTo(x, y - badgeRadius * 0.72);
+                        ctx.lineTo(x, y + badgeRadius * 0.72);
+                        ctx.moveTo(x - badgeRadius * 0.72, y);
+                        ctx.lineTo(x + badgeRadius * 0.72, y);
+                        ctx.stroke();
+                        break;
+                    case 'ice_armor':
+                        ctx.strokeStyle = `rgba(170, 235, 255, ${0.75 + depth * 0.12})`;
+                        ctx.lineWidth = Math.max(1.8, cellSize * 0.065);
+                        for (let i = 0; i < 3; i++) {
+                            const angle = i * Math.PI / 3;
+                            const dx = Math.cos(angle) * badgeRadius * 0.9;
+                            const dy = Math.sin(angle) * badgeRadius * 0.9;
+                            ctx.beginPath();
+                            ctx.moveTo(x - dx, y - dy);
+                            ctx.lineTo(x + dx, y + dy);
+                            ctx.stroke();
+                        }
+                        ctx.fillStyle = 'rgba(225, 250, 255, 0.85)';
+                        ctx.beginPath();
+                        ctx.arc(x, y, Math.max(1.4, cellSize * 0.07), 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'magnet':
+                        ctx.strokeStyle = `rgba(255, 212, 92, ${0.78 + depth * 0.1})`;
+                        ctx.lineWidth = Math.max(2, cellSize * 0.08);
+                        ctx.beginPath();
+                        ctx.moveTo(x - badgeRadius * 0.55, y - badgeRadius * 0.5);
+                        ctx.lineTo(x - badgeRadius * 0.55, y + badgeRadius * 0.2);
+                        ctx.arc(x, y + badgeRadius * 0.2, badgeRadius * 0.55, Math.PI, 0, false);
+                        ctx.lineTo(x + badgeRadius * 0.55, y - badgeRadius * 0.5);
+                        ctx.stroke();
+                        ctx.strokeStyle = 'rgba(120, 210, 255, 0.9)';
+                        ctx.lineWidth = Math.max(1.4, cellSize * 0.05);
+                        ctx.beginPath();
+                        ctx.moveTo(x - badgeRadius * 0.55, y - badgeRadius * 0.5);
+                        ctx.lineTo(x - badgeRadius * 0.55, y - badgeRadius * 0.12);
+                        ctx.moveTo(x + badgeRadius * 0.55, y - badgeRadius * 0.5);
+                        ctx.lineTo(x + badgeRadius * 0.55, y - badgeRadius * 0.12);
+                        ctx.stroke();
+                        break;
+                    case 'dash_active':
+                        ctx.strokeStyle = `rgba(255, 164, 63, ${0.85 + depth * 0.08})`;
+                        ctx.lineWidth = Math.max(2, cellSize * 0.08);
+                        for (let i = -1; i <= 1; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(x - badgeRadius * 0.72, y + i * cellSize * 0.12);
+                            ctx.lineTo(x - badgeRadius * 0.1, y + i * cellSize * 0.12 - cellSize * 0.12);
+                            ctx.lineTo(x + badgeRadius * 0.72, y + i * cellSize * 0.12 - cellSize * 0.02);
+                            ctx.stroke();
+                        }
+                        break;
+                    case 'dash':
+                        ctx.strokeStyle = `rgba(255, 193, 90, ${0.76 + depth * 0.1})`;
+                        ctx.lineWidth = Math.max(2, cellSize * 0.075);
+                        ctx.beginPath();
+                        ctx.moveTo(x - badgeRadius * 0.55, y - badgeRadius * 0.35);
+                        ctx.lineTo(x, y - badgeRadius * 0.68);
+                        ctx.lineTo(x + badgeRadius * 0.18, y - badgeRadius * 0.1);
+                        ctx.lineTo(x + badgeRadius * 0.55, y - badgeRadius * 0.1);
+                        ctx.lineTo(x - badgeRadius * 0.04, y + badgeRadius * 0.68);
+                        ctx.lineTo(x - badgeRadius * 0.16, y + badgeRadius * 0.16);
+                        ctx.lineTo(x - badgeRadius * 0.55, y + badgeRadius * 0.16);
+                        ctx.closePath();
+                        ctx.stroke();
+                        drawMarkerPips(marker.count, x, y, 'rgba(255, 202, 106, 0.95)', badgeRadius + cellSize * 0.02);
+                        break;
+                }
+
+                ctx.restore();
+            };
             
             // V17: 先画蛇身特效（在蛇下方）
             snake.forEach((seg, index) => {
@@ -4061,6 +4190,12 @@
                         traceBodyShape(x, y);
                     }
                     ctx.fill();
+                }
+                if (index > 0) {
+                    const marker = bodyStatusMarkers[index - 1];
+                    if (marker) {
+                        drawBodyStatusMarker(marker, x, y, cellSize * 0.82, depth);
+                    }
                 }
 
                 // 眼睛
