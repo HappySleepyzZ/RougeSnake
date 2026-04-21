@@ -230,6 +230,13 @@
             font-weight: bold;
         }
 
+        .legend-symbol-img {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
+        }
+
         .legend-positive {
             color: #2ecc71;
         }
@@ -1163,19 +1170,10 @@
     </div>
     
     <!-- V19c: 食物图例 - 默认折叠 -->
-    <div class="legend collapsed" id="legend">
+    <div class="legend expanded" id="legend">
         <div class="legend-toggle"><span>📋</span><span class="legend-toggle-label">图例</span></div>
         <div class="legend-body">
             <div class="legend-item" id="moduleLegend" style="margin-bottom:4px;font-weight:bold"><span class="legend-symbol">⚪</span> <span>通用</span></div>
-            <div class="legend-item legend-positive"><span class="legend-symbol" style="color:#9be15d">&#8593;</span> <span>变长</span></div>
-            <div class="legend-item legend-positive"><span class="legend-symbol" style="color:#ffd166">&#8644;</span> <span>对调</span></div>
-            <div class="legend-item legend-strategy"><span class="legend-symbol" style="color:#f59e0b">🚧</span> <span>造障</span></div>
-            <div class="legend-item legend-danger"><span class="legend-symbol" style="color:#ff6b6b">&#8595;</span> <span>变短</span></div>
-            <div class="legend-item legend-wind"><span class="legend-symbol" style="color:#74cfff">🌀</span> <span>清障</span></div>
-            <div class="legend-item"><span class="legend-symbol" style="color:#8b4513">🐍</span> <span>蛇皮</span></div>
-            <div class="legend-item"><span class="legend-symbol" style="color:#800080">☠</span> <span>毒雾</span></div>
-            <div class="legend-item"><span class="legend-symbol" style="color:#0064c8">❄</span> <span>减速</span></div>
-            <div class="legend-item"><span class="legend-symbol" style="color:#c084fc">⊙</span> <span>传送门</span></div>
         </div>
     </div>
     
@@ -1460,16 +1458,6 @@
 
         document.querySelector('.mode-note').textContent = UI_TEXT.wave.modeNote;
         document.getElementById('pauseTitle').textContent = UI_TEXT.pause.title;
-        document.querySelector('#moduleLegend span:last-child').textContent = UI_TEXT.legend.moduleBalanced;
-        document.querySelectorAll('.legend-item span:last-child')[1].textContent = UI_TEXT.legend.grow;
-        document.querySelectorAll('.legend-item span:last-child')[2].textContent = UI_TEXT.legend.teleportSwap;
-        document.querySelectorAll('.legend-item span:last-child')[3].textContent = UI_TEXT.legend.barrier;
-        document.querySelectorAll('.legend-item span:last-child')[4].textContent = UI_TEXT.legend.shrink;
-        document.querySelectorAll('.legend-item span:last-child')[5].textContent = UI_TEXT.legend.clear;
-        document.querySelectorAll('.legend-item span:last-child')[6].textContent = UI_TEXT.legend.snakeSkin;
-        document.querySelectorAll('.legend-item span:last-child')[7].textContent = UI_TEXT.legend.poison;
-        document.querySelectorAll('.legend-item span:last-child')[8].textContent = UI_TEXT.legend.slow;
-        document.querySelectorAll('.legend-item span:last-child')[9].textContent = UI_TEXT.legend.portal;
 
         const LEVEL_CONFIGS = {
             v12_relic_trial: {
@@ -1522,6 +1510,57 @@
 
         function getTouchHintText() {
             return activeModeConfig.touchHint(currentLevelConfig);
+        }
+
+        function getIconSrc(iconKey) {
+            return (ICON_CONFIG && ICON_CONFIG[iconKey] && ICON_CONFIG[iconKey].src)
+                ? ICON_CONFIG[iconKey].src
+                : `./icons/${iconKey}.png`;
+        }
+
+        function createLegendRowMarkup({ iconKey, label, className = '', color = '' }) {
+            const classAttr = className ? ` ${className}` : '';
+            const imageMarkup = iconKey
+                ? `<img class="legend-symbol-img" src="${getIconSrc(iconKey)}" alt="${label}">`
+                : `<span style="color:${color || '#fff'}">⚪</span>`;
+            return `<div class="legend-item${classAttr}"><span class="legend-symbol">${imageMarkup}</span> <span>${label}</span></div>`;
+        }
+
+        function renderLegendPanel() {
+            if (!legendPanel) return;
+            const mod = selectedModule || MODULE_TYPES.BALANCED;
+            const legendBody = legendPanel.querySelector('.legend-body');
+            if (!legendBody) return;
+            legendBody.innerHTML = [
+                `<div class="legend-item" id="moduleLegend" style="margin-bottom:4px;font-weight:bold"><span class="legend-symbol">${mod.icon}</span> <span>${mod.name}</span></div>`,
+                createLegendRowMarkup({ iconKey: 'food_grow', label: UI_TEXT.legend.grow, className: 'legend-positive' }),
+                createLegendRowMarkup({ iconKey: 'food_teleport', label: UI_TEXT.legend.teleportSwap, className: 'legend-positive' }),
+                createLegendRowMarkup({ iconKey: 'food_barrier', label: UI_TEXT.legend.barrier, className: 'legend-strategy' }),
+                createLegendRowMarkup({ iconKey: 'food_shrink', label: UI_TEXT.legend.shrink, className: 'legend-danger' }),
+                createLegendRowMarkup({ iconKey: 'food_wind', label: UI_TEXT.legend.clear, className: 'legend-wind' }),
+                createLegendRowMarkup({ iconKey: 'snake_skin', label: UI_TEXT.legend.snakeSkin }),
+                createLegendRowMarkup({ iconKey: 'terrain_poison', label: UI_TEXT.legend.poison }),
+                createLegendRowMarkup({ iconKey: 'terrain_ice', label: UI_TEXT.legend.slow }),
+                createLegendRowMarkup({ iconKey: 'portal_a', label: UI_TEXT.legend.portal })
+            ].join('');
+        }
+
+        function drawTutorialIconLine({ iconKey, label, color, y, size = 24 }) {
+            const icon = ICON_IMAGES[iconKey];
+            const centerX = canvas.width / 2;
+            const iconX = centerX - 138;
+            if (icon && icon.complete && icon.naturalWidth > 0) {
+                ctx.drawImage(icon, iconX - size / 2, y - size / 2, size, size);
+            } else {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(iconX, y, size * 0.28, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.fillStyle = color;
+            ctx.textAlign = 'left';
+            ctx.fillText(label, centerX - 112, y);
+            ctx.textAlign = 'center';
         }
         
         let snake = [];
@@ -1618,55 +1657,59 @@
 
         const AUDIO_THEMES = {
             onboarding: {
-                pulseMs: 860,
-                padType: 'triangle',
+                pulseMs: 920,
+                padType: 'sine',
                 leadType: 'sine',
                 bassType: 'triangle',
-                padVolume: 0.026,
-                bassVolume: 0.036,
-                leadVolume: 0.024,
+                padVolume: 0.018,
+                bassVolume: 0.026,
+                leadVolume: 0.012,
+                leadEvery: 2,
                 pad: [261.63, 329.63, 392.0, 523.25],
                 bass: [130.81, 98.0, 130.81, 164.81],
                 lead: [523.25, 659.25, 783.99, 659.25]
             },
             frost: {
-                pulseMs: 800,
+                pulseMs: 960,
                 padType: 'sine',
-                leadType: 'triangle',
+                leadType: 'sine',
                 bassType: 'triangle',
-                padVolume: 0.03,
-                bassVolume: 0.04,
-                leadVolume: 0.026,
+                padVolume: 0.02,
+                bassVolume: 0.028,
+                leadVolume: 0.012,
+                leadEvery: 3,
                 pad: [293.66, 369.99, 440.0, 587.33],
                 bass: [146.83, 110.0, 146.83, 174.61],
                 lead: [587.33, 739.99, 880.0, 739.99]
             },
             poison: {
-                pulseMs: 760,
-                padType: 'triangle',
-                leadType: 'sawtooth',
+                pulseMs: 900,
+                padType: 'sine',
+                leadType: 'sine',
                 bassType: 'triangle',
-                padVolume: 0.024,
-                bassVolume: 0.034,
-                leadVolume: 0.023,
+                padVolume: 0.016,
+                bassVolume: 0.022,
+                leadVolume: 0.01,
+                leadEvery: 4,
                 pad: [261.63, 311.13, 392.0, 466.16],
                 bass: [130.81, 103.83, 130.81, 116.54],
                 lead: [523.25, 622.25, 698.46, 622.25]
             },
             rift: {
-                pulseMs: 700,
-                padType: 'triangle',
-                leadType: 'square',
+                pulseMs: 860,
+                padType: 'sine',
+                leadType: 'triangle',
                 bassType: 'sine',
-                padVolume: 0.022,
-                bassVolume: 0.034,
-                leadVolume: 0.022,
+                padVolume: 0.017,
+                bassVolume: 0.024,
+                leadVolume: 0.011,
+                leadEvery: 3,
                 pad: [220.0, 277.18, 329.63, 493.88],
                 bass: [110.0, 82.41, 123.47, 98.0],
                 lead: [440.0, 554.37, 659.25, 554.37]
             }
         };
-        const AUDIO_BGM_TRACK = 'assets/audio/ai_cyber_song.wav';
+        const AUDIO_BGM_TRACK = '';
 
         let audioContext = null;
         let audioMasterGain = null;
@@ -1686,7 +1729,7 @@
             audioMusicGain = audioContext.createGain();
             audioSfxGain = audioContext.createGain();
             audioMasterGain.gain.value = 1;
-            audioMusicGain.gain.value = 0.52;
+            audioMusicGain.gain.value = 0.34;
             audioSfxGain.gain.value = 0.64;
             audioMusicGain.connect(audioMasterGain);
             audioSfxGain.connect(audioMasterGain);
@@ -1765,6 +1808,22 @@
                     scheduleAudioTone({ frequency: 440.0, startTime: now, duration: 0.07, gain: 0.024, type: 'triangle' });
                     scheduleAudioTone({ frequency: 659.25, startTime: now + 0.07, duration: 0.12, gain: 0.024, type: 'triangle' });
                     break;
+                case 'eatBarrier':
+                    scheduleAudioTone({ frequency: 349.23, startTime: now, duration: 0.06, gain: 0.02, type: 'square', attack: 0.004, release: 0.05 });
+                    scheduleAudioTone({ frequency: 261.63, startTime: now + 0.04, duration: 0.09, gain: 0.018, type: 'triangle', attack: 0.004, release: 0.06 });
+                    break;
+                case 'eatWind':
+                    scheduleAudioTone({ frequency: 587.33, startTime: now, duration: 0.05, gain: 0.018, type: 'sine', attack: 0.003, release: 0.04 });
+                    scheduleAudioTone({ frequency: 880.0, startTime: now + 0.04, duration: 0.1, gain: 0.016, type: 'triangle', attack: 0.003, release: 0.05 });
+                    break;
+                case 'turretLock':
+                    scheduleAudioTone({ frequency: 466.16, startTime: now, duration: 0.06, gain: 0.02, type: 'square', attack: 0.004, release: 0.04 });
+                    scheduleAudioTone({ frequency: 466.16, startTime: now + 0.08, duration: 0.06, gain: 0.016, type: 'square', attack: 0.004, release: 0.04 });
+                    break;
+                case 'turretFire':
+                    scheduleAudioTone({ frequency: 196.0, startTime: now, duration: 0.08, gain: 0.026, type: 'sawtooth', attack: 0.003, release: 0.06 });
+                    scheduleAudioTone({ frequency: 110.0, startTime: now + 0.03, duration: 0.12, gain: 0.022, type: 'triangle', attack: 0.003, release: 0.08 });
+                    break;
                 case 'eatPositive':
                     scheduleAudioTone({ frequency: 523.25, startTime: now, duration: 0.06, gain: 0.018, type: 'sine' });
                     scheduleAudioTone({ frequency: 783.99, startTime: now + 0.05, duration: 0.1, gain: 0.02, type: 'triangle' });
@@ -1834,16 +1893,18 @@
                 attack: 0.02,
                 release: 0.22
             });
-            scheduleAudioTone({
-                frequency: theme.lead[leadIndex],
-                startTime: now + theme.pulseMs / 1000 * 0.32,
-                duration: theme.pulseMs / 1000 * 0.24,
-                gain: theme.leadVolume,
-                type: theme.leadType,
-                destination: 'music',
-                attack: 0.01,
-                release: 0.12
-            });
+            if (!theme.leadEvery || audioMusicStep % theme.leadEvery === 0) {
+                scheduleAudioTone({
+                    frequency: theme.lead[leadIndex],
+                    startTime: now + theme.pulseMs / 1000 * 0.32,
+                    duration: theme.pulseMs / 1000 * 0.24,
+                    gain: theme.leadVolume,
+                    type: theme.leadType,
+                    destination: 'music',
+                    attack: 0.01,
+                    release: 0.12
+                });
+            }
             audioMusicStep++;
         }
 
@@ -2019,10 +2080,40 @@
             }
         };
 
+        function updatePortalWidthForModule(mod) {
+            portalWidth = mod && mod.special === 'widePortal'
+                ? currentLevelConfig.portalWidth + 2
+                : currentLevelConfig.portalWidth;
+        }
+
+        function setSelectedModule(mod) {
+            selectedModule = mod;
+            updatePortalWidthForModule(mod);
+            renderLegendPanel();
+        }
+
         // V14：瞬移无敌帧
         let teleportInvincibleSteps = 0;
         // V21 fix: 传送门重复触发/跨波次残留保护
         let portalTeleportCooldown = 0;
+        const TURRET_CONFIG = {
+            startWave: 2,
+            firstShotDelayMs: 2200,
+            cooldownMs: 3000,
+            warningMs: 850,
+            beamMs: 220
+        };
+        let turretState = {
+            enabled: false,
+            x: 0,
+            y: 0,
+            nextShotAt: 0,
+            warningUntil: 0,
+            impactAt: 0,
+            target: null,
+            beamTarget: null,
+            beamUntil: 0
+        };
 
         // 改动1：速度曲线平滑化 - 指数衰减
         const BASE_SPEED = TUNING.speed.base;
@@ -2047,6 +2138,68 @@
         let totalPausedTime = 0; // 累计暂停时间（毫秒），用于修正计时
         let timerTraceBuffer = [];
         const TIMER_TRACE_LIMIT = 180;
+
+        function resetTurretState(nextShotAt = 0) {
+            turretState = {
+                enabled: false,
+                x: Math.floor(tileCount / 2),
+                y: Math.floor(tileCount / 2),
+                nextShotAt,
+                warningUntil: 0,
+                impactAt: 0,
+                target: null,
+                beamTarget: null,
+                beamUntil: 0
+            };
+        }
+
+        function scheduleTurretForWave(delayMs = TURRET_CONFIG.firstShotDelayMs) {
+            const now = Date.now();
+            resetTurretState(now + delayMs);
+            turretState.enabled = currentWave >= TURRET_CONFIG.startWave;
+        }
+
+        function updateTurretHazard(now) {
+            if (!snake.length || currentWave < TURRET_CONFIG.startWave || !isCeremonyPlayingState() || isPausedState() || isWaveTransitionState()) {
+                if (turretState.warningUntil || turretState.beamUntil || turretState.target || turretState.beamTarget) {
+                    resetTurretState(0);
+                }
+                return false;
+            }
+
+            turretState.enabled = true;
+            turretState.x = Math.floor(tileCount / 2);
+            turretState.y = Math.floor(tileCount / 2);
+
+            if (turretState.beamTarget && now >= turretState.beamUntil) {
+                turretState.beamTarget = null;
+                turretState.beamUntil = 0;
+            }
+
+            if (turretState.target && now >= turretState.impactAt) {
+                turretState.beamTarget = { ...turretState.target };
+                turretState.beamUntil = now + TURRET_CONFIG.beamMs;
+                turretState.target = null;
+                turretState.warningUntil = 0;
+                turretState.impactAt = 0;
+                turretState.nextShotAt = now + TURRET_CONFIG.cooldownMs;
+                playSfx('turretFire');
+                return snake[0] && snake[0].x === turretState.beamTarget.x && snake[0].y === turretState.beamTarget.y;
+            }
+
+            if (!turretState.target && now >= turretState.nextShotAt) {
+                const head = snake[0];
+                const aimX = Math.max(0, Math.min(tileCount - 1, head.x + (direction.x || 0)));
+                const aimY = Math.max(0, Math.min(tileCount - 1, head.y + (direction.y || 0)));
+                turretState.target = { x: aimX, y: aimY };
+                turretState.warningUntil = now + TURRET_CONFIG.warningMs;
+                turretState.impactAt = turretState.warningUntil;
+                playSfx('turretLock');
+                spawnFloatingText(aimX, aimY, '锁定', '#ff7b72', false);
+            }
+
+            return false;
+        }
         const pauseBtn = document.getElementById('pauseBtn');
         const pauseOverlay = document.getElementById('pauseOverlay');
         const resumeBtn = document.getElementById('resumeBtn');
@@ -2218,6 +2371,7 @@
             dashBurstTicks = 0;
             portalPairs = [];
             floatingTexts = [];
+            resetTurretState(0);
             
             // V14: 重置瞬移无敌帧
             teleportInvincibleSteps = 0;
@@ -2270,10 +2424,9 @@
         // ========== 统计正分食物数量 ==========
         // ========== 紧急补位机制 ==========
         function ensurePositiveFood() {
-            const positiveCount = foods.filter(f => f.type.isPositive).length;
-            if (positiveCount < 1) {
-                const positiveTypes = [FOOD_TYPES.GROW, FOOD_TYPES.TELEPORT, FOOD_TYPES.BARRIER];
-                const selectedType = positiveTypes[Math.floor(Math.random() * positiveTypes.length)];
+            const coreCount = foods.filter(f => f.type.effect === 'grow').length;
+            if (coreCount < 1) {
+                const selectedType = FOOD_TYPES.GROW;
                 const padding = currentLevelConfig.foodField.wallPadding;
                 const min = padding;
                 const max = tileCount - padding - 1;
@@ -2305,13 +2458,12 @@
             const maxFoods = Math.floor(Math.random() * 3) + 4;
             if (foods.length >= maxFoods) return;
 
-            const positiveCount = foods.filter(f => f.type.isPositive).length;
-            const mustGeneratePositive = positiveCount < 1;
+            const coreCount = foods.filter(f => f.type.effect === 'grow').length;
+            const mustGeneratePositive = coreCount < 1;
             let selectedType;
 
             if (mustGeneratePositive) {
-                const positiveTypes = [FOOD_TYPES.GROW, FOOD_TYPES.TELEPORT, FOOD_TYPES.BARRIER];
-                selectedType = positiveTypes[Math.floor(Math.random() * positiveTypes.length)];
+                selectedType = FOOD_TYPES.GROW;
             } else {
                 const types = Object.values(FOOD_TYPES);
                 let rand = Math.random();
@@ -2358,9 +2510,10 @@
         function flashEffect(color = 'white') {
             flashAlpha = 0.6;
             const colors = {
+                grow: 'rgba(110, 231, 140, ',
                 teleport: 'rgba(39, 174, 96, ',  // V12: 绿色瞬移效果
                 death: 'rgba(231, 76, 60, ',
-                wind: 'rgba(142, 68, 173, ',     // V12: 紫色清石效果
+                wind: 'rgba(125, 211, 252, ',
                 barrier: 'rgba(26, 188, 156, ',  // V12: 青绿路障效果
                 levelComplete: 'rgba(46, 204, 113, ',
                 timeout: 'rgba(231, 76, 60, ',
@@ -2402,6 +2555,23 @@
                 maxAge: 0.8,
                 big: big
             });
+        }
+
+        function getFoodFeedbackConfig(effect) {
+            switch (effect) {
+                case 'grow':
+                    return { label: '补给', color: '#9be15d', flash: 'grow', sfx: 'eatPositive' };
+                case 'teleport':
+                    return { label: '跃迁', color: '#5eead4', flash: 'teleport', sfx: 'teleport' };
+                case 'barrier':
+                    return { label: '筑墙', color: '#ffd166', flash: 'barrier', sfx: 'eatBarrier' };
+                case 'wind':
+                    return { label: '清场', color: '#7dd3fc', flash: 'wind', sfx: 'eatWind' };
+                case 'shrink':
+                    return { label: '代价', color: '#ff7b72', flash: 'death', sfx: 'eatNegative' };
+                default:
+                    return { label: '', color: '#ffffff', flash: 'white', sfx: 'eatPositive' };
+            }
         }
         // V19: 商店系统
         // ========== shop-wave-flow 包装层 (Patch 1) ==========
@@ -2478,6 +2648,18 @@
             shopItems = shuffledShopItems.slice(0, 3);
             shopItems.push({ id: 'heal', name: '修剪', icon: '✂️', cost: 3, payType: 'coins', desc: '-2节蛇身', category: 'utility', bodyDelta: -2 });
             shopItems.push({ id: 'grow_tail', name: '蜕皮', icon: '🪶', cost: 5, payType: 'coins', desc: '-4节蛇身', category: 'utility', bodyDelta: -4 });
+            Object.values(MODULE_TYPES).filter(mod => !selectedModule || mod.id !== selectedModule.id).forEach(mod => {
+                shopItems.push({
+                    id: `module_${mod.id}`,
+                    name: `换模组·${mod.name}`,
+                    icon: mod.icon,
+                    cost: 4,
+                    payType: 'coins',
+                    desc: '当前波结束后生效',
+                    category: 'module',
+                    moduleTarget: mod
+                });
+            });
             const shopInfo = document.getElementById('shopInfo');
             const shopItemsDiv = document.getElementById('shopItems');
             shopInfo.textContent = UI_TEXT.shop.info(coins, snake.length, currentWave);
@@ -2527,6 +2709,11 @@
                                 break;
                             case 'grow_tail':
                                 snake.splice(Math.max(2, snake.length - 4));
+                                break;
+                            default:
+                                if (item.moduleTarget) {
+                                    setSelectedModule(item.moduleTarget);
+                                }
                                 break;
                         }
                         if (!isShopState() && !isShopOpeningState()) return;
@@ -2880,6 +3067,11 @@
                 lastSlowInterval = null;
                 restartGameLoopWithInterval();
             }
+
+            if (updateTurretHazard(now)) {
+                gameOver();
+                return;
+            }
             
             updateStatusUI();
             
@@ -3030,8 +3222,13 @@
                 const foodHead = snake[0];
                 const scoreText = modScore >= 0 ? `+${modScore}` : `${modScore}`;
                 const scoreColor = modScore >= 0 ? '#4ade80' : '#f87171';
+                const foodFeedback = getFoodFeedbackConfig(effect);
                 spawnFloatingText(foodHead.x, foodHead.y, scoreText, scoreColor, Math.abs(modScore) >= 20);
-                playSfx(modScore >= 0 ? 'eatPositive' : 'eatNegative');
+                if (foodFeedback.label) {
+                    spawnFloatingText(foodHead.x, foodHead.y - 0.18, foodFeedback.label, foodFeedback.color, false);
+                }
+                flashEffect(foodFeedback.flash);
+                playSfx(foodFeedback.sfx);
 
                 if (effect === 'grow') {
                     score += modScore;
@@ -3534,6 +3731,75 @@
             }
 
             ctx.shadowBlur = 0;
+        }
+
+        function drawTurretHazard(time) {
+            if (!turretState.enabled || currentWave < TURRET_CONFIG.startWave) return;
+
+            const turretX = turretState.x * cellSize + cellSize / 2;
+            const turretY = turretState.y * cellSize + cellSize / 2;
+            const activeTarget = turretState.target || turretState.beamTarget || snake[0];
+            const activeTargetX = activeTarget ? activeTarget.x * cellSize + cellSize / 2 : turretX;
+            const activeTargetY = activeTarget ? activeTarget.y * cellSize + cellSize / 2 : turretY - cellSize;
+            const aimAngle = Math.atan2(activeTargetY - turretY, activeTargetX - turretX);
+
+            ctx.save();
+            ctx.translate(turretX, turretY);
+            ctx.fillStyle = 'rgba(22, 30, 40, 0.92)';
+            ctx.strokeStyle = 'rgba(255, 108, 108, 0.78)';
+            ctx.lineWidth = Math.max(1.5, cellSize * 0.06);
+            ctx.shadowColor = 'rgba(255, 96, 96, 0.36)';
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(0, 0, cellSize * 0.42, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.rotate(aimAngle);
+            ctx.fillStyle = 'rgba(255, 128, 128, 0.9)';
+            ctx.beginPath();
+            ctx.roundRect(cellSize * 0.08, -cellSize * 0.11, cellSize * 0.48, cellSize * 0.22, Math.max(3, cellSize * 0.08));
+            ctx.fill();
+            ctx.restore();
+
+            if (turretState.target) {
+                const tx = turretState.target.x * cellSize + cellSize / 2;
+                const ty = turretState.target.y * cellSize + cellSize / 2;
+                const pulse = Math.sin(time * 12) * 0.18 + 0.82;
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 102, 102, ${0.55 + pulse * 0.18})`;
+                ctx.lineWidth = Math.max(2, cellSize * 0.08);
+                ctx.setLineDash([5, 4]);
+                ctx.beginPath();
+                ctx.arc(tx, ty, cellSize * (0.42 + pulse * 0.22), 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.strokeStyle = 'rgba(255, 132, 132, 0.24)';
+                ctx.lineWidth = Math.max(1.2, cellSize * 0.04);
+                ctx.beginPath();
+                ctx.moveTo(turretX, turretY);
+                ctx.lineTo(tx, ty);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            if (turretState.beamTarget) {
+                const tx = turretState.beamTarget.x * cellSize + cellSize / 2;
+                const ty = turretState.beamTarget.y * cellSize + cellSize / 2;
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255, 86, 86, 0.92)';
+                ctx.lineWidth = Math.max(4, cellSize * 0.16);
+                ctx.shadowColor = 'rgba(255, 86, 86, 0.55)';
+                ctx.shadowBlur = 16;
+                ctx.beginPath();
+                ctx.moveTo(turretX, turretY);
+                ctx.lineTo(tx, ty);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255, 120, 120, 0.28)';
+                ctx.beginPath();
+                ctx.arc(tx, ty, cellSize * 0.55, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
         }
 
         function drawSnake(time) {
@@ -4107,46 +4373,48 @@
             ctx.rotate(Math.PI / 2);
             ctx.fillText('↔', 0, 0);
             ctx.restore();
-            const wallColor = '#ff4444';
-            const wallWidth = Math.max(3, cellSize * 0.25);
-            ctx.strokeStyle = wallColor;
-            ctx.lineWidth = wallWidth;
-            ctx.lineCap = 'round';
-            ctx.shadowColor = wallColor;
-            ctx.shadowBlur = 3;
-            ctx.beginPath();
-            ctx.moveTo(0, wallWidth / 2);
-            ctx.lineTo(portals.top.start * cellSize, wallWidth / 2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo((portals.top.end + 1) * cellSize, wallWidth / 2);
-            ctx.lineTo(canvas.width, wallWidth / 2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height - wallWidth / 2);
-            ctx.lineTo(portals.bottom.start * cellSize, canvas.height - wallWidth / 2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo((portals.bottom.end + 1) * cellSize, canvas.height - wallWidth / 2);
-            ctx.lineTo(canvas.width, canvas.height - wallWidth / 2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(wallWidth / 2, 0);
-            ctx.lineTo(wallWidth / 2, portals.left.start * cellSize);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(wallWidth / 2, (portals.left.end + 1) * cellSize);
-            ctx.lineTo(wallWidth / 2, canvas.height);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(canvas.width - wallWidth / 2, 0);
-            ctx.lineTo(canvas.width - wallWidth / 2, portals.right.start * cellSize);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(canvas.width - wallWidth / 2, (portals.right.end + 1) * cellSize);
-            ctx.lineTo(canvas.width - wallWidth / 2, canvas.height);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            if (!isCeremonyLootBurstState()) {
+                const wallColor = '#ff4444';
+                const wallWidth = Math.max(3, cellSize * 0.25);
+                ctx.strokeStyle = wallColor;
+                ctx.lineWidth = wallWidth;
+                ctx.lineCap = 'round';
+                ctx.shadowColor = wallColor;
+                ctx.shadowBlur = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, wallWidth / 2);
+                ctx.lineTo(portals.top.start * cellSize, wallWidth / 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo((portals.top.end + 1) * cellSize, wallWidth / 2);
+                ctx.lineTo(canvas.width, wallWidth / 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height - wallWidth / 2);
+                ctx.lineTo(portals.bottom.start * cellSize, canvas.height - wallWidth / 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo((portals.bottom.end + 1) * cellSize, canvas.height - wallWidth / 2);
+                ctx.lineTo(canvas.width, canvas.height - wallWidth / 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(wallWidth / 2, 0);
+                ctx.lineTo(wallWidth / 2, portals.left.start * cellSize);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(wallWidth / 2, (portals.left.end + 1) * cellSize);
+                ctx.lineTo(wallWidth / 2, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(canvas.width - wallWidth / 2, 0);
+                ctx.lineTo(canvas.width - wallWidth / 2, portals.right.start * cellSize);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(canvas.width - wallWidth / 2, (portals.right.end + 1) * cellSize);
+                ctx.lineTo(canvas.width - wallWidth / 2, canvas.height);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
             const vignette = ctx.createRadialGradient(
                 canvas.width * 0.5,
                 canvas.height * 0.5,
@@ -4497,6 +4765,7 @@
                     }
                 });
             });
+            drawTurretHazard(time);
             
             if (isInWaitingTutorialState()) {
                 if (showTutorial) {
@@ -4510,24 +4779,23 @@
                     ctx.font = 'bold 22px Arial';
                     ctx.fillText(UI_TEXT.tutorial.title, centerX, centerY - 90);
                     ctx.font = 'bold 18px Arial';
-                    ctx.fillStyle = '#2ecc71';
-                    ctx.fillText(UI_TEXT.tutorial.line1, centerX, centerY - 50);
-                    ctx.fillStyle = '#e74c3c';
-                    ctx.fillText(UI_TEXT.tutorial.line2, centerX, centerY - 10);
-                    ctx.fillStyle = '#9b59b6';
-                    ctx.fillText(UI_TEXT.tutorial.line3, centerX, centerY + 20);
-                    ctx.fillStyle = '#d2691e';
-                    ctx.fillText(UI_TEXT.tutorial.line4, centerX, centerY + 60);
-                    ctx.fillStyle = '#800080';
-                    ctx.fillText(UI_TEXT.tutorial.line5, centerX, centerY + 90);
+                    drawTutorialIconLine({ iconKey: 'food_grow', label: UI_TEXT.legend.grow, color: '#9be15d', y: centerY - 68 });
+                    drawTutorialIconLine({ iconKey: 'food_teleport', label: UI_TEXT.legend.teleportSwap, color: '#2ecc71', y: centerY - 40 });
+                    drawTutorialIconLine({ iconKey: 'food_barrier', label: UI_TEXT.legend.barrier, color: '#f59e0b', y: centerY - 12 });
+                    drawTutorialIconLine({ iconKey: 'food_shrink', label: UI_TEXT.legend.shrink, color: '#ff6b6b', y: centerY + 16 });
+                    drawTutorialIconLine({ iconKey: 'food_wind', label: UI_TEXT.legend.clear, color: '#74cfff', y: centerY + 44 });
+                    drawTutorialIconLine({ iconKey: 'snake_skin', label: UI_TEXT.legend.snakeSkin, color: '#d2691e', y: centerY + 72 });
+                    drawTutorialIconLine({ iconKey: 'terrain_poison', label: UI_TEXT.legend.poison, color: '#a855f7', y: centerY + 100 });
+                    drawTutorialIconLine({ iconKey: 'terrain_ice', label: UI_TEXT.legend.slow, color: '#60a5fa', y: centerY + 128 });
+                    drawTutorialIconLine({ iconKey: 'portal_a', label: UI_TEXT.legend.portal, color: '#c084fc', y: centerY + 156 });
                     ctx.fillStyle = '#00ff88';
-                    ctx.fillText(UI_TEXT.wave.canvasTip, centerX, centerY + 120);
+                    ctx.fillText(UI_TEXT.wave.canvasTip, centerX, centerY + 186);
                     ctx.fillStyle = '#aaa';
                     ctx.font = '14px Arial';
                     const closeText = tutorialTimer > 0
                         ? `点击关闭 (${Math.ceil(tutorialTimer)}秒后自动消失)`
                         : '点击关闭';
-                    ctx.fillText(closeText, centerX, centerY + 140);
+                    ctx.fillText(closeText, centerX, centerY + 208);
                 }
                 return;
             }
@@ -5009,6 +5277,7 @@
             }
 
             ensurePositiveFood();
+            scheduleTurretForWave();
             updateStatusUI();
             isWaitingForStart = false;
             isGameRunning = true;
@@ -5044,6 +5313,7 @@
                     clearWaveTransitionState();
                     closeAllOverlays();
                     waveStartTime = Date.now();
+                    scheduleTurretForWave();
                     updateStatusUI();
                     updateMusicLoop();
                     restartGameLoopWithInterval();
@@ -5419,6 +5689,9 @@
                 backgroundHue = getWaveBackgroundHue(currentWave, score);
                 terrainZones = waveEnvironment.terrainZones;
                 portalPairs = waveEnvironment.portalPairs;
+                spawnFood();
+                ensurePositiveFood();
+                scheduleTurretForWave();
                 syncPauseButtonVisibility();
                 updateMusicLoop();
                 restartGameLoopWithInterval();
@@ -5930,11 +6203,7 @@
                 <div class="mode-btn-desc">${mod.desc}<br><span style="color:#e74c3c">${mod.weakness}</span> · <span style="color:#2ecc71">${mod.passive}</span></div>
             `;
             btn.addEventListener('click', () => {
-                selectedModule = mod;
-                const legendEl = document.getElementById('moduleLegend');
-                if (legendEl) {
-                    legendEl.innerHTML = `<span class="legend-symbol">${selectedModule.icon}</span> <span>${selectedModule.name}</span>`;
-                }
+                setSelectedModule(mod);
                 closeAllOverlays();
                 clearInterval(gameLoop);
                 gameLoop = null;
@@ -5955,6 +6224,7 @@
         if (touchHintEl) {
             touchHintEl.textContent = getTouchHintText();
         }
+        renderLegendPanel();
         bindAudioUnlockGestures();
         hasSelectedMode = false;
         uiOverlaysModule.showModeOverlay();
