@@ -2017,7 +2017,7 @@
         const SHOP_POOL = [
             { id: 'poison_resist', name: '毒雾抗性', icon: '🟢', cost: 3, desc: 'DoT减半 1波', category: 'defense' },
             { id: 'ice_armor', name: '冰霜护甲', icon: '🔵', cost: 3, desc: '减速时间-50% 1波', category: 'defense' },
-            { id: 'shield', name: '护盾', icon: '🛡', cost: 4, desc: '撞障碍免死1次', category: 'defense' },
+            { id: 'shield', name: '护盾', icon: '🛡', cost: 4, desc: '挡1次墙/岩石/蛇蜕', category: 'defense' },
             { id: 'dash', name: '冲刺', icon: '⚡', cost: 5, desc: '获得1次冲刺加速', category: 'offense' },
             { id: 'magnet', name: '磁铁', icon: '🧲', cost: 4, desc: '食物吸引+2格 1波', category: 'offense' },
             { id: 'turret_guard', name: '干扰器', icon: '📡', cost: 3, desc: '免疫1次炮击', category: 'tool' },
@@ -2218,18 +2218,21 @@
                 turretState.warningUntil = 0;
                 turretState.impactAt = 0;
                 turretState.nextShotAt = now + TURRET_CONFIG.cooldownMs;
-                shedTailSegmentToSkin();
-                playSfx('turretFire');
                 if (snake[0] && snake[0].x === turretState.beamTarget.x && snake[0].y === turretState.beamTarget.y) {
                     if (turretGuardCharges > 0) {
                         turretGuardCharges--;
                         spawnFloatingText(snake[0].x, snake[0].y, UI_TEXT.floating.turretGuard, '#7dd3fc', true);
                         flashEffect('teleport');
                         flashAlpha = 0.35;
+                        playSfx('turretFire');
                         return false;
                     }
+                    shedTailSegmentToSkin();
+                    playSfx('turretFire');
                     return true;
                 }
+                shedTailSegmentToSkin();
+                playSfx('turretFire');
                 return false;
             }
 
@@ -3258,6 +3261,14 @@
                 }
             }
             if (hitWall) {
+                if (shieldCharges > 0) {
+                    shieldCharges--;
+                    spawnFloatingText(snake[0].x, snake[0].y, UI_TEXT.floating.shield, '#2ecc71', true);
+                    flashEffect('teleport');
+                    flashAlpha = 0.3;
+                    updateStatusUI();
+                    return;
+                }
                 if (tryConsumeRevive(snake[0], 'wall')) return;
                 gameOver();
                 return;
