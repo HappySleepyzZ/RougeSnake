@@ -249,9 +249,19 @@
           await wait(20);
           afterShopPurchase = api.getState();
           Object.assign(interactionChecks, {
-            shopClosedAfterPurchase: afterShopPurchase.shopOpen === false && afterShopPurchase.shopOpening === false,
-            enteredWaveTransitionAfterPurchase: afterShopPurchase.isWaveTransition === true
+            shopRemainsOpenAfterPurchase: afterShopPurchase.shopOpen === true || afterShopPurchase.shopOpening === true,
+            waveTransitionWaitsForLeave: afterShopPurchase.isWaveTransition !== true
           });
+          const shopSkipBtn = doc.getElementById('shopSkipBtn');
+          if (shopSkipBtn) {
+            shopSkipBtn.click();
+            await wait(20);
+            afterCloseShop = api.getState();
+            Object.assign(interactionChecks, {
+              shopClosed: afterCloseShop.shopOpen === false && afterCloseShop.shopOpening === false,
+              enteredWaveTransition: afterCloseShop.isWaveTransition === true
+            });
+          }
         } else {
           const shopSkipBtn = doc.getElementById('shopSkipBtn');
           if (shopSkipBtn) {

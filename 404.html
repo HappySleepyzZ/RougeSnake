@@ -1419,6 +1419,7 @@
                 debuffSlow: (secs) => ` ❄${secs}s`,
                 shield: (count) => ` 🛡${count}`,
                 turretGuard: (count) => ` 📡${count}`,
+                revive: (count) => ` ❤️${count}`,
                 dash: (count) => ` ⚡${count}`,
                 poisonResist: ' 🟢毒抗',
                 iceArmor: ' 🔵冰甲',
@@ -1436,6 +1437,7 @@
                 dash: '⚡ 冲刺!',
                 shield: '🛡 护盾!',
                 turretGuard: '📡 反炮!',
+                revive: '❤️ 复活!',
                 keyFound: '🔑 找到钥匙!',
                 keyGet: '✨ 钥匙get!',
                 coinFrenzy: '💰 金币狂欢!',
@@ -2002,10 +2004,13 @@
         let shopOpen = false;
         let shopOpening = false;
         let shopItems = [];
+        let shopPurchasedItemIds = [];
+        let shopPurchasedCategories = [];
         let dashBurstTicks = 0;
         let activeBuffs = [];      // 当前生效的 buff [{id, remaining}]
         let shieldCharges = 0;     // 护盾次数
         let turretGuardCharges = 0; // 免疫炮击次数
+        let reviveCharges = 0;     // 全兜底免死次数
         let dashCharges = 0;       // 冲刺次数
         
         // 商品池
@@ -2016,6 +2021,9 @@
             { id: 'dash', name: '冲刺', icon: '⚡', cost: 5, desc: '获得1次冲刺加速', category: 'offense' },
             { id: 'magnet', name: '磁铁', icon: '🧲', cost: 4, desc: '食物吸引+2格 1波', category: 'offense' },
             { id: 'turret_guard', name: '干扰器', icon: '📡', cost: 3, desc: '免疫1次炮击', category: 'tool' },
+        ];
+        const PREMIUM_SHOP_POOL = [
+            { id: 'revive_core', name: '复活核心', icon: '❤️', cost: 10, payType: 'coins', desc: '本波免死1次', category: 'premium', unlockWave: 6, singlePurchase: true },
         ];
         
         let waveTransitionTimer = 0;
@@ -2038,6 +2046,7 @@
                 passive: '毒雾区内免疫中毒',
                 scoreModifiers: { grow: 10, shrink: -8, teleport: 20, barrier: 20, wind: -20 },
                 terrainBonus: { poison: 15, slow: -8 },
+                unlockWave: 1,
                 special: null,
                 // V17: 视觉配置
                 headColor: '#7b2ff7', headGlow: '#a855f7',
@@ -2052,6 +2061,7 @@
                 passive: '碰石头时碎石而非死亡',
                 scoreModifiers: { grow: 10, shrink: 12, teleport: 20, barrier: 20, wind: -20 },
                 terrainBonus: { poison: -5, slow: 12 },
+                unlockWave: 1,
                 special: 'breakObstacle',
                 // V17: 视觉配置
                 headColor: '#4a90d9', headGlow: '#60a5fa',
@@ -2066,6 +2076,7 @@
                 passive: '穿墙通道范围扩大至 5 格',
                 scoreModifiers: { grow: 10, shrink: -10, teleport: 20, barrier: -8, wind: 10 },
                 terrainBonus: { poison: -10, slow: -10 },
+                unlockWave: 1,
                 special: 'widePortal',
                 // V17: 视觉配置
                 headColor: '#f5c842', headGlow: '#fbbf24',
@@ -2080,12 +2091,27 @@
                 passive: '地形 DoT 伤害减半',
                 scoreModifiers: { grow: 5, shrink: -5, teleport: 5, barrier: 5, wind: -5 },
                 terrainBonus: { poison: -2, slow: -2 },
+                unlockWave: 1,
                 special: 'halfDot',
                 // V17: 视觉配置
                 headColor: '#2ecc71', headGlow: '#34d399',
                 bodyColor: '#1e8449', bodyGlow: '#059669',
                 headShape: 'round', // 圆头
                 trailEffect: 'pulse' // 微微发光脉动
+            },
+            MOLT: {
+                id: 'molt', name: '蜕壳', icon: '🪶',
+                desc: '滑过蛇皮，不再被旧壳绊死',
+                strength: '蛇皮免疫', weakness: '碰路障 -10',
+                passive: '免疫蛇皮碰撞',
+                scoreModifiers: { grow: 8, shrink: -6, teleport: 12, barrier: -10, wind: 6 },
+                terrainBonus: { poison: -4, slow: 4 },
+                unlockWave: 8,
+                special: 'ignoreSnakeSkin',
+                headColor: '#c084fc', headGlow: '#d8b4fe',
+                bodyColor: '#7c3aed', bodyGlow: '#a78bfa',
+                headShape: 'slim',
+                trailEffect: 'ghost'
             }
         };
 
@@ -2388,8 +2414,11 @@
             activeBuffs = [];
             shieldCharges = 0;
             turretGuardCharges = 0;
+            reviveCharges = 0;
             dashCharges = 0;
             dashBurstTicks = 0;
+            shopPurchasedItemIds = [];
+            shopPurchasedCategories = [];
             hasCeremonyKey = false;
             ceremonyEntryFxUntil = 0;
             lastNeedKeyPromptAt = 0;
@@ -2736,40 +2765,99 @@
             return true;
         }
 
-        function openShop() {
-            if (!enterShopState()) return;
-            playSfx('shopOpen');
-            updateMusicLoop();
-            activeBuffs = activeBuffs.filter(b => {
-                b.remaining--;
-                return b.remaining > 0;
-            });
+        function isRepeatableShopItem(item) {
+            return !!item && ['shield', 'turret_guard', 'dash', 'heal', 'grow_tail'].includes(item.id);
+        }
+
+        function hasPurchasedShopItem(item) {
+            if (!item) return false;
+            if (item.moduleTarget) {
+                return shopPurchasedCategories.includes('module');
+            }
+            if (item.singlePurchase) {
+                return shopPurchasedItemIds.includes(item.id);
+            }
+            if (!isRepeatableShopItem(item)) {
+                return shopPurchasedItemIds.includes(item.id);
+            }
+            return false;
+        }
+
+        function markShopItemPurchased(item) {
+            if (!item || isRepeatableShopItem(item)) return;
+            if (!shopPurchasedItemIds.includes(item.id)) {
+                shopPurchasedItemIds.push(item.id);
+            }
+            if (item.moduleTarget && !shopPurchasedCategories.includes('module')) {
+                shopPurchasedCategories.push('module');
+            }
+        }
+
+        function applyShopItemEffect(item) {
+            switch (item.id) {
+                case 'poison_resist':
+                    activeBuffs.push({ id: 'poison_resist', remaining: 1 });
+                    break;
+                case 'ice_armor':
+                    activeBuffs.push({ id: 'ice_armor', remaining: 1 });
+                    break;
+                case 'shield':
+                    shieldCharges++;
+                    break;
+                case 'turret_guard':
+                    turretGuardCharges++;
+                    break;
+                case 'revive_core':
+                    reviveCharges++;
+                    break;
+                case 'dash':
+                    dashCharges++;
+                    break;
+                case 'magnet':
+                    activeBuffs.push({ id: 'magnet', remaining: 1 });
+                    break;
+                case 'heal':
+                    snake.splice(Math.max(2, snake.length - 2));
+                    break;
+                case 'grow_tail':
+                    snake.splice(Math.max(2, snake.length - 4));
+                    break;
+                default:
+                    if (item.moduleTarget) {
+                        setSelectedModule(item.moduleTarget);
+                    }
+                    break;
+            }
+        }
+
+        function leaveShopAndStartNextWave() {
+            if (!isShopState() && !isShopOpeningState()) return;
+            closeShopState();
+            resetTeleportPreviewState();
+            closeAllOverlays();
+            if (!enterWaveTransition()) return;
             clearInterval(gameLoop);
             gameLoop = null;
-            syncPauseButtonVisibility();
-            const shuffledShopItems = [...SHOP_POOL].sort(() => Math.random() - 0.5);
-            shopItems = shuffledShopItems.slice(0, 3);
-            shopItems.push({ id: 'heal', name: '修剪', icon: '✂️', cost: 3, payType: 'coins', desc: '-2节蛇身', category: 'utility', bodyDelta: -2 });
-            shopItems.push({ id: 'grow_tail', name: '蜕皮', icon: '🪶', cost: 5, payType: 'coins', desc: '-4节蛇身', category: 'utility', bodyDelta: -4 });
-            Object.values(MODULE_TYPES).filter(mod => !selectedModule || mod.id !== selectedModule.id).forEach(mod => {
-                shopItems.push({
-                    id: `module_${mod.id}`,
-                    name: `换模组·${mod.name}`,
-                    icon: mod.icon,
-                    cost: 4,
-                    payType: 'coins',
-                    desc: '当前波结束后生效',
-                    category: 'module',
-                    moduleTarget: mod
-                });
-            });
+            clearInterval(waveTransitionInterval);
+            waveTransitionInterval = null;
+            playSfx('waveIntro');
+            renderWaveTransitionOverlay();
+            updateMusicLoop();
+            restartWaveTransitionCountdown();
+        }
+
+        function renderShopItems() {
             const shopInfo = document.getElementById('shopInfo');
             const shopItemsDiv = document.getElementById('shopItems');
             shopInfo.textContent = UI_TEXT.shop.info(coins, snake.length, currentWave);
             shopItemsDiv.innerHTML = '';
             shopItems.forEach(item => {
                 const payment = getShopPaymentBreakdown(item);
-                const canAfford = payment.canAfford;
+                const alreadyBought = hasPurchasedShopItem(item);
+                const canAfford = payment.canAfford && !alreadyBought;
+                const statusText = alreadyBought
+                    ? (item.moduleTarget ? '已选模块' : '已购买')
+                    : payment.priceText;
                 const btn = document.createElement('button');
                 btn.className = 'restart-btn';
                 btn.style.cssText = `
@@ -2782,76 +2870,66 @@
                 `;
                 btn.innerHTML = `
                     <span>${item.icon} ${item.name} <small style="color:#aaa">${item.desc}</small></span>
-                    <span style="color:${item.cost > 0 ? '#ffd166' : '#2ecc71'}">${payment.priceText}</span>
+                    <span style="color:${alreadyBought ? '#8ecae6' : (item.cost > 0 ? '#ffd166' : '#2ecc71')}">${statusText}</span>
                 `;
                 if (canAfford) {
                     btn.onclick = () => {
                         if (!applyShopCost(item)) return;
-
-                        switch (item.id) {
-                            case 'poison_resist':
-                                activeBuffs.push({ id: 'poison_resist', remaining: 1 });
-                                break;
-                            case 'ice_armor':
-                                activeBuffs.push({ id: 'ice_armor', remaining: 1 });
-                                break;
-                            case 'shield':
-                                shieldCharges++;
-                                break;
-                            case 'turret_guard':
-                                turretGuardCharges++;
-                                break;
-                            case 'dash':
-                                dashCharges++;
-                                break;
-                            case 'magnet':
-                                activeBuffs.push({ id: 'magnet', remaining: 1 });
-                                break;
-                            case 'heal':
-                                snake.splice(Math.max(2, snake.length - 2));
-                                break;
-                            case 'grow_tail':
-                                snake.splice(Math.max(2, snake.length - 4));
-                                break;
-                            default:
-                                if (item.moduleTarget) {
-                                    setSelectedModule(item.moduleTarget);
-                                }
-                                break;
-                        }
-                        if (!isShopState() && !isShopOpeningState()) return;
-                        closeShopState();
-                        resetTeleportPreviewState();
-                        closeAllOverlays();
-                        if (!enterWaveTransition()) return;
-                        clearInterval(gameLoop);
-                        gameLoop = null;
-                        clearInterval(waveTransitionInterval);
-                        waveTransitionInterval = null;
-                        playSfx('waveIntro');
-                        renderWaveTransitionOverlay();
-                        updateMusicLoop();
-                        restartWaveTransitionCountdown();
+                        applyShopItemEffect(item);
+                        markShopItemPurchased(item);
+                        renderShopItems();
                     };
                 } else {
                     btn.disabled = true;
                 }
                 shopItemsDiv.appendChild(btn);
             });
-            document.getElementById('shopSkipBtn').onclick = () => {
-                if (!isShopState() && !isShopOpeningState()) return;
+        }
+
+        function openShop() {
+            if (isShopState() || isShopOpeningState()) {
                 closeShopState();
-                resetTeleportPreviewState();
-                closeAllOverlays();
-                if (!enterWaveTransition()) return;
-                clearInterval(gameLoop);
-                gameLoop = null;
-                clearInterval(waveTransitionInterval);
-                waveTransitionInterval = null;
-                playSfx('waveIntro');
-                renderWaveTransitionOverlay();
-                updateMusicLoop();
-                restartWaveTransitionCountdown();
+            }
+            if (!enterShopState()) return;
+            playSfx('shopOpen');
+            updateMusicLoop();
+            activeBuffs = activeBuffs.filter(b => {
+                b.remaining--;
+                return b.remaining > 0;
+            });
+            clearInterval(gameLoop);
+            gameLoop = null;
+            syncPauseButtonVisibility();
+            shopPurchasedItemIds = [];
+            shopPurchasedCategories = [];
+            const shuffledShopItems = [...SHOP_POOL].sort(() => Math.random() - 0.5);
+            shopItems = shuffledShopItems.slice(0, 3);
+            shopItems.push({ id: 'heal', name: '修剪', icon: '✂️', cost: 3, payType: 'coins', desc: '-2节蛇身', category: 'utility', bodyDelta: -2 });
+            shopItems.push({ id: 'grow_tail', name: '蜕皮', icon: '🪶', cost: 5, payType: 'coins', desc: '-4节蛇身', category: 'utility', bodyDelta: -4 });
+            PREMIUM_SHOP_POOL.filter(item => currentWave >= item.unlockWave).forEach(item => {
+                shopItems.push({ ...item });
+            });
+            Object.values(MODULE_TYPES)
+                .filter(mod => currentWave >= (mod.unlockWave || 1))
+                .filter(mod => !selectedModule || mod.id !== selectedModule.id)
+                .forEach(mod => {
+                    shopItems.push({
+                        id: `module_${mod.id}`,
+                        name: `换模组·${mod.name}`,
+                        icon: mod.icon,
+                        cost: mod.unlockWave && mod.unlockWave > 1 ? 8 : 4,
+                        payType: 'coins',
+                        desc: mod.unlockWave && mod.unlockWave > 1 ? `当前波结束后生效 · ${mod.passive}` : '当前波结束后生效',
+                        category: 'module',
+                        moduleTarget: mod,
+                        singlePurchase: true
+                    });
+                });
+            renderShopItems();
+            const shopSkipBtn = document.getElementById('shopSkipBtn');
+            shopSkipBtn.textContent = '➡️ 离开商店';
+            shopSkipBtn.onclick = () => {
+                leaveShopAndStartNextWave();
             };
             showShopOverlay();
             finishShopOpening();
@@ -2921,6 +2999,7 @@
             let buffStr = '';
             if (shieldCharges > 0) buffStr += UI_TEXT.hud.shield(shieldCharges);
             if (turretGuardCharges > 0) buffStr += UI_TEXT.hud.turretGuard(turretGuardCharges);
+            if (reviveCharges > 0) buffStr += UI_TEXT.hud.revive(reviveCharges);
             if (dashCharges > 0) buffStr += UI_TEXT.hud.dash(dashCharges);
             if (activeBuffs.some(b => b.id === 'poison_resist')) buffStr += UI_TEXT.hud.poisonResist;
             if (activeBuffs.some(b => b.id === 'ice_armor')) buffStr += UI_TEXT.hud.iceArmor;
@@ -3130,6 +3209,7 @@
             }
 
             if (updateTurretHazard(now)) {
+                if (tryConsumeRevive(snake[0], 'turret')) return;
                 gameOver();
                 return;
             }
@@ -3178,6 +3258,7 @@
                 }
             }
             if (hitWall) {
+                if (tryConsumeRevive(snake[0], 'wall')) return;
                 gameOver();
                 return;
             }
@@ -3228,6 +3309,7 @@
             if (teleportInvincibleSteps > 0) {
                 teleportInvincibleSteps--;
             } else if (isCeremonyPlayingState() && collisionSegments.some(seg => seg.x === head.x && seg.y === head.y)) {
+                if (tryConsumeRevive(snake[0], 'self')) return;
                 gameOver();
                 return;
             }
@@ -3250,6 +3332,7 @@
                         flashEffect('teleport');
                         flashAlpha = 0.3;
                     } else {
+                        if (tryConsumeRevive(snake[0], 'obstacle')) return;
                         gameOver();
                         return;
                     }
@@ -3257,13 +3340,16 @@
 
                 const hitSnakeSkinIdx = snakeSkins.findIndex(skin => skin.cells && skin.cells.some(c => c.x === head.x && c.y === head.y));
                 if (hitSnakeSkinIdx !== -1) {
-                    if (shieldCharges > 0) {
+                    if (selectedModule && selectedModule.special === 'ignoreSnakeSkin') {
+                        spawnFloatingText(head.x, head.y, '穿壳', '#c084fc', false);
+                    } else if (shieldCharges > 0) {
                         shieldCharges--;
                         snakeSkins.splice(hitSnakeSkinIdx, 1);
                         spawnFloatingText(head.x, head.y, UI_TEXT.floating.shield, '#2ecc71', true);
                         flashEffect('teleport');
                         flashAlpha = 0.3;
                     } else {
+                        if (tryConsumeRevive(snake[0], 'snakeSkin')) return;
                         gameOver();
                         return;
                     }
@@ -3933,6 +4019,7 @@
             const bodyStatusMarkers = [];
             if (shieldCharges > 0) bodyStatusMarkers.push({ kind: 'shield', count: shieldCharges });
             if (turretGuardCharges > 0) bodyStatusMarkers.push({ kind: 'turret_guard', count: turretGuardCharges });
+            if (reviveCharges > 0) bodyStatusMarkers.push({ kind: 'revive', count: reviveCharges });
             if (hasBuff('poison_resist')) bodyStatusMarkers.push({ kind: 'poison_resist' });
             if (hasBuff('ice_armor')) bodyStatusMarkers.push({ kind: 'ice_armor' });
             if (hasBuff('magnet')) bodyStatusMarkers.push({ kind: 'magnet' });
@@ -4011,6 +4098,16 @@
                         ctx.arc(x, y, Math.max(1.8, cellSize * 0.08), 0, Math.PI * 2);
                         ctx.fill();
                         drawMarkerPips(marker.count, x, y, 'rgba(125, 225, 255, 0.95)', badgeRadius + cellSize * 0.03);
+                        break;
+                    case 'revive':
+                        ctx.strokeStyle = `rgba(255, 138, 158, ${0.82 + depth * 0.08})`;
+                        ctx.lineWidth = Math.max(2, cellSize * 0.07);
+                        ctx.beginPath();
+                        ctx.moveTo(x, y + badgeRadius * 0.7);
+                        ctx.bezierCurveTo(x - badgeRadius * 0.95, y + badgeRadius * 0.12, x - badgeRadius * 0.92, y - badgeRadius * 0.72, x, y - badgeRadius * 0.1);
+                        ctx.bezierCurveTo(x + badgeRadius * 0.92, y - badgeRadius * 0.72, x + badgeRadius * 0.95, y + badgeRadius * 0.12, x, y + badgeRadius * 0.7);
+                        ctx.stroke();
+                        drawMarkerPips(marker.count, x, y, 'rgba(255, 170, 186, 0.95)', badgeRadius + cellSize * 0.03);
                         break;
                     case 'ice_armor':
                         ctx.strokeStyle = `rgba(170, 235, 255, ${0.75 + depth * 0.12})`;
@@ -5486,6 +5583,32 @@
             requestAnimationFrame(animStep);
         }
 
+        function tryConsumeRevive(deathHead = snake[0], reason = 'fatal') {
+            if (reviveCharges <= 0 || !snake.length) return false;
+            reviveCharges--;
+            const safeHead = snake[0] ? { ...snake[0] } : { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) };
+            const safeSecond = snake[1]
+                ? { ...snake[1] }
+                : {
+                    x: Math.max(0, Math.min(tileCount - 1, safeHead.x - (direction.x || 1))),
+                    y: Math.max(0, Math.min(tileCount - 1, safeHead.y - (direction.y || 0)))
+                };
+            snake = [safeHead, safeSecond];
+            const fallbackDir = snake[1]
+                ? { x: snake[0].x - snake[1].x, y: snake[0].y - snake[1].y }
+                : { x: -direction.x || -1, y: -direction.y || 0 };
+            direction = { ...fallbackDir };
+            nextDirection = { ...fallbackDir };
+            teleportInvincibleSteps = Math.max(teleportInvincibleSteps, 4);
+            isSpeedBoosted = false;
+            dashBurstTicks = 0;
+            spawnFloatingText(safeHead.x, safeHead.y, UI_TEXT.floating.revive, '#ff9fb3', true);
+            flashEffect('grow');
+            flashAlpha = 0.38;
+            updateStatusUI();
+            return true;
+        }
+
         function gameOver() {
             resetRunState();
             isGameOver = true;
@@ -6183,6 +6306,7 @@
                     activeBuffs: activeBuffs.map(buff => ({ ...buff })),
                     shieldCharges,
                     turretGuardCharges,
+                    reviveCharges,
                     dashCharges,
                     dashBurstTicks,
                     poisonDebuffEnd,
@@ -6287,6 +6411,9 @@
                         break;
                     case 'turretGuardCharges':
                         turretGuardCharges = value;
+                        break;
+                    case 'reviveCharges':
+                        reviveCharges = value;
                         break;
                     case 'dashCharges':
                         dashCharges = value;
@@ -6501,7 +6628,7 @@
         currentModeRules = { timeLimit: Infinity, targetScore: null };
         remainingTime = Infinity;
         moduleButtonsContainer.innerHTML = '';
-        Object.values(MODULE_TYPES).forEach(mod => {
+        Object.values(MODULE_TYPES).filter(mod => (mod.unlockWave || 1) <= 1).forEach(mod => {
             const btn = document.createElement('button');
             btn.className = 'mode-btn';
             btn.type = 'button';
