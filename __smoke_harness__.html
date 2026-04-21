@@ -992,7 +992,8 @@
           isGameOver: false,
           waveCeremonyState: 'KEY_SPAWN',
           ceremonyKey: { x: 6, y: 5 },
-          ceremonyChest: null,
+          ceremonyChest: { x: 10, y: 10 },
+          hasCeremonyKey: false,
           lootFoods: [],
           lootEatenCount: 0,
           lootTotalCount: 0,
@@ -1005,9 +1006,10 @@
         await wait(20);
         afterKeyPickupStep = api.getState();
         Object.assign(interactionChecks, {
-          keyPickupTransitionsToChestState: afterKeyPickupStep.waveCeremonyState === 'CHEST_SPAWN'
+          keyPickupArmsChestInSameWave: afterKeyPickupStep.waveCeremonyState === 'KEY_SPAWN'
             && !afterKeyPickupStep.ceremonyKey
             && !!afterKeyPickupStep.ceremonyChest
+            && afterKeyPickupStep.hasCeremonyKey === true
         });
       }
 
@@ -1032,9 +1034,10 @@
           isWaveTransition: false,
           isLevelComplete: false,
           isGameOver: false,
-          waveCeremonyState: 'CHEST_SPAWN',
+          waveCeremonyState: 'KEY_SPAWN',
           ceremonyKey: null,
           ceremonyChest: { x: 6, y: 5 },
+          hasCeremonyKey: true,
           lootFoods: [],
           lootEatenCount: 0,
           lootTotalCount: 0,
@@ -1457,7 +1460,8 @@
         } : null,
         keyPickupStateAfterStep: afterKeyPickupStep ? {
           waveCeremonyState: afterKeyPickupStep.waveCeremonyState,
-          hasKey: !!afterKeyPickupStep.ceremonyKey,
+          hasKeyPickup: afterKeyPickupStep.hasCeremonyKey === true,
+          hasKeyObject: !!afterKeyPickupStep.ceremonyKey,
           hasChest: !!afterKeyPickupStep.ceremonyChest
         } : null,
         chestPickupStateAfterStep: afterChestPickupStep ? {

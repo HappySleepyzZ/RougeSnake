@@ -1595,10 +1595,11 @@
                 base: 150,
                 min: 50,
                 slowTick: 500,
-                speedBoostMultiplier: 0.6,
-                dashLoopMultiplier: 0.5,
+                speedBoostMultiplier: 0.82,
+                dashLoopMultiplier: 0.72,
                 slowMultiplier: 2.5,
-                scoreDecayK: 0.005
+                scoreLogDivisor: 25,
+                scoreLogReduction: 36
             },
             wave: {
                 duration: DEFAULT_WAVE_DURATION,
@@ -1642,7 +1643,9 @@
             ceremony: {
                 keyMinDistance: 5,
                 chestMinDistance: 4,
-                keyFallbackY: 2
+                keyFallbackY: 2,
+                entryFxDuration: 900,
+                needKeyPromptCooldownMs: 700
             },
             pickup: {
                 defaultRadius: 1.0,
@@ -1984,10 +1987,13 @@
         let isWaveTransition = false;
         
         // V19: 波间仪式状态机
-        // 流程：PLAYING → KEY_SPAWN → CHEST_SPAWN → LOOT_BURST → SHOP
+        // 流程：PLAYING → KEY_SPAWN(钥匙+宝箱同场) → LOOT_BURST → SHOP
         let waveCeremonyState = 'PLAYING'; // PLAYING | KEY_SPAWN | CHEST_SPAWN | LOOT_BURST | SHOP
         let ceremonyKey = null;    // { x, y }
         let ceremonyChest = null;  // { x, y }
+        let hasCeremonyKey = false;
+        let ceremonyEntryFxUntil = 0;
+        let lastNeedKeyPromptAt = 0;
         let lootFoods = [];        // 喷出的食物
         let lootEatenCount = 0;
         let lootTotalCount = 0;
@@ -2384,6 +2390,9 @@
             turretGuardCharges = 0;
             dashCharges = 0;
             dashBurstTicks = 0;
+            hasCeremonyKey = false;
+            ceremonyEntryFxUntil = 0;
+            lastNeedKeyPromptAt = 0;
             portalPairs = [];
             floatingTexts = [];
             resetTurretState(0);
@@ -2570,6 +2579,71 @@
                 maxAge: 0.8,
                 big: big
             });
+        }
+
+        function getScoreSpeedInterval(scoreValue = score) {
+            const safeScore = Math.max(0, scoreValue);
+            const reduction = TUNING.speed.scoreLogReduction * Math.log1p(safeScore / TUNING.speed.scoreLogDivisor);
+            return Math.max(MIN_SPEED, Math.min(BASE_SPEED, BASE_SPEED - reduction));
+        }
+
+        function syncSpeedFromScore(forceRestart = false) {
+            const nextInterval = getScoreSpeedInterval(score);
+            const changed = Math.abs(nextInterval - currentInterval) > 0.5;
+            currentInterval = nextInterval;
+            if (forceRestart || changed || isSpeedBoosted || Date.now() < slowDebuffEnd) {
+                restartGameLoopWithInterval();
+            }
+        }
+
+        function findCeremonySpawnCell(minDistance, fallback, extraBlockedCells = []) {
+            const head = snake[0];
+            const isBlocked = (x, y) => {
+                if (isPositionOccupied(x, y)) return true;
+                return extraBlockedCells.some(cell => cell && cell.x === x && cell.y === y);
+            };
+
+            for (let attempts = 0; attempts < TUNING.generation.ceremonySpawnAttempts; attempts++) {
+                const x = Math.floor(Math.random() * (tileCount - 4)) + 2;
+                const y = Math.floor(Math.random() * (tileCount - 4)) + 2;
+                const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
+                if (!farEnough || isBlocked(x, y)) continue;
+                return { x, y };
+            }
+
+            if (fallback && !isBlocked(fallback.x, fallback.y)) {
+                return { ...fallback };
+            }
+
+            for (let y = 1; y < tileCount - 1; y++) {
+                for (let x = 1; x < tileCount - 1; x++) {
+                    const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
+                    if (!farEnough || isBlocked(x, y)) continue;
+                    return { x, y };
+                }
+            }
+
+            return fallback ? { ...fallback } : null;
+        }
+
+        function beginRewardCeremony() {
+            setCeremonyState('KEY_SPAWN');
+            clearWavePlayfieldState();
+            hasCeremonyKey = false;
+            lastNeedKeyPromptAt = 0;
+            ceremonyKey = findCeremonySpawnCell(
+                TUNING.ceremony.keyMinDistance,
+                { x: Math.floor(tileCount / 2), y: TUNING.ceremony.keyFallbackY }
+            );
+            ceremonyChest = findCeremonySpawnCell(
+                TUNING.ceremony.chestMinDistance,
+                { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) },
+                ceremonyKey ? [ceremonyKey] : []
+            );
+            ceremonyEntryFxUntil = Date.now() + TUNING.ceremony.entryFxDuration;
+            flashEffect('grow');
+            flashAlpha = 0.22;
+            spawnFloatingText(Math.floor(tileCount / 2), Math.floor(tileCount / 2), '奖励关开启', '#ffd166', true);
         }
 
         function shedTailSegmentToSkin() {
@@ -2867,99 +2941,48 @@
             const waveElapsed = now - waveStartTime;
             
             if (waveElapsed >= getWaveDurationMs(currentWave) && isCeremonyPlayingState()) {
-                setCeremonyState('KEY_SPAWN');
-                clearWavePlayfieldState();
-                {
-                    const minDistance = TUNING.ceremony.keyMinDistance;
-                    const fallback = { x: Math.floor(tileCount / 2), y: TUNING.ceremony.keyFallbackY };
-                    const head = snake[0];
-                    ceremonyKey = null;
-                    for (let attempts = 0; attempts < TUNING.generation.ceremonySpawnAttempts; attempts++) {
-                        const x = Math.floor(Math.random() * (tileCount - 4)) + 2;
-                        const y = Math.floor(Math.random() * (tileCount - 4)) + 2;
-                        const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
-                        if (!farEnough || isPositionOccupied(x, y)) continue;
-                        ceremonyKey = { x, y };
-                        break;
-                    }
-                    if (!ceremonyKey && fallback && !isPositionOccupied(fallback.x, fallback.y)) {
-                        ceremonyKey = { ...fallback };
-                    }
-                    if (!ceremonyKey) {
-                        for (let y = 1; y < tileCount - 1 && !ceremonyKey; y++) {
-                            for (let x = 1; x < tileCount - 1; x++) {
-                                const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
-                                if (!farEnough || isPositionOccupied(x, y)) continue;
-                                ceremonyKey = { x, y };
-                                break;
-                            }
-                        }
-                    }
-                    if (!ceremonyKey) {
-                        ceremonyKey = fallback ? { ...fallback } : null;
-                    }
+                beginRewardCeremony();
+                if (ceremonyKey) {
+                    spawnFloatingText(ceremonyKey.x, ceremonyKey.y, UI_TEXT.floating.keyFound, '#ffd700', true);
                 }
-                spawnFloatingText(Math.floor(tileCount / 2), Math.floor(tileCount / 2), UI_TEXT.floating.keyFound, '#ffd700', true);
             }
             const ceremonyHead = snake[0];
             if (isCeremonyKeyState() && ceremonyKey && ceremonyHead.x === ceremonyKey.x && ceremonyHead.y === ceremonyKey.y) {
-                setCeremonyState('CHEST_SPAWN');
+                hasCeremonyKey = true;
                 ceremonyKey = null;
                 flashEffect('teleport');
                 flashAlpha = 0.3;
-                {
-                    const minDistance = TUNING.ceremony.chestMinDistance;
-                    const fallback = { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) };
-                    const head = snake[0];
+                spawnFloatingText(ceremonyHead.x, ceremonyHead.y, UI_TEXT.floating.keyGet, '#ffd700', true);
+            }
+            if (isCeremonyKeyState() && ceremonyChest && ceremonyHead.x === ceremonyChest.x && ceremonyHead.y === ceremonyChest.y) {
+                if (!hasCeremonyKey) {
+                    if (Date.now() - lastNeedKeyPromptAt >= TUNING.ceremony.needKeyPromptCooldownMs) {
+                        lastNeedKeyPromptAt = Date.now();
+                        spawnFloatingText(ceremonyHead.x, ceremonyHead.y, '需要钥匙', '#ffd166', false);
+                    }
+                } else {
+                    setCeremonyState('LOOT_BURST');
                     ceremonyChest = null;
-                    for (let attempts = 0; attempts < TUNING.generation.ceremonySpawnAttempts; attempts++) {
-                        const x = Math.floor(Math.random() * (tileCount - 4)) + 2;
-                        const y = Math.floor(Math.random() * (tileCount - 4)) + 2;
-                        const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
-                        if (!farEnough || isPositionOccupied(x, y)) continue;
-                        ceremonyChest = { x, y };
-                        break;
-                    }
-                    if (!ceremonyChest && fallback && !isPositionOccupied(fallback.x, fallback.y)) {
-                        ceremonyChest = { ...fallback };
-                    }
-                    if (!ceremonyChest) {
-                        for (let y = 1; y < tileCount - 1 && !ceremonyChest; y++) {
-                            for (let x = 1; x < tileCount - 1; x++) {
-                                const farEnough = !head || (Math.abs(x - head.x) + Math.abs(y - head.y) >= minDistance);
-                                if (!farEnough || isPositionOccupied(x, y)) continue;
-                                ceremonyChest = { x, y };
+                    hasCeremonyKey = false;
+                    flashEffect('grow');
+                    flashAlpha = 0.4;
+                    spawnFloatingText(ceremonyHead.x, ceremonyHead.y, UI_TEXT.floating.coinFrenzy, '#ffd700', true);
+                    clearWavePlayfieldState();
+                    resetLootBurstState();
+                    lootBurstEndTime = Date.now() + TUNING.wave.lootBurstDuration;
+                    const targetLootCount = Math.min(TUNING.wave.lootMax, Math.max(TUNING.wave.lootMin, Math.floor(tileCount * TUNING.wave.lootTileFactor)));
+                    for (let i = 0; i < targetLootCount; i++) {
+                        for (let att = 0; att < TUNING.generation.lootSpawnAttempts; att++) {
+                            const fx = Math.floor(Math.random() * (tileCount - 2)) + 1;
+                            const fy = Math.floor(Math.random() * (tileCount - 2)) + 1;
+                            if (!isPositionOccupied(fx, fy) && !lootFoods.some(l => l.x === fx && l.y === fy)) {
+                                lootFoods.push({ x: fx, y: fy, eaten: false });
                                 break;
                             }
                         }
                     }
-                    if (!ceremonyChest) {
-                        ceremonyChest = fallback ? { ...fallback } : null;
-                    }
+                    lootTotalCount = lootFoods.length;
                 }
-                spawnFloatingText(ceremonyHead.x, ceremonyHead.y, UI_TEXT.floating.keyGet, '#ffd700', true);
-            }
-            if (isCeremonyChestState() && ceremonyChest && ceremonyHead.x === ceremonyChest.x && ceremonyHead.y === ceremonyChest.y) {
-                setCeremonyState('LOOT_BURST');
-                ceremonyChest = null;
-                flashEffect('grow');
-                flashAlpha = 0.4;
-                spawnFloatingText(ceremonyHead.x, ceremonyHead.y, UI_TEXT.floating.coinFrenzy, '#ffd700', true);
-                clearWavePlayfieldState();
-                resetLootBurstState();
-                lootBurstEndTime = Date.now() + TUNING.wave.lootBurstDuration;
-                const targetLootCount = Math.min(TUNING.wave.lootMax, Math.max(TUNING.wave.lootMin, Math.floor(tileCount * TUNING.wave.lootTileFactor)));
-                for (let i = 0; i < targetLootCount; i++) {
-                    for (let att = 0; att < TUNING.generation.lootSpawnAttempts; att++) {
-                        const fx = Math.floor(Math.random() * (tileCount - 2)) + 1;
-                        const fy = Math.floor(Math.random() * (tileCount - 2)) + 1;
-                        if (!isPositionOccupied(fx, fy) && !lootFoods.some(l => l.x === fx && l.y === fy)) {
-                            lootFoods.push({ x: fx, y: fy, eaten: false });
-                            break;
-                        }
-                    }
-                }
-                lootTotalCount = lootFoods.length;
             }
             if (isCeremonyLootBurstState()) {
                 let lootCollectedThisTick = false;
@@ -2972,6 +2995,8 @@
                         lootEatenCount++;
                         coins += 1;
                         score += 5;
+                        syncSpeedFromScore();
+                        backgroundHue = getWaveBackgroundHue(currentWave, score);
                         lootCollectedThisTick = true;
                         const now = Date.now();
                         if (now - lastCoinSfxAt > 70) {
@@ -3033,6 +3058,8 @@
                         if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
                             score += terrainScore;
                             if (terrainScore !== 0) {
+                                syncSpeedFromScore();
+                                backgroundHue = getWaveBackgroundHue(currentWave, score);
                                 const poisonText = terrainScore > 0 ? `+${terrainScore}` : `${terrainScore}`;
                                 spawnFloatingText(terrainHead.x, terrainHead.y, poisonText, '#a855f7', false);
                                 if (score > highScore) {
@@ -3049,6 +3076,8 @@
                         if (terrainDotStepCounter % TERRAIN_DOT_INTERVAL === 0) {
                             score += terrainScore;
                             if (terrainScore !== 0) {
+                                syncSpeedFromScore();
+                                backgroundHue = getWaveBackgroundHue(currentWave, score);
                                 const slowText = terrainScore > 0 ? `+${terrainScore}` : `${terrainScore}`;
                                 spawnFloatingText(terrainHead.x, terrainHead.y, slowText, '#60a5fa', false);
                                 if (score > highScore) {
@@ -3075,6 +3104,8 @@
                             dmg = Math.max(1, Math.ceil(dmg / 2));
                         }
                         score -= dmg;
+                        syncSpeedFromScore();
+                        backgroundHue = getWaveBackgroundHue(currentWave, score);
                         spawnFloatingText(terrainHead.x, terrainHead.y, `-${dmg}`, '#c084fc', false);
                         updateStatusUI();
                     }
@@ -3207,6 +3238,8 @@
                     if (selectedModule && selectedModule.special === 'breakObstacle') {
                         obstacles.splice(hitObstacleIdx, 1);
                         score += 5;
+                        syncSpeedFromScore();
+                        backgroundHue = getWaveBackgroundHue(currentWave, score);
                         flashEffect('barrier');
                         playSfx('crash');
                         updateStatusUI();
@@ -3261,22 +3294,20 @@
 
                 if (effect === 'grow') {
                     score += modScore;
-                    const speed = BASE_SPEED * Math.exp(-TUNING.speed.scoreDecayK * score);
-                    const newInterval = Math.max(MIN_SPEED, speed);
-                    const oldInterval = currentInterval;
-                    currentInterval = newInterval;
-                    if (newInterval !== oldInterval || isSpeedBoosted || Date.now() < slowDebuffEnd) {
-                        restartGameLoopWithInterval();
-                    }
-                backgroundHue = getWaveBackgroundHue(currentWave, score);
+                    syncSpeedFromScore();
+                    backgroundHue = getWaveBackgroundHue(currentWave, score);
                 } else if (effect === 'shrink') {
                     shedTailSegmentToSkin();
                     score += modScore;
+                    syncSpeedFromScore();
+                    backgroundHue = getWaveBackgroundHue(currentWave, score);
                     isSpeedBoosted = true;
                     speedBoostTimer = speedBoostDuration;
                     restartGameLoopWithInterval(Math.max(currentInterval * TUNING.speed.speedBoostMultiplier, MIN_SPEED));
                 } else if (effect === 'teleport') {
                     score += modScore;
+                    syncSpeedFromScore();
+                    backgroundHue = getWaveBackgroundHue(currentWave, score);
                     if (snake.length >= 2) {
                         const oldHeadPos = { x: snake[0].x, y: snake[0].y };
                         const oldTailPos = { x: snake[snake.length - 1].x, y: snake[snake.length - 1].y };
@@ -3314,6 +3345,8 @@
                     }
                 } else if (effect === 'barrier') {
                     score += modScore;
+                    syncSpeedFromScore();
+                    backgroundHue = getWaveBackgroundHue(currentWave, score);
                     {
                         const headPos = snake[0];
                         const stoneCount = Math.floor(Math.random() * 4) + 3;
@@ -3353,6 +3386,8 @@
                     }
                 } else if (effect === 'wind') {
                     score += modScore;
+                    syncSpeedFromScore();
+                    backgroundHue = getWaveBackgroundHue(currentWave, score);
                     if (obstacles.length > 0) {
                         obstacles = [];
                         flashEffect('wind');
@@ -4792,6 +4827,37 @@
                 ctx.stroke();
                 ctx.setLineDash([]);
             });
+            const ceremonyEntryFxActive = ceremonyEntryFxUntil > Date.now() && !isCeremonyLootBurstState() && (ceremonyKey || ceremonyChest);
+            if (ceremonyEntryFxActive) {
+                const entryProgress = 1 - ((ceremonyEntryFxUntil - Date.now()) / TUNING.ceremony.entryFxDuration);
+                const dimAlpha = Math.max(0, 0.22 - entryProgress * 0.14);
+                ctx.save();
+                ctx.fillStyle = `rgba(4, 8, 18, ${dimAlpha})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = `rgba(255, 214, 102, ${0.48 - entryProgress * 0.2})`;
+                ctx.lineWidth = Math.max(2, cellSize * 0.14);
+                ctx.strokeRect(cellSize * 0.35, cellSize * 0.35, canvas.width - cellSize * 0.7, canvas.height - cellSize * 0.7);
+                [ceremonyKey, ceremonyChest].filter(Boolean).forEach(target => {
+                    const tx = target.x * cellSize + cellSize / 2;
+                    const ty = target.y * cellSize + cellSize / 2;
+                    const ringRadius = cellSize * (1.05 + entryProgress * 1.2);
+                    const ringGradient = ctx.createRadialGradient(tx, ty, cellSize * 0.14, tx, ty, ringRadius * 1.25);
+                    ringGradient.addColorStop(0, 'rgba(255, 239, 168, 0.32)');
+                    ringGradient.addColorStop(0.45, 'rgba(255, 208, 92, 0.14)');
+                    ringGradient.addColorStop(1, 'rgba(255, 208, 92, 0)');
+                    ctx.fillStyle = ringGradient;
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, ringRadius * 1.25, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = `rgba(255, 222, 138, ${0.7 - entryProgress * 0.22})`;
+                    ctx.lineWidth = Math.max(2, cellSize * 0.08);
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, ringRadius, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+
             if (ceremonyKey && isCeremonyKeyState()) {
                 const kx = ceremonyKey.x * cellSize + cellSize / 2;
                 const ky = ceremonyKey.y * cellSize + cellSize / 2;
@@ -4812,21 +4878,40 @@
                 ctx.restore();
             }
 
-            if (ceremonyChest && isCeremonyChestState()) {
+            if (ceremonyChest && !isCeremonyLootBurstState()) {
                 const cx = ceremonyChest.x * cellSize + cellSize / 2;
                 const cy = ceremonyChest.y * cellSize + cellSize / 2;
                 const cSize = cellSize * 1.2;
                 const cImg = ICON_IMAGES.ceremony_chest;
+                const chestGlow = hasCeremonyKey ? '#ffd166' : '#ff8c00';
                 ctx.save();
-                ctx.shadowColor = '#ff8c00';
-                ctx.shadowBlur = 22;
+                ctx.shadowColor = chestGlow;
+                ctx.shadowBlur = hasCeremonyKey ? 28 : 20;
                 if (cImg && cImg.complete && cImg.naturalWidth > 0) {
+                    ctx.globalAlpha = hasCeremonyKey ? 1 : 0.88;
                     ctx.drawImage(cImg, cx - cSize / 2, cy - cSize / 2, cSize, cSize);
                 } else {
                     ctx.fillStyle = '#8B4513';
                     ctx.beginPath();
                     ctx.roundRect(cx - cSize * 0.4, cy - cSize * 0.3, cSize * 0.8, cSize * 0.6, 3);
                     ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = hasCeremonyKey ? 'rgba(255, 226, 122, 0.92)' : 'rgba(255, 174, 92, 0.56)';
+                ctx.lineWidth = Math.max(2, cellSize * 0.08);
+                ctx.beginPath();
+                ctx.arc(cx, cy, cSize * 0.52, 0, Math.PI * 2);
+                ctx.stroke();
+                if (!hasCeremonyKey) {
+                    ctx.strokeStyle = 'rgba(255, 228, 186, 0.85)';
+                    ctx.lineWidth = Math.max(1.6, cellSize * 0.06);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy - cSize * 0.06, cSize * 0.15, Math.PI, Math.PI * 2);
+                    ctx.moveTo(cx - cSize * 0.15, cy - cSize * 0.06);
+                    ctx.lineTo(cx - cSize * 0.15, cy + cSize * 0.12);
+                    ctx.lineTo(cx + cSize * 0.15, cy + cSize * 0.12);
+                    ctx.lineTo(cx + cSize * 0.15, cy - cSize * 0.06);
+                    ctx.stroke();
                 }
                 ctx.shadowBlur = 0;
                 ctx.restore();
@@ -5542,10 +5627,15 @@
                     terrainDotType,
                     portalTeleportCooldown,
                     foodSpawnTimer,
+                    ceremonyKey,
+                    ceremonyChest,
                     lootFoods,
                     lootEatenCount,
                     lootTotalCount,
                     lootBurstEndTime,
+                    hasCeremonyKey,
+                    ceremonyEntryFxUntil,
+                    lastNeedKeyPromptAt,
                     teleportPreview,
                     teleportTrailTimer,
                     headGlowTimer
@@ -5607,6 +5697,12 @@
                     case 'foodSpawnTimer':
                         foodSpawnTimer = value;
                         break;
+                    case 'ceremonyKey':
+                        ceremonyKey = value;
+                        break;
+                    case 'ceremonyChest':
+                        ceremonyChest = value;
+                        break;
                     case 'lootFoods':
                         lootFoods = value;
                         break;
@@ -5618,6 +5714,15 @@
                         break;
                     case 'lootBurstEndTime':
                         lootBurstEndTime = value;
+                        break;
+                    case 'hasCeremonyKey':
+                        hasCeremonyKey = value;
+                        break;
+                    case 'ceremonyEntryFxUntil':
+                        ceremonyEntryFxUntil = value;
+                        break;
+                    case 'lastNeedKeyPromptAt':
+                        lastNeedKeyPromptAt = value;
                         break;
                     case 'teleportPreview':
                         teleportPreview = value;
@@ -6044,6 +6149,9 @@
                     waveCeremonyState,
                     ceremonyKey,
                     ceremonyChest,
+                    hasCeremonyKey,
+                    ceremonyEntryFxUntil,
+                    lastNeedKeyPromptAt,
                     shopOpen,
                     shopOpening,
                     currentMode,
@@ -6208,6 +6316,15 @@
                         break;
                     case 'ceremonyChest':
                         ceremonyChest = value;
+                        break;
+                    case 'hasCeremonyKey':
+                        hasCeremonyKey = value;
+                        break;
+                    case 'ceremonyEntryFxUntil':
+                        ceremonyEntryFxUntil = value;
+                        break;
+                    case 'lastNeedKeyPromptAt':
+                        lastNeedKeyPromptAt = value;
                         break;
                     default:
                         break;

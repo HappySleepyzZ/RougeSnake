@@ -85,6 +85,9 @@ window.SnakeRuntimeState = {
       setCeremonyState('PLAYING');
       setStateValue('ceremonyKey', null);
       setStateValue('ceremonyChest', null);
+      setStateValue('hasCeremonyKey', false);
+      setStateValue('ceremonyEntryFxUntil', 0);
+      setStateValue('lastNeedKeyPromptAt', 0);
       if (actions && typeof actions.resetLootBurstState === 'function') {
         actions.resetLootBurstState();
       }
