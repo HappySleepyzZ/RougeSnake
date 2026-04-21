@@ -1593,13 +1593,13 @@
         const TUNING = {
             speed: {
                 base: 150,
-                min: 50,
+                min: 72,
                 slowTick: 500,
                 speedBoostMultiplier: 0.82,
                 dashLoopMultiplier: 0.72,
                 slowMultiplier: 2.5,
-                scoreLogDivisor: 25,
-                scoreLogReduction: 36
+                scoreLogDivisor: 72,
+                scoreLogReduction: 28
             },
             wave: {
                 duration: DEFAULT_WAVE_DURATION,
@@ -4912,6 +4912,22 @@
                     ctx.lineTo(cx + cSize * 0.15, cy + cSize * 0.12);
                     ctx.lineTo(cx + cSize * 0.15, cy - cSize * 0.06);
                     ctx.stroke();
+
+                    const lockWidth = cSize * 0.72;
+                    const lockHeight = cSize * 0.22;
+                    const lockY = cy + cSize * 0.42;
+                    ctx.fillStyle = 'rgba(36, 20, 12, 0.84)';
+                    ctx.beginPath();
+                    ctx.roundRect(cx - lockWidth / 2, lockY - lockHeight / 2, lockWidth, lockHeight, Math.max(4, cellSize * 0.12));
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 220, 166, 0.9)';
+                    ctx.lineWidth = Math.max(1.4, cellSize * 0.05);
+                    ctx.stroke();
+                    ctx.fillStyle = 'rgba(255, 238, 202, 0.95)';
+                    ctx.font = `${Math.max(10, cellSize * 0.28)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('LOCK', cx, lockY + 1);
                 }
                 ctx.shadowBlur = 0;
                 ctx.restore();
