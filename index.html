@@ -2015,15 +2015,15 @@
         
         // 商品池
         const SHOP_POOL = [
-            { id: 'poison_resist', name: '毒雾抗性', icon: '🟢', cost: 3, desc: 'DoT减半 1波', category: 'defense' },
-            { id: 'ice_armor', name: '冰霜护甲', icon: '🔵', cost: 3, desc: '减速时间-50% 1波', category: 'defense' },
-            { id: 'shield', name: '护盾', icon: '🛡', cost: 4, desc: '挡1次墙/岩石/蛇蜕', category: 'defense' },
-            { id: 'dash', name: '冲刺', icon: '⚡', cost: 5, desc: '获得1次冲刺加速', category: 'offense' },
-            { id: 'magnet', name: '磁铁', icon: '🧲', cost: 4, desc: '食物吸引+2格 1波', category: 'offense' },
-            { id: 'turret_guard', name: '干扰器', icon: '📡', cost: 3, desc: '免疫1次炮击', category: 'tool' },
+            { id: 'poison_resist', name: '毒雾抗性', icon: '🟢', cost: 5, desc: 'DoT减半 1波', category: 'defense' },
+            { id: 'ice_armor', name: '冰霜护甲', icon: '🔵', cost: 5, desc: '减速时间-50% 1波', category: 'defense' },
+            { id: 'shield', name: '护盾', icon: '🛡', cost: 6, desc: '挡1次墙/岩石/蛇蜕', category: 'defense' },
+            { id: 'dash', name: '冲刺', icon: '⚡', cost: 8, desc: '获得1次冲刺加速', category: 'offense' },
+            { id: 'magnet', name: '磁铁', icon: '🧲', cost: 7, desc: '食物吸引+2格 1波', category: 'offense' },
+            { id: 'turret_guard', name: '干扰器', icon: '📡', cost: 6, desc: '免疫1次炮击', category: 'tool' },
         ];
         const PREMIUM_SHOP_POOL = [
-            { id: 'revive_core', name: '复活核心', icon: '❤️', cost: 10, payType: 'coins', desc: '本波免死1次', category: 'premium', unlockWave: 6, singlePurchase: true },
+            { id: 'revive_core', name: '复活核心', icon: '❤️', cost: 16, payType: 'coins', desc: '本波免死1次', category: 'premium', unlockWave: 6, singlePurchase: true },
         ];
         
         let waveTransitionTimer = 0;
@@ -2233,9 +2233,12 @@
                 }
                 turretState.beamTarget = impactTarget;
                 turretState.beamUntil = now + TURRET_CONFIG.beamMs;
-                shedTailSegmentToSkin();
                 playSfx('turretFire');
-                return snake[0] && snake[0].x === impactTarget.x && snake[0].y === impactTarget.y;
+                const didHitHead = snake[0] && snake[0].x === impactTarget.x && snake[0].y === impactTarget.y;
+                if (didHitHead) {
+                    shedTailSegmentToSkin();
+                }
+                return didHitHead;
             }
 
             if (!turretState.target && now >= turretState.nextShotAt) {
@@ -2909,8 +2912,8 @@
             shopPurchasedCategories = [];
             const shuffledShopItems = [...SHOP_POOL].sort(() => Math.random() - 0.5);
             shopItems = shuffledShopItems.slice(0, 3);
-            shopItems.push({ id: 'heal', name: '修剪', icon: '✂️', cost: 3, payType: 'coins', desc: '-2节蛇身', category: 'utility', bodyDelta: -2 });
-            shopItems.push({ id: 'grow_tail', name: '蜕皮', icon: '🪶', cost: 5, payType: 'coins', desc: '-4节蛇身', category: 'utility', bodyDelta: -4 });
+            shopItems.push({ id: 'heal', name: '修剪', icon: '✂️', cost: 5, payType: 'coins', desc: '-2节蛇身', category: 'utility', bodyDelta: -2 });
+            shopItems.push({ id: 'grow_tail', name: '蜕皮', icon: '🪶', cost: 8, payType: 'coins', desc: '-4节蛇身', category: 'utility', bodyDelta: -4 });
             PREMIUM_SHOP_POOL.filter(item => currentWave >= item.unlockWave).forEach(item => {
                 shopItems.push({ ...item });
             });
@@ -2922,7 +2925,7 @@
                         id: `module_${mod.id}`,
                         name: `换模组·${mod.name}`,
                         icon: mod.icon,
-                        cost: mod.unlockWave && mod.unlockWave > 1 ? 8 : 4,
+                        cost: mod.unlockWave && mod.unlockWave > 1 ? 11 : 6,
                         payType: 'coins',
                         desc: mod.unlockWave && mod.unlockWave > 1 ? `当前波结束后生效 · ${mod.passive}` : '当前波结束后生效',
                         category: 'module',
