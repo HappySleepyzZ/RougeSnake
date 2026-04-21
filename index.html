@@ -1594,8 +1594,8 @@
         const WAVE_TRANSITION_DURATION = 3000; // 3 秒过渡
         const TUNING = {
             speed: {
-                base: 150,
-                min: 72,
+                base: 170,
+                min: 85,
                 slowTick: 500,
                 speedBoostMultiplier: 0.82,
                 dashLoopMultiplier: 0.72,
@@ -2004,6 +2004,7 @@
         let shopOpen = false;
         let shopOpening = false;
         let shopItems = [];
+        let shopPurchaseCounts = {};
         let shopPurchasedItemIds = [];
         let shopPurchasedCategories = [];
         let dashBurstTicks = 0;
@@ -2015,15 +2016,15 @@
         
         // 商品池
         const SHOP_POOL = [
-            { id: 'poison_resist', name: '毒雾抗性', icon: '🟢', cost: 5, desc: 'DoT减半 1波', category: 'defense' },
-            { id: 'ice_armor', name: '冰霜护甲', icon: '🔵', cost: 5, desc: '减速时间-50% 1波', category: 'defense' },
-            { id: 'shield', name: '护盾', icon: '🛡', cost: 6, desc: '挡1次墙/岩石/蛇蜕', category: 'defense' },
-            { id: 'dash', name: '冲刺', icon: '⚡', cost: 8, desc: '获得1次冲刺加速', category: 'offense' },
-            { id: 'magnet', name: '磁铁', icon: '🧲', cost: 7, desc: '食物吸引+2格 1波', category: 'offense' },
-            { id: 'turret_guard', name: '干扰器', icon: '📡', cost: 6, desc: '免疫1次炮击', category: 'tool' },
+            { id: 'poison_resist', name: '毒雾抗性', icon: '🟢', cost: 5, desc: 'DoT减半 1波', category: 'defense', maxPerShop: 1 },
+            { id: 'ice_armor', name: '冰霜护甲', icon: '🔵', cost: 5, desc: '减速时间-50% 1波', category: 'defense', maxPerShop: 1 },
+            { id: 'shield', name: '护盾', icon: '🛡', cost: 6, desc: '挡1次墙/岩石/蛇蜕', category: 'defense', maxPerShop: 2 },
+            { id: 'dash', name: '冲刺', icon: '⚡', cost: 8, desc: '获得1次冲刺加速', category: 'offense', maxPerShop: 2 },
+            { id: 'magnet', name: '磁铁', icon: '🧲', cost: 7, desc: '食物吸引+2格 1波', category: 'offense', maxPerShop: 1 },
+            { id: 'turret_guard', name: '干扰器', icon: '📡', cost: 6, desc: '免疫1次炮击', category: 'tool', maxPerShop: 1 },
         ];
         const PREMIUM_SHOP_POOL = [
-            { id: 'revive_core', name: '复活核心', icon: '❤️', cost: 16, payType: 'coins', desc: '本波免死1次', category: 'premium', unlockWave: 6, singlePurchase: true },
+            { id: 'revive_core', name: '复活核心', icon: '❤️', cost: 16, payType: 'coins', desc: '本波免死1次', category: 'premium', unlockWave: 6, singlePurchase: true, maxPerShop: 1 },
         ];
         
         let waveTransitionTimer = 0;
@@ -2106,7 +2107,7 @@
                 passive: '免疫蛇皮碰撞',
                 scoreModifiers: { grow: 8, shrink: -6, teleport: 12, barrier: -10, wind: 6 },
                 terrainBonus: { poison: -4, slow: 4 },
-                unlockWave: 8,
+                unlockWave: 3,
                 special: 'ignoreSnakeSkin',
                 headColor: '#c084fc', headGlow: '#d8b4fe',
                 bodyColor: '#7c3aed', bodyGlow: '#a78bfa',
@@ -2196,7 +2197,7 @@
             turretState.enabled = currentWave >= TURRET_CONFIG.startWave;
         }
 
-        function updateTurretHazard(now) {
+        function updateTurretHazard(now, impactSegments = snake) {
             if (!snake.length || currentWave < TURRET_CONFIG.startWave || !isCeremonyPlayingState() || isPausedState() || isWaveTransitionState()) {
                 if (turretState.warningUntil || turretState.beamUntil || turretState.target || turretState.beamTarget) {
                     resetTurretState(0);
@@ -2234,11 +2235,11 @@
                 turretState.beamTarget = impactTarget;
                 turretState.beamUntil = now + TURRET_CONFIG.beamMs;
                 playSfx('turretFire');
-                const didHitHead = snake[0] && snake[0].x === impactTarget.x && snake[0].y === impactTarget.y;
-                if (didHitHead) {
+                const didHitSnake = Array.isArray(impactSegments) && impactSegments.some(segment => segment.x === impactTarget.x && segment.y === impactTarget.y);
+                if (didHitSnake) {
                     shedTailSegmentToSkin();
                 }
-                return didHitHead;
+                return didHitSnake;
             }
 
             if (!turretState.target && now >= turretState.nextShotAt) {
@@ -2425,6 +2426,7 @@
             reviveCharges = 0;
             dashCharges = 0;
             dashBurstTicks = 0;
+            shopPurchaseCounts = {};
             shopPurchasedItemIds = [];
             shopPurchasedCategories = [];
             hasCeremonyKey = false;
@@ -2777,10 +2779,24 @@
             return !!item && ['shield', 'turret_guard', 'dash', 'heal', 'grow_tail'].includes(item.id);
         }
 
+        function getShopItemPurchaseCount(item) {
+            if (!item) return 0;
+            return shopPurchaseCounts[item.id] || 0;
+        }
+
+        function getShopItemMaxPerShop(item) {
+            if (!item) return 1;
+            if (item.moduleTarget) return 1;
+            return Math.max(1, item.maxPerShop || 1);
+        }
+
         function hasPurchasedShopItem(item) {
             if (!item) return false;
             if (item.moduleTarget) {
                 return shopPurchasedCategories.includes('module');
+            }
+            if (getShopItemPurchaseCount(item) >= getShopItemMaxPerShop(item)) {
+                return true;
             }
             if (item.singlePurchase) {
                 return shopPurchasedItemIds.includes(item.id);
@@ -2792,7 +2808,9 @@
         }
 
         function markShopItemPurchased(item) {
-            if (!item || isRepeatableShopItem(item)) return;
+            if (!item) return;
+            shopPurchaseCounts[item.id] = getShopItemPurchaseCount(item) + 1;
+            if (isRepeatableShopItem(item)) return;
             if (!shopPurchasedItemIds.includes(item.id)) {
                 shopPurchasedItemIds.push(item.id);
             }
@@ -2861,11 +2879,13 @@
             shopItemsDiv.innerHTML = '';
             shopItems.forEach(item => {
                 const payment = getShopPaymentBreakdown(item);
+                const purchaseCount = getShopItemPurchaseCount(item);
+                const maxPerShop = getShopItemMaxPerShop(item);
                 const alreadyBought = hasPurchasedShopItem(item);
                 const canAfford = payment.canAfford && !alreadyBought;
                 const statusText = alreadyBought
-                    ? (item.moduleTarget ? '已选模块' : '已购买')
-                    : payment.priceText;
+                    ? (item.moduleTarget ? '已选模块' : '售罄')
+                    : `${payment.priceText} · 余${Math.max(0, maxPerShop - purchaseCount)}`;
                 const btn = document.createElement('button');
                 btn.className = 'restart-btn';
                 btn.style.cssText = `
@@ -2908,12 +2928,13 @@
             clearInterval(gameLoop);
             gameLoop = null;
             syncPauseButtonVisibility();
+            shopPurchaseCounts = {};
             shopPurchasedItemIds = [];
             shopPurchasedCategories = [];
             const shuffledShopItems = [...SHOP_POOL].sort(() => Math.random() - 0.5);
             shopItems = shuffledShopItems.slice(0, 3);
-            shopItems.push({ id: 'heal', name: '修剪', icon: '✂️', cost: 5, payType: 'coins', desc: '-2节蛇身', category: 'utility', bodyDelta: -2 });
-            shopItems.push({ id: 'grow_tail', name: '蜕皮', icon: '🪶', cost: 8, payType: 'coins', desc: '-4节蛇身', category: 'utility', bodyDelta: -4 });
+            shopItems.push({ id: 'heal', name: '修剪', icon: '✂️', cost: 5, payType: 'coins', desc: '-2节蛇身', category: 'utility', bodyDelta: -2, maxPerShop: 1 });
+            shopItems.push({ id: 'grow_tail', name: '蜕皮', icon: '🪶', cost: 8, payType: 'coins', desc: '-4节蛇身', category: 'utility', bodyDelta: -4, maxPerShop: 1 });
             PREMIUM_SHOP_POOL.filter(item => currentWave >= item.unlockWave).forEach(item => {
                 shopItems.push({ ...item });
             });
@@ -2930,7 +2951,8 @@
                         desc: mod.unlockWave && mod.unlockWave > 1 ? `当前波结束后生效 · ${mod.passive}` : '当前波结束后生效',
                         category: 'module',
                         moduleTarget: mod,
-                        singlePurchase: true
+                        singlePurchase: true,
+                        maxPerShop: 1
                     });
                 });
             renderShopItems();
@@ -3216,14 +3238,6 @@
                 restartGameLoopWithInterval();
             }
 
-            if (updateTurretHazard(now)) {
-                if (tryConsumeRevive(snake[0], 'turret')) return;
-                gameOver();
-                return;
-            }
-            
-            updateStatusUI();
-            
             direction = { ...nextDirection };
             let head = {
                 x: snake[0].x + direction.x,
@@ -3265,6 +3279,15 @@
                     hitWall = true;
                 }
             }
+
+            const projectedSnake = hitWall
+                ? snake
+                : [head, ...snake.slice(0, Math.max(0, snake.length - 1))];
+            if (updateTurretHazard(now, projectedSnake)) {
+                updateStatusUI();
+            }
+            
+            updateStatusUI();
             if (hitWall) {
                 if (shieldCharges > 0) {
                     shieldCharges--;
